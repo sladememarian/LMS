@@ -5,7 +5,7 @@ java:
   script:
     - ./gradlew clean test
   artifacts:
-    reports:
-      junit:
-        - target/surefire-reports/TEST-*.xml
-        - target/failsafe-reports/TEST-*.xml
+    when: always
+    paths:
+      - "build/test-results/test/TEST-*.xml"
+      - "build/reports/tests/test"
