@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.ConsoleColor;
 
 public class IamService {
@@ -40,6 +42,7 @@ public class IamService {
 
                 UserCredentials newUser = new UserCredentials(email, password, firstName, lastName, phoneNumber);
                 DATABASE.add(newUser);
+                PersonaService.registerPersona(email, password);
                 ConsoleColor.printSuccess("Registration successful! You can now log in.");
                 break;
             } catch (IllegalArgumentException e) {
@@ -62,15 +65,17 @@ public class IamService {
             System.out.print("Password: ");
             String password = scanner.nextLine().trim();
 
-            boolean found = false;
-            for (UserCredentials user : DATABASE) {
-                if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
-                    ConsoleColor.printSuccess("Login successful! Welcome, " + user.getFirstName() + "!");
-                    found = true;
-                    break;
-                }
-            }
+            boolean found = PersonaService.validateCredentials(email, password);
+            // for (UserCredentials user : DATABASE) {
+            //     if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
+            //         ConsoleColor.printSuccess("Login successful! Welcome, " + user.getFirstName() + "!");
+            //         found = true;
+            //         break;
+            //     }
+            // }
             if (found) {
+                Persona.currentUser = PersonaService.getProfile(email);
+                ConsoleColor.printSuccess("Login successful! Welcome to the portal.");
                 break;
             } else {
                 ConsoleColor.printError("Invalid email or password. Please try again.");

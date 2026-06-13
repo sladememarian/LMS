@@ -1,6 +1,9 @@
 package ir.ac.kntu.persona;
 
 public class Persona {
+
+    public static Persona currentUser;
+
     private final String email;
     private final String password;
     private UserRole role;
