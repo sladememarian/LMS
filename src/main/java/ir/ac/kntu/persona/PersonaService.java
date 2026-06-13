@@ -42,13 +42,14 @@ public class PersonaService {
 
     private static void saveToEncryptedFile() {
         StringBuilder jsonBuilder = new StringBuilder("[\n");
+        String fieldSuffix = "\",\n";
         for (int i = 0; i < PERSONA_DATABASE.size(); i++) {
-            Persona p = PERSONA_DATABASE.get(i);
+            Persona persona = PERSONA_DATABASE.get(i);
             jsonBuilder.append("  {\n")
-                    .append("    \"email\": \"").append(p.getEmail()).append("\",\n")
-                    .append("    \"password\": \"").append(p.getPassword()).append("\",\n")
-                    .append("    \"role\": \"").append(p.getRole().name()).append("\",\n")
-                    .append("    \"memberId\": \"").append(p.getMemberId()).append("\"\n")
+                    .append("    \"email\": \"").append(persona.getEmail()).append(fieldSuffix)
+                    .append("    \"password\": \"").append(persona.getPassword()).append(fieldSuffix)
+                    .append("    \"role\": \"").append(persona.getRole().name()).append(fieldSuffix)
+                    .append("    \"memberId\": \"").append(persona.getMemberId()).append("\"\n")
                     .append("  }");
             if (i < PERSONA_DATABASE.size() - 1) {
                 jsonBuilder.append(",");

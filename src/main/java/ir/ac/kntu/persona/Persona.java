@@ -21,7 +21,7 @@ public class Persona {
     }
 
     private String generateMemberId(String prefix) {
-        int uniqueNumber = (int) (Math.random() * 900000) + 100000;
+        int uniqueNumber = (int) (Math.random() * 900_000) + 100_000;
         return prefix + uniqueNumber;
     }
 
