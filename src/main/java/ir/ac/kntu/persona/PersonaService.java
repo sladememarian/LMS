@@ -121,4 +121,31 @@ public class PersonaService {
         int endIndex = source.indexOf("\"", startIndex);
         return source.substring(startIndex, endIndex);
     }
+
+    public static int getWalletBalance(String email) {
+        Persona persona = getProfile(email);
+        if (persona != null) {
+            return persona.getWalletBalance();
+        }
+        throw new IllegalArgumentException("Persona not found for email: " + email);
+    }
+
+    public static void updateWalletBalance(String email, int amount) {
+        Persona persona = getProfile(email);
+        if (persona != null) {
+            persona.setWalletBalance(persona.getWalletBalance() + amount);
+            saveToEncryptedFile();
+        }
+    }
+
+    public static void transferToAdmin(int taxAmount) {
+        for(Persona persona : PERSONA_DATABASE) {
+            if (persona.getRole() == UserRole.ADMIN) {
+                persona.setWalletBalance(persona.getWalletBalance() + taxAmount);
+                break;
+            }
+        }
+        saveToEncryptedFile();
+    }
+
 }

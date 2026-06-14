@@ -2,17 +2,19 @@ package ir.ac.kntu.persona;
 
 public class Persona {
 
-    public static Persona currentUser;
+    private static Persona currentUser;
 
     private final String email;
     private final String password;
     private UserRole role;
     private String memberId;
+    private int walletBalance;  
 
     public Persona(String email, String password) {
         this.email = email;
         this.password = password;
         this.role = UserRole.GUEST;
+        this.walletBalance = 0;
         this.memberId = generateMemberId(UserRole.GUEST.getPrefix());
     }
 
@@ -21,6 +23,7 @@ public class Persona {
         this.password = password;
         this.role = role;
         this.memberId = memberId;
+        this.walletBalance = 0;
     }
 
     private String generateMemberId(String prefix) {
@@ -47,5 +50,21 @@ public class Persona {
 
     public String getMemberId() {
         return memberId;
+    }
+
+    public int getWalletBalance() {
+        return walletBalance;
+    }
+
+    public void setWalletBalance(int walletBalance) {
+        this.walletBalance = walletBalance;
+    }
+
+    public static Persona getCurrentUser() {
+        return currentUser;
+    }
+
+    public static void setCurrentUser(Persona currentUser) {
+        Persona.currentUser = currentUser;
     }
 }

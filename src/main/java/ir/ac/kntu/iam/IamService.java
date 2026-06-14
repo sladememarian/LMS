@@ -74,7 +74,7 @@ public class IamService {
             //     }
             // }
             if (found) {
-                Persona.currentUser = PersonaService.getProfile(email);
+                Persona.setCurrentUser(PersonaService.getProfile(email));
                 ConsoleColor.printSuccess("Login successful! Welcome to the portal.");
                 break;
             } else {
