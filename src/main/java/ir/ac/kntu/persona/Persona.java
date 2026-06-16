@@ -6,11 +6,13 @@ public class Persona {
 
     private final String email;
     private final String password;
+    private final String username;
     private UserRole role;
     private String memberId;
     private int walletBalance;  
 
     public Persona(String email, String password) {
+        this.username = null;
         this.email = email;
         this.password = password;
         this.role = UserRole.GUEST;
@@ -18,12 +20,22 @@ public class Persona {
         this.memberId = generateMemberId(UserRole.GUEST.getPrefix());
     }
 
-    public Persona(String email, String password, UserRole role, String memberId) {
+    public Persona(String username, String password, UserRole role) {
+        this.email = null;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.memberId = generateMemberId(role.getPrefix());
+        this.walletBalance = 0;
+    }
+
+    public Persona(String email, String username, String password, UserRole role, String memberId, int walletBalance) {
         this.email = email;
+        this.username = username;
         this.password = password;
         this.role = role;
         this.memberId = memberId;
-        this.walletBalance = 0;
+        this.walletBalance = walletBalance;
     }
 
     private String generateMemberId(String prefix) {
@@ -66,5 +78,9 @@ public class Persona {
 
     public static void setCurrentUser(Persona currentUser) {
         Persona.currentUser = currentUser;
+    }
+
+    public String getUsername() {
+        return username;
     }
 }

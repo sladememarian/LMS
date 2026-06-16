@@ -101,12 +101,15 @@ public class PersonaService {
             String cleanObj = obj.replace("{", "").replace("}", "").trim();
             String email = extractValue(cleanObj, "email");
             String password = extractValue(cleanObj, "password");
+            String username = extractValue(cleanObj, "username");
             String roleStr = extractValue(cleanObj, "role");
             String memberId = extractValue(cleanObj, "memberId");
+            String walletBalanceStr = extractValue(cleanObj, "walletBalance");
 
             if (email != null && password != null) {
                 UserRole role = UserRole.valueOf(roleStr != null ? roleStr : "GUEST");
-                PERSONA_DATABASE.add(new Persona(email, password, role, memberId));
+                int walletBalance = walletBalanceStr != null ? Integer.parseInt(walletBalanceStr) : 0;
+                PERSONA_DATABASE.add(new Persona(email, username, password, role, memberId, walletBalance));
             }
         }
     }
@@ -139,7 +142,7 @@ public class PersonaService {
     }
 
     public static void transferToAdmin(int taxAmount) {
-        for(Persona persona : PERSONA_DATABASE) {
+        for (Persona persona : PERSONA_DATABASE) {
             if (persona.getRole() == UserRole.ADMIN) {
                 persona.setWalletBalance(persona.getWalletBalance() + taxAmount);
                 break;
@@ -148,4 +151,15 @@ public class PersonaService {
         saveToEncryptedFile();
     }
 
+    public static Persona getProfileByUsername(String username) {
+        if (username == null) {
+            return null;
+        }
+        for (Persona profile : PERSONA_DATABASE) {
+            if (username.equalsIgnoreCase(profile.getUsername())) {
+                return profile;
+            }
+        }
+        return null;
+    }
 }

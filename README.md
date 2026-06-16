@@ -19,6 +19,30 @@ run tests from terminal:
 </li>
 
 <li>
+compile the project:
+
+```
+./gradlew build
+```
+</li>
+
+<li>
+run the application (after building):
+
+```
+java -cp "build\classes\java\main" ir.ac.kntu.Main
+```
+</li>
+
+<li>
+compile and run in one shot (Windows):
+
+```
+./gradlew build && java -cp "build\classes\java\main" ir.ac.kntu.Main
+```
+</li>
+
+<li>
 push changes to the repository:
 
 ```
