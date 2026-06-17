@@ -43,6 +43,10 @@ public class CheckPMDTest {
 
             List<RuleViolation> violations = report.getViolations();
 
+            for (RuleViolation v : violations) {
+                System.out.println("VIOLATION: " + v.getRule().getName() + " - " + v.getDescription());
+            }
+
             System.out.println("Found " + violations.size() + " PMD rule violations.");
             assertEquals(0, violations.size(), violations.size() + " PMD rule violations found.");
         }

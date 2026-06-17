@@ -9,13 +9,17 @@ import java.util.List;
 
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.util.EnvConfig;
 
 public class FinanceService {
 
     private static final List<Transaction> TX_LOGS = new ArrayList<>();
     private static final String FILE_PATH = "finance_secure.json";
-    private static final byte XOR_KEY = 0x5A;
     private static final double TAX_RATE = 0.10;
+
+    private static byte[] getEncryptionKey() {
+        return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
+    }
 
     public static boolean checkBorrowingPermission(String memberId) {
         if (TX_LOGS.isEmpty()) {
@@ -70,9 +74,11 @@ public class FinanceService {
         jsonBuilder.append("]");
 
         try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {
-            byte[] encryptedData = new byte[jsonBuilder.length()];
-            for (int i = 0; i < jsonBuilder.length(); i++) {
-                encryptedData[i] = (byte) (jsonBuilder.charAt(i) ^ XOR_KEY);
+            byte[] keyBytes = getEncryptionKey();
+            byte[] rawBytes = jsonBuilder.toString().getBytes();
+            byte[] encryptedData = new byte[rawBytes.length];
+            for (int i = 0; i < rawBytes.length; i++) {
+                encryptedData[i] = (byte) (rawBytes[i] ^ keyBytes[i % keyBytes.length]);
             }
             fos.write(encryptedData);
         } catch (IOException e) {
@@ -106,9 +112,10 @@ public class FinanceService {
 
         try (FileInputStream fis = new FileInputStream(file)) {
             byte[] encryptedData = fis.readAllBytes();
+            byte[] keyBytes = getEncryptionKey();
             byte[] decryptedData = new byte[encryptedData.length];
             for (int i = 0; i < encryptedData.length; i++) {
-                decryptedData[i] = (byte) (encryptedData[i] ^ XOR_KEY);
+                decryptedData[i] = (byte) (encryptedData[i] ^ keyBytes[i % keyBytes.length]);
             }
             parseTxFromJson(new String(decryptedData));
         } catch (IOException e) {

@@ -9,13 +9,19 @@ import java.util.Collections;
 import java.util.List;
 
 import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.library.LibraryService;
+import ir.ac.kntu.util.EnvConfig;
 
 public class SupportService {
 
     private static final List<SupportTicket> TICKETS = new ArrayList<>();
     private static final String FILE_PATH = "support_tickets.json";
-    private static final byte XOR_KEY = 0x5A;
+
+    private static byte[] getEncryptionKey() {
+        return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
+    }
 
     public static boolean validateCallCenterLogin(String username, String password) {
         Persona profile = PersonaService.getProfile(username);
@@ -84,9 +90,11 @@ public class SupportService {
             sb.append("\n");
         }
         sb.append("]");
-        byte[] enc = new byte[sb.toString().getBytes().length];
-        for (int i = 0; i < sb.toString().getBytes().length; i++) {
-            enc[i] = (byte) (sb.toString().getBytes()[i] ^ XOR_KEY);
+        byte[] keyBytes = getEncryptionKey();
+        byte[] rawBytes = sb.toString().getBytes();
+        byte[] enc = new byte[rawBytes.length];
+        for (int i = 0; i < rawBytes.length; i++) {
+            enc[i] = (byte) (rawBytes[i] ^ keyBytes[i % keyBytes.length]);
         }
         try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {
             fos.write(enc);
@@ -102,9 +110,10 @@ public class SupportService {
         }
         try (FileInputStream fis = new FileInputStream(file)) {
             byte[] enc = fis.readAllBytes();
+            byte[] keyBytes = getEncryptionKey();
             byte[] dec = new byte[enc.length];
             for (int i = 0; i < enc.length; i++) {
-                dec[i] = (byte) (enc[i] ^ XOR_KEY);
+                dec[i] = (byte) (enc[i] ^ keyBytes[i % keyBytes.length]);
             }
             parseSupportJson(new String(dec));
         } catch (IOException e) {
@@ -148,5 +157,14 @@ public class SupportService {
         }
         start += token.length();
         return src.substring(start, src.indexOf("\"", start));
+    }
+
+    public static void handleCallCenterStockUpdate(String itemId, int quantity) {
+        if (Persona.getCurrentUser() != null && Persona.getCurrentUser().getRole() == UserRole.CALLCENTER) {
+            LibraryService.updateItemQuantityFromCallCenter(itemId, quantity);
+            System.out.println("🔄 Support Bridge: Verified agent request routed to inventory module.");
+        } else {
+            System.out.println("❌ Support Bridge Error: Action denied. Unauthorized security clearance scope.");
+        }
     }
 }

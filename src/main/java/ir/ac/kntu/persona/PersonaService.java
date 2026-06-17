@@ -7,11 +7,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.util.EnvConfig;
+
 public class PersonaService {
 
     private static final String FILE_PATH = "persona_secure.json";
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
-    private static final byte XOR_KEY = 0x5A;
+    private static byte[] getEncryptionKey() {
+        return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
+    }
+
+    static {
+        String defaultCcUser = EnvConfig.get("DEFAULT_CALLCENTER_USERNAME", "callcenter");
+        String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
+        
+        String defaultAdminUser = EnvConfig.get("DEFAULT_ADMIN_USERNAME", "admin");
+        String defaultAdminPass = EnvConfig.get("DEFAULT_ADMIN_PASSWORD", "adminpass");
+
+        
+        PERSONA_DATABASE.add(new Persona(defaultCcUser, defaultCcPass, UserRole.CALLCENTER));
+        PERSONA_DATABASE.add(new Persona(defaultAdminUser, defaultAdminPass, UserRole.ADMIN));
+    }
 
     public static void registerPersona(String email, String password) {
         Persona persona = new Persona(email, password);
@@ -58,10 +74,11 @@ public class PersonaService {
         }
         jsonBuilder.append("]");
 
+        byte[] keyBytes = getEncryptionKey();
         byte[] rawBytes = jsonBuilder.toString().getBytes();
         byte[] encryptedBytes = new byte[rawBytes.length];
         for (int i = 0; i < rawBytes.length; i++) {
-            encryptedBytes[i] = (byte) (rawBytes[i] ^ XOR_KEY);
+            encryptedBytes[i] = (byte) (rawBytes[i] ^ keyBytes[i % keyBytes.length]);
         }
 
         try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {
@@ -79,9 +96,10 @@ public class PersonaService {
 
         try (FileInputStream fis = new FileInputStream(file)) {
             byte[] encryptedBytes = fis.readAllBytes();
+            byte[] keyBytes = getEncryptionKey();
             byte[] decryptedBytes = new byte[encryptedBytes.length];
             for (int i = 0; i < encryptedBytes.length; i++) {
-                decryptedBytes[i] = (byte) (encryptedBytes[i] ^ XOR_KEY);
+                decryptedBytes[i] = (byte) (encryptedBytes[i] ^ keyBytes[i % keyBytes.length]);
             }
             String jsonString = new String(decryptedBytes);
             parseJsonToPersonaList(jsonString);

@@ -15,7 +15,7 @@ public class SupportTicket implements Comparable<SupportTicket> {
         this.title = title;
         this.description = description;
         this.category = "General";
-        this.priority = "Low";
+        this.priority = "LOW";
         this.status = "Open";
     }
 
