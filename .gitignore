@@ -45,3 +45,14 @@ out/
 
 ### none ###
 INSTRUCTION_README.md
+
+### database ###
+library.enc
+mail.enc
+persona_secure.json
+support_tickets.json
+finance_secure.json
+
+
+### messages ###
+msg.txt

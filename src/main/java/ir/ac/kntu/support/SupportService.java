@@ -11,6 +11,7 @@ import java.util.List;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.util.EnvConfig;
 
@@ -24,9 +25,9 @@ public class SupportService {
     }
 
     public static boolean validateCallCenterLogin(String username, String password) {
-        Persona profile = PersonaService.getProfile(username);
+        Persona profile = PersonaService.getProfileByUsername(username);
 
-        if (profile != null && profile.getPassword().equals(password) && profile.getRole() == ir.ac.kntu.persona.UserRole.CALLCENTER) {
+        if (profile != null && profile.getPassword().equals(password) && profile.getRole() == UserRole.CALLCENTER) {
             Persona.setCurrentUser(profile);
             return true;
         }
@@ -56,6 +57,20 @@ public class SupportService {
         saveTicketsToEncryptedFile();
     }
 
+    public static boolean updateTicketStatus(String ticketId, String status) {
+        if (TICKETS.isEmpty()) {
+            loadTicketsFromEncryptedFile();
+        }
+        for (SupportTicket ticket : TICKETS) {
+            if (ticket.getTicketId().equals(ticketId)) {
+                ticket.setStatus(status);
+                saveTicketsToEncryptedFile();
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static List<SupportTicket> getAllTickets() {
         if (TICKETS.isEmpty()) {
             loadTicketsFromEncryptedFile();
@@ -64,42 +79,43 @@ public class SupportService {
     }
 
     public static boolean submitLibraryItemPlaceholder(String type, String title, String author) {
-        // In a real implementation, this would save to a database or file
-        // System.out.println("Received library item placeholder: " + type + " - " + title + " by " + author);
-        // comming soon in next commits :)
+        // Placeholder bridge for future library item submissions via support.
         return type != null && title != null && author != null;
     }
 
-    private static void saveTicketsToEncryptedFile() {
-        StringBuilder sb = new StringBuilder("[\n");
+    private static void appendTicket(StringBuilder builder, SupportTicket ticket) {
         String suffix = "\",\n";
+        builder.append("  {\n")
+                .append("    \"id\": \"").append(ticket.getTicketId()).append(suffix)
+                .append("    \"uid\": \"").append(ticket.getUserId()).append(suffix)
+                .append("    \"cat\": \"").append(ticket.getCategory()).append(suffix)
+                .append("    \"ttl\": \"").append(ticket.getTitle()).append(suffix)
+                .append("    \"desc\": \"").append(ticket.getDescription()).append(suffix)
+                .append("    \"stat\": \"").append(ticket.getStatus()).append(suffix)
+                .append("    \"pri\": \"").append(ticket.getPriority()).append("\"\n")
+                .append("  }");
+    }
+
+    private static void saveTicketsToEncryptedFile() {
+        StringBuilder builder = new StringBuilder("[\n");
         for (int i = 0; i < TICKETS.size(); i++) {
-            SupportTicket ticket = TICKETS.get(i);
-            sb.append("  {\n")
-                    .append("    \"id\": \"").append(ticket.getTicketId()).append(suffix)
-                    .append("    \"uid\": \"").append(ticket.getUserId()).append(suffix)
-                    .append("    \"cat\": \"").append(ticket.getCategory()).append(suffix)
-                    .append("    \"ttl\": \"").append(ticket.getTitle()).append(suffix)
-                    .append("    \"desc\": \"").append(ticket.getDescription()).append(suffix)
-                    .append("    \"stat\": \"").append(ticket.getStatus()).append(suffix)
-                    .append("    \"pri\": \"").append(ticket.getPriority()).append("\"\n")
-                    .append("  }");
+            appendTicket(builder, TICKETS.get(i));
             if (i < TICKETS.size() - 1) {
-                sb.append(",");
+                builder.append(",");
             }
-            sb.append("\n");
+            builder.append("\n");
         }
-        sb.append("]");
+        builder.append("]");
         byte[] keyBytes = getEncryptionKey();
-        byte[] rawBytes = sb.toString().getBytes();
+        byte[] rawBytes = builder.toString().getBytes();
         byte[] enc = new byte[rawBytes.length];
         for (int i = 0; i < rawBytes.length; i++) {
             enc[i] = (byte) (rawBytes[i] ^ keyBytes[i % keyBytes.length]);
         }
         try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {
             fos.write(enc);
-        } catch (IOException e) {
-            System.err.println("Error saving support data: " + e.getMessage());
+        } catch (IOException ex) {
+            System.err.println("Error saving support data: " + ex.getMessage());
         }
     }
 
@@ -116,9 +132,19 @@ public class SupportService {
                 dec[i] = (byte) (enc[i] ^ keyBytes[i % keyBytes.length]);
             }
             parseSupportJson(new String(dec));
-        } catch (IOException e) {
-            System.err.println("Error loading support data: " + e.getMessage());
+        } catch (IOException ex) {
+            System.err.println("Error loading support data: " + ex.getMessage());
         }
+    }
+
+    private static SupportTicket buildTicket(String obj) {
+        SupportTicket ticket = new SupportTicket(extract(obj, "id"), extract(obj, "uid"),
+                extract(obj, "ttl"), extract(obj, "desc"));
+        ticket.setCategory(extract(obj, "cat"));
+        String priority = extract(obj, "pri");
+        ticket.setPriority(priority != null ? priority : "LOW");
+        ticket.setStatus(extract(obj, "stat"));
+        return ticket;
     }
 
     private static void parseSupportJson(String raw) {
@@ -130,20 +156,8 @@ public class SupportService {
         String[] blocks = clean.split("\\},");
         for (String block : blocks) {
             String obj = block.replace("{", "").replace("}", "").trim();
-            String id = extract(obj, "id");
-            String uid = extract(obj, "uid");
-            String cat = extract(obj, "cat");
-            String ttl = extract(obj, "ttl");
-            String desc = extract(obj, "desc");
-            String stat = extract(obj, "stat");
-            String pri = extract(obj, "pri");
-
-            if (id != null && uid != null) {
-                SupportTicket ticket = new SupportTicket(id, uid, ttl, desc);
-                ticket.setCategory(cat);
-                ticket.setPriority(pri != null ? pri : "LOW");
-                ticket.setStatus(stat);
-                TICKETS.add(ticket);
+            if (extract(obj, "id") != null) {
+                TICKETS.add(buildTicket(obj));
             }
         }
         Collections.sort(TICKETS);
@@ -160,11 +174,27 @@ public class SupportService {
     }
 
     public static void handleCallCenterStockUpdate(String itemId, int quantity) {
-        if (Persona.getCurrentUser() != null && Persona.getCurrentUser().getRole() == UserRole.CALLCENTER) {
+        Persona current = Persona.getCurrentUser();
+        if (current != null && current.getRole() == UserRole.CALLCENTER) {
             LibraryService.updateItemQuantityFromCallCenter(itemId, quantity);
-            System.out.println("🔄 Support Bridge: Verified agent request routed to inventory module.");
+            System.out.println("[Support Bridge]: Verified agent request routed to inventory module.");
         } else {
-            System.out.println("❌ Support Bridge Error: Action denied. Unauthorized security clearance scope.");
+            System.out.println("[Support Bridge Error]: Action denied. Unauthorized security clearance scope.");
         }
+    }
+
+    public static boolean addLibraryItemViaSupport(LibraryItem item) {
+        Persona current = Persona.getCurrentUser();
+        boolean allowed = current != null
+                && (current.getRole() == UserRole.CALLCENTER || current.getRole() == UserRole.ADMIN);
+        if (!allowed) {
+            System.out.println("[Support Bridge Error]: Action denied. Unauthorized security clearance scope.");
+            return false;
+        }
+        boolean added = LibraryService.addItem(item);
+        if (added) {
+            System.out.println("[Support Bridge]: New catalog item routed CallCenter -> Support -> Library.");
+        }
+        return added;
     }
 }

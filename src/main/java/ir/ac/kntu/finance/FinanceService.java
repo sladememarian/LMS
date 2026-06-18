@@ -16,23 +16,37 @@ public class FinanceService {
     private static final List<Transaction> TX_LOGS = new ArrayList<>();
     private static final String FILE_PATH = "finance_secure.json";
     private static final double TAX_RATE = 0.10;
+    private static final String TYPE_DEBT = "DEBT";
+    private static final String TYPE_DEBT_PAYMENT = "DEBT_PAYMENT";
+    private static final String TYPE_TAX = "TAX";
+
+    private static void ensureLoaded() {
+        if (TX_LOGS.isEmpty()) {
+            loadTransactions();
+        }
+    }
 
     private static byte[] getEncryptionKey() {
         return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
     }
 
     public static boolean checkBorrowingPermission(String memberId) {
-        if (TX_LOGS.isEmpty()) {
-            loadTransactions();
-        }
+        return getOutstandingDebt(memberId) <= 0;
+    }
 
+    public static int getOutstandingDebt(String memberId) {
+        ensureLoaded();
+        int debt = 0;
         for (Transaction tx : TX_LOGS) {
-            if (tx.getMemberId().equals(memberId) && "DEBT".equals(tx.getType())) {
-                return false;
+            if (tx.getMemberId().equals(memberId)) {
+                if (TYPE_DEBT.equals(tx.getType())) {
+                    debt += tx.getAmount();
+                } else if (TYPE_DEBT_PAYMENT.equals(tx.getType())) {
+                    debt -= tx.getAmount();
+                }
             }
         }
-
-        return true;
+        return debt;
     }
 
     public static void proccessWalletCharge(Persona persona, int amount) {
@@ -99,8 +113,8 @@ public class FinanceService {
         
         PersonaService.updateWalletBalance(persona.getEmail(), -totalAmount);
         PersonaService.transferToAdmin(tax);
-        logTransaction(persona.getMemberId(), amount, "DEBT", "Extension payment amount");
-        logTransaction(persona.getMemberId(), tax, "TAX", "Extension payment tax");
+        logTransaction(persona.getMemberId(), amount, TYPE_DEBT, "Extension payment amount");
+        logTransaction(persona.getMemberId(), tax, TYPE_TAX, "Extension payment tax");
         return true;
     }
 
@@ -153,6 +167,58 @@ public class FinanceService {
         }
         start += pattern.length();
         return source.substring(start, source.indexOf("\"", start));
+    }
+
+
+    public static List<Transaction> getTransactionsForMember(String memberId) {
+        ensureLoaded();
+        List<Transaction> result = new ArrayList<>();
+        for (Transaction tx : TX_LOGS) {
+            if (tx.getMemberId() != null && tx.getMemberId().equals(memberId)) {
+                result.add(tx);
+            }
+        }
+        return result;
+    }
+
+    public static List<Transaction> getAllTransactions() {
+        ensureLoaded();
+        return new ArrayList<>(TX_LOGS);
+    }
+
+    public static int getTaxRevenueCollected() {
+        ensureLoaded();
+        int total = 0;
+        for (Transaction tx : TX_LOGS) {
+            if (TYPE_TAX.equals(tx.getType())) {
+                total += tx.getAmount();
+            }
+        }
+        return total;
+    }
+
+    public static void recordDebt(Persona persona, int amount, String description) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Debt amount must be positive");
+        }
+        logTransaction(persona.getMemberId(), amount, TYPE_DEBT, description);
+    }
+
+    public static boolean payDebt(Persona persona) {
+        int debt = getOutstandingDebt(persona.getMemberId());
+        if (debt <= 0) {
+            return false;
+        }
+        int tax = (int) (debt * TAX_RATE);
+        int total = debt + tax;
+        if (persona.getWalletBalance() < total) {
+            return false;
+        }
+        PersonaService.updateWalletBalance(persona.getEmail(), -total);
+        PersonaService.transferToAdmin(tax);
+        logTransaction(persona.getMemberId(), debt, TYPE_DEBT_PAYMENT, "Debt cleared");
+        logTransaction(persona.getMemberId(), tax, TYPE_TAX, "Debt payment tax");
+        return true;
     }
 
 }

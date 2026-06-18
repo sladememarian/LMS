@@ -9,6 +9,7 @@ public abstract class LibraryItem {
     private String supplierId;
     private int totalCopies;
     private int availableCopies;
+    private int unitPrice;
 
     public LibraryItem(String id, String title, String cat, int year) {
         this.itemId = id;
@@ -57,5 +58,17 @@ public abstract class LibraryItem {
 
     public void setAvailableCopies(int availableCopies) {
         this.availableCopies = availableCopies;
+    }
+
+    public int getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(int unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public int getBorrowedCopies() {
+        return totalCopies - availableCopies;
     }
 }

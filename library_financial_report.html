@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Supplier Financial Status</title><style>:root{--bg:#0b1120;--card:#111c33;--line:#1e2a44;--text:#e5edff;--muted:#94a8cc;--accent:#2563eb}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);padding:24px}header h1{font-size:24px}.sub{color:var(--muted);margin-top:4px;font-size:13px}main{max-width:980px;margin:18px auto}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:22px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px}.card-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.card-value{font-size:20px;font-weight:700}.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:22px}.panel h2{font-size:16px;margin-bottom:16px}.bar-row{display:flex;align-items:center;gap:12px;margin:10px 0}.bar-name{width:150px;font-size:13px;color:var(--muted)}.bar-track{flex:1;background:#0b1120;border-radius:8px;height:20px;overflow:hidden}.bar-fill{height:100%;border-radius:8px}.bar-val{width:90px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}.donut-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:28px}.donut{width:200px;height:200px}.legend{display:flex;flex-direction:column;gap:8px;font-size:13px}.legend-item{display:flex;align-items:center;gap:8px;color:var(--muted)}.dot{width:12px;height:12px;border-radius:3px;display:inline-block}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.04em}tbody tr:hover{background:#0d1730}@media(max-width:560px){.bar-name{width:90px}}</style></head><body>
+<header><h1>Supplier Financial Status Report</h1><p class='sub'>UniLibraryMail &middot; Library Management System &middot; Generated 2026-06-18 19:42</p></header>
+<main>
+<section class='cards'>
+<div class='card'><span class='card-label'>Companies</span><span class='card-value'>4</span></div>
+<div class='card'><span class='card-label'>Catalogued Items</span><span class='card-value'>5</span></div>
+<div class='card'><span class='card-label'>Total Copies</span><span class='card-value'>1062</span></div>
+<div class='card'><span class='card-label'>Copies With Users</span><span class='card-value'>16</span></div>
+<div class='card'><span class='card-label'>Inventory Value</span><span class='card-value'>190,870 cr</span></div>
+<div class='card'><span class='card-label'>Value In Circulation</span><span class='card-value'>2,340 cr</span></div>
+</section>
+<section class='panel'><h2>Inventory Value by Company</h2>
+<div class='bar-row'><span class='bar-name'>Global Books Inc.</span><div class='bar-track'><div class='bar-fill' style='width:17px;background:#2563eb'></div></div><span class='bar-val'>6,250</span></div>
+<div class='bar-row'><span class='bar-name'>Digital Reads Ltd.</span><div class='bar-track'><div class='bar-fill' style='width:520px;background:#16a34a'></div></div><span class='bar-val'>181,020</span></div>
+<div class='bar-row'><span class='bar-name'>KNTU Academic Press</span><div class='bar-track'><div class='bar-fill' style='width:6px;background:#f59e0b'></div></div><span class='bar-val'>2,400</span></div>
+<div class='bar-row'><span class='bar-name'>Magazine World</span><div class='bar-track'><div class='bar-fill' style='width:3px;background:#db2777'></div></div><span class='bar-val'>1,200</span></div>
+</section>
+<section class='panel'><h2>Value In Circulation Share</h2><div class='donut-wrap'><svg viewBox='0 0 200 200' class='donut'>
+<circle cx='100' cy='100' r='80' fill='none' stroke='#2563eb' stroke-width='34' stroke-dasharray='0.00 502.65' stroke-dashoffset='-0.00' transform='rotate(-90 100 100)'></circle>
+<circle cx='100' cy='100' r='80' fill='none' stroke='#16a34a' stroke-width='34' stroke-dasharray='77.33 502.65' stroke-dashoffset='-0.00' transform='rotate(-90 100 100)'></circle>
+<circle cx='100' cy='100' r='80' fill='none' stroke='#f59e0b' stroke-width='34' stroke-dasharray='322.21 502.65' stroke-dashoffset='-77.33' transform='rotate(-90 100 100)'></circle>
+<circle cx='100' cy='100' r='80' fill='none' stroke='#db2777' stroke-width='34' stroke-dasharray='103.11 502.65' stroke-dashoffset='-399.55' transform='rotate(-90 100 100)'></circle>
+<circle cx='100' cy='100' r='55' fill='var(--bg)'></circle></svg><div class='legend'>
+<div class='legend-item'><span class='dot' style='background:#2563eb'></span>Global Books Inc. &mdash; 0 cr (0.0%)</div>
+<div class='legend-item'><span class='dot' style='background:#16a34a'></span>Digital Reads Ltd. &mdash; 360 cr (15.4%)</div>
+<div class='legend-item'><span class='dot' style='background:#f59e0b'></span>KNTU Academic Press &mdash; 1,500 cr (64.1%)</div>
+<div class='legend-item'><span class='dot' style='background:#db2777'></span>Magazine World &mdash; 480 cr (20.5%)</div>
+</div></div></section>
+<section class='panel'><h2>Per-Company Breakdown</h2><table><thead><tr><th>Company</th><th>ID</th><th>Items</th><th>Total Copies</th><th>With Users</th><th>Inventory Value</th><th>In Circulation</th></tr></thead><tbody>
+<tr><td>Global Books Inc.</td><td>SUP-101</td><td>1</td><td>25</td><td>0</td><td>6,250 cr</td><td>0 cr</td></tr>
+<tr><td>Digital Reads Ltd.</td><td>SUP-102</td><td>2</td><td>1009</td><td>3</td><td>181,020 cr</td><td>360 cr</td></tr>
+<tr><td>KNTU Academic Press</td><td>SUP-103</td><td>1</td><td>8</td><td>5</td><td>2,400 cr</td><td>1,500 cr</td></tr>
+<tr><td>Magazine World</td><td>SUP-104</td><td>1</td><td>20</td><td>8</td><td>1,200 cr</td><td>480 cr</td></tr>
+</tbody></table></section>
+</main></body></html>

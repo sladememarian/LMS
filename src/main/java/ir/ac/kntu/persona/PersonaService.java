@@ -13,6 +13,19 @@ public class PersonaService {
 
     private static final String FILE_PATH = "persona_secure.json";
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
+    private static final String KEY_EMAIL = "email";
+    private static final String KEY_USERNAME = "username";
+    private static final String KEY_PASSWORD = "password";
+    private static final String KEY_ROLE = "role";
+    private static final String KEY_MEMBER_ID = "memberId";
+    private static final String KEY_WALLET = "walletBalance";
+    private static final String KEY_FIRST = "firstName";
+    private static final String KEY_LAST = "lastName";
+    private static final String KEY_PHONE = "phone";
+    private static final String KEY_THEME = "theme";
+    private static final String KEY_BORROWED = "borrowed";
+    private static final String BORROW_SEPARATOR = "\\|";
+
     private static byte[] getEncryptionKey() {
         return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
     }
@@ -20,19 +33,19 @@ public class PersonaService {
     static {
         String defaultCcUser = EnvConfig.get("DEFAULT_CALLCENTER_USERNAME", "callcenter");
         String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
-        
+
         String defaultAdminUser = EnvConfig.get("DEFAULT_ADMIN_USERNAME", "admin");
         String defaultAdminPass = EnvConfig.get("DEFAULT_ADMIN_PASSWORD", "adminpass");
 
-        
         PERSONA_DATABASE.add(new Persona(defaultCcUser, defaultCcPass, UserRole.CALLCENTER));
         PERSONA_DATABASE.add(new Persona(defaultAdminUser, defaultAdminPass, UserRole.ADMIN));
     }
 
-    public static void registerPersona(String email, String password) {
+    public static Persona registerPersona(String email, String password) {
         Persona persona = new Persona(email, password);
         PERSONA_DATABASE.add(persona);
         saveToEncryptedFile();
+        return persona;
     }
 
     public static boolean validateCredentials(String email, String password) {
@@ -40,7 +53,8 @@ public class PersonaService {
             loadFromEncryptedFile();
         }
         for (Persona persona : PERSONA_DATABASE) {
-            if (persona.getEmail().equalsIgnoreCase(email) && persona.getPassword().equals(password)) {
+            if (persona.getEmail() != null && persona.getEmail().equalsIgnoreCase(email)
+                    && persona.getPassword().equals(password)) {
                 return true;
             }
         }
@@ -49,33 +63,75 @@ public class PersonaService {
 
     public static Persona getProfile(String email) {
         for (Persona persona : PERSONA_DATABASE) {
-            if (persona.getEmail().equalsIgnoreCase(email)) {
+            if (persona.getEmail() != null && persona.getEmail().equalsIgnoreCase(email)) {
                 return persona;
             }
         }
         return null;
     }
 
-    private static void saveToEncryptedFile() {
-        StringBuilder jsonBuilder = new StringBuilder("[\n");
-        String fieldSuffix = "\",\n";
-        for (int i = 0; i < PERSONA_DATABASE.size(); i++) {
-            Persona persona = PERSONA_DATABASE.get(i);
-            jsonBuilder.append("  {\n")
-                    .append("    \"email\": \"").append(persona.getEmail()).append(fieldSuffix)
-                    .append("    \"password\": \"").append(persona.getPassword()).append(fieldSuffix)
-                    .append("    \"role\": \"").append(persona.getRole().name()).append(fieldSuffix)
-                    .append("    \"memberId\": \"").append(persona.getMemberId()).append("\"\n")
-                    .append("  }");
-            if (i < PERSONA_DATABASE.size() - 1) {
-                jsonBuilder.append(",");
-            }
-            jsonBuilder.append("\n");
+    public static void updateProfile(String email, String firstName, String lastName, String phoneNumber) {
+        Persona persona = getProfile(email);
+        if (persona != null) {
+            persona.setFirstName(firstName);
+            persona.setLastName(lastName);
+            persona.setPhoneNumber(phoneNumber);
+            saveToEncryptedFile();
         }
-        jsonBuilder.append("]");
+    }
+
+    public static boolean updatePassword(String email, String newPassword) {
+        Persona persona = getProfile(email);
+        if (persona == null) {
+            return false;
+        }
+        persona.setPassword(newPassword);
+        saveToEncryptedFile();
+        return true;
+    }
+
+    public static void updateTheme(String email, String theme) {
+        Persona persona = getProfile(email);
+        if (persona != null) {
+            persona.setTheme(theme);
+            saveToEncryptedFile();
+        }
+    }
+
+    private static String field(String key, String value, boolean last) {
+        String safe = value == null ? "" : value;
+        return "    \"" + key + "\": \"" + safe + "\"" + (last ? "\n" : ",\n");
+    }
+
+    private static void appendPersona(StringBuilder builder, Persona persona) {
+        builder.append("  {\n")
+                .append(field(KEY_EMAIL, persona.getEmail(), false))
+                .append(field(KEY_USERNAME, persona.getUsername(), false))
+                .append(field(KEY_PASSWORD, persona.getPassword(), false))
+                .append(field(KEY_ROLE, persona.getRole().name(), false))
+                .append(field(KEY_MEMBER_ID, persona.getMemberId(), false))
+                .append(field(KEY_WALLET, String.valueOf(persona.getWalletBalance()), false))
+                .append(field(KEY_FIRST, persona.getFirstName(), false))
+                .append(field(KEY_LAST, persona.getLastName(), false))
+                .append(field(KEY_PHONE, persona.getPhoneNumber(), false))
+                .append(field(KEY_THEME, persona.getTheme(), false))
+                .append(field(KEY_BORROWED, String.join("|", persona.getBorrowedItemIds()), true))
+                .append("  }");
+    }
+
+    private static void saveToEncryptedFile() {
+        StringBuilder builder = new StringBuilder("[\n");
+        for (int i = 0; i < PERSONA_DATABASE.size(); i++) {
+            appendPersona(builder, PERSONA_DATABASE.get(i));
+            if (i < PERSONA_DATABASE.size() - 1) {
+                builder.append(",");
+            }
+            builder.append("\n");
+        }
+        builder.append("]");
 
         byte[] keyBytes = getEncryptionKey();
-        byte[] rawBytes = jsonBuilder.toString().getBytes();
+        byte[] rawBytes = builder.toString().getBytes();
         byte[] encryptedBytes = new byte[rawBytes.length];
         for (int i = 0; i < rawBytes.length; i++) {
             encryptedBytes[i] = (byte) (rawBytes[i] ^ keyBytes[i % keyBytes.length]);
@@ -83,8 +139,8 @@ public class PersonaService {
 
         try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {
             fos.write(encryptedBytes);
-        } catch (IOException e) {
-            System.err.println("Error saving persona data: " + e.getMessage());
+        } catch (IOException ex) {
+            System.err.println("Error saving persona data: " + ex.getMessage());
         }
     }
 
@@ -101,10 +157,37 @@ public class PersonaService {
             for (int i = 0; i < encryptedBytes.length; i++) {
                 decryptedBytes[i] = (byte) (encryptedBytes[i] ^ keyBytes[i % keyBytes.length]);
             }
-            String jsonString = new String(decryptedBytes);
-            parseJsonToPersonaList(jsonString);
-        } catch (IOException e) {
-            System.err.println("Error loading persona data: " + e.getMessage());
+            parseJsonToPersonaList(new String(decryptedBytes));
+        } catch (IOException ex) {
+            System.err.println("Error loading persona data: " + ex.getMessage());
+        }
+    }
+
+    private static Persona buildPersona(String obj) {
+        String email = emptyToNull(extractValue(obj, KEY_EMAIL));
+        String username = emptyToNull(extractValue(obj, KEY_USERNAME));
+        String password = extractValue(obj, KEY_PASSWORD);
+        String roleStr = extractValue(obj, KEY_ROLE);
+        String memberId = extractValue(obj, KEY_MEMBER_ID);
+        String walletStr = extractValue(obj, KEY_WALLET);
+        UserRole role = roleStr.isEmpty() ? UserRole.GUEST : UserRole.valueOf(roleStr);
+        int wallet = walletStr.isEmpty() ? 0 : Integer.parseInt(walletStr);
+        Persona persona = new Persona(email, username, password, role, memberId, wallet);
+        persona.setFirstName(emptyToNull(extractValue(obj, KEY_FIRST)));
+        persona.setLastName(emptyToNull(extractValue(obj, KEY_LAST)));
+        persona.setPhoneNumber(emptyToNull(extractValue(obj, KEY_PHONE)));
+        String theme = extractValue(obj, KEY_THEME);
+        persona.setTheme(theme.isEmpty() ? "LIGHT" : theme);
+        restoreBorrowedItems(persona, extractValue(obj, KEY_BORROWED));
+        return persona;
+    }
+
+    private static void restoreBorrowedItems(Persona persona, String rawBorrowed) {
+        if (rawBorrowed == null || rawBorrowed.isEmpty()) {
+            return;
+        }
+        for (String itemId : rawBorrowed.split(BORROW_SEPARATOR)) {
+            persona.addBorrowedItem(itemId.trim());
         }
     }
 
@@ -117,26 +200,21 @@ public class PersonaService {
         String[] objects = clean.split("\\},");
         for (String obj : objects) {
             String cleanObj = obj.replace("{", "").replace("}", "").trim();
-            String email = extractValue(cleanObj, "email");
-            String password = extractValue(cleanObj, "password");
-            String username = extractValue(cleanObj, "username");
-            String roleStr = extractValue(cleanObj, "role");
-            String memberId = extractValue(cleanObj, "memberId");
-            String walletBalanceStr = extractValue(cleanObj, "walletBalance");
-
-            if (email != null && password != null) {
-                UserRole role = UserRole.valueOf(roleStr != null ? roleStr : "GUEST");
-                int walletBalance = walletBalanceStr != null ? Integer.parseInt(walletBalanceStr) : 0;
-                PERSONA_DATABASE.add(new Persona(email, username, password, role, memberId, walletBalance));
+            if (!cleanObj.isEmpty()) {
+                PERSONA_DATABASE.add(buildPersona(cleanObj));
             }
         }
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isEmpty() ? null : value;
     }
 
     private static String extractValue(String source, String key) {
         String targetKey = "\"" + key + "\": \"";
         int startIndex = source.indexOf(targetKey);
         if (startIndex == -1) {
-            return null;
+            return "";
         }
         startIndex += targetKey.length();
         int endIndex = source.indexOf("\"", startIndex);
@@ -167,6 +245,36 @@ public class PersonaService {
             }
         }
         saveToEncryptedFile();
+    }
+
+    public static void recordBorrow(String email, String itemId) {
+        Persona persona = getProfile(email);
+        if (persona != null) {
+            persona.addBorrowedItem(itemId);
+            saveToEncryptedFile();
+        }
+    }
+
+    public static boolean promoteRole(String email, UserRole newRole) {
+        Persona persona = getProfile(email);
+        if (persona == null) {
+            return false;
+        }
+        persona.updateRole(newRole);
+        saveToEncryptedFile();
+        return true;
+    }
+
+    public static boolean recordReturn(String email, String itemId) {
+        Persona persona = getProfile(email);
+        if (persona == null) {
+            return false;
+        }
+        boolean removed = persona.removeBorrowedItem(itemId);
+        if (removed) {
+            saveToEncryptedFile();
+        }
+        return removed;
     }
 
     public static Persona getProfileByUsername(String username) {
