@@ -9,18 +9,8 @@ import java.time.format.DateTimeFormatter;
 
 import ir.ac.kntu.util.EnvConfig;
 
-/**
- * The simulated calendar of the whole system. The Admin is the "god of time":
- * advancing the clock moves every running instance to the next simulated day
- * and real calendar date. Both the integer day counter (used by
- * {@link LoanService} for due-day arithmetic) and the base calendar date are
- * persisted to a local XOR-encrypted file and re-read on every access, so two
- * simultaneously running instances always agree on "today". The base date is
- * set to the real current date on first creation and never changes; subsequent
- * advances shift the displayed date forward one calendar day at a time.
- */
 public class SimulationClock {
-
+    // time is a social construct, but this clock is real
     private static final String FILE_PATH = "clock_secure.json";
     private static final String KEY_DAY = "day";
     private static final String KEY_BASE = "base";

@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReportServiceTest {
+    // Reports: because guesswork is not a strategy
 
     @AfterEach
     void clearUser() {
@@ -23,6 +24,7 @@ class ReportServiceTest {
 
     @Test
     void authorizationByRole() {
+        // Not authorized? No report. Authorized? Here's a PDF.
         Persona.setCurrentUser(null);
         assertFalse(ReportService.isAuthorized());
         Persona.setCurrentUser(PersonaService.getProfileByUsername("admin"));
@@ -37,6 +39,7 @@ class ReportServiceTest {
 
     @Test
     void financialsCoverAllSuppliers() {
+        // Every supplier gets a row. Even Acme.
         List<SupplierFinancials> data = ReportService.computeSupplierFinancials();
         assertEquals(LibraryService.getAllSuppliers().size(), data.size());
         long totalInventory = 0;
@@ -51,6 +54,7 @@ class ReportServiceTest {
 
     @Test
     void htmlContainsHeadingAndCompany() {
+        // HTML: the crayon drawing of the programming world
         String html = ReportService.buildHtml(ReportService.computeSupplierFinancials());
         assertTrue(html.contains("Supplier Financial Status Report"));
         assertTrue(html.contains("Global Books Inc."));
@@ -59,12 +63,14 @@ class ReportServiceTest {
 
     @Test
     void exportRequiresAuthorization() {
+        // Export without auth? IllegalStateException says no.
         Persona.setCurrentUser(null);
         assertThrows(IllegalStateException.class, () -> ReportService.exportReport("build/should_not_exist.html"));
     }
 
     @Test
     void exportWritesFileWhenAuthorized() {
+        // With auth comes great file-writing power
         Persona.setCurrentUser(PersonaService.getProfileByUsername("admin"));
         String path = ReportService.exportReport("build/test_financial_report.html");
         assertTrue(new File(path).exists());

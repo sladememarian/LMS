@@ -7,12 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Tests for the admin/operator catalog operations added to LibraryService
- * (getItemById, addItem, deleteItem, updateItemPrice) and the expanded mock
- * data set.
- */
 class LibraryAdminOpsTest {
+    // Admin ops: the god-mode of library management
 
     private Book sampleBook(String id) {
         Book book = new Book(id, "Temp Title", "Temp", 2020);
@@ -27,6 +23,7 @@ class LibraryAdminOpsTest {
 
     @Test
     void getItemByIdFindsSeededItem() {
+        // ITEM-001: the oldest item in the west
         assertNotNull(LibraryService.getItemById("ITEM-001"));
         assertNull(LibraryService.getItemById("NOPE-000"));
         assertNull(LibraryService.getItemById(null));
@@ -34,14 +31,14 @@ class LibraryAdminOpsTest {
 
     @Test
     void expandedMockDataIsSeeded() {
-        // Inventory may be loaded from an existing library.enc (>= 5 baseline items)
-        //  or freshly seeded (>= 11 expanded items). Either way it must be non-empty.
+        // 5 items minimum: because 4 looked too empty
         assertFalse(LibraryService.getAllItems().isEmpty());
         assertTrue(LibraryService.getAllItems().size() >= 5);
     }
 
     @Test
     void addAndDeleteItem() {
+        // Add, find, reject duplicate, delete. The circle of library life.
         String id = "ITEM-T" + (System.nanoTime() % 100_000);
         assertTrue(LibraryService.addItem(sampleBook(id)));
         assertNotNull(LibraryService.getItemById(id));
@@ -53,6 +50,7 @@ class LibraryAdminOpsTest {
 
     @Test
     void updatePrice() {
+        // Price goes up: inflation simulator 2026
         String id = "ITEM-P" + (System.nanoTime() % 100_000);
         LibraryService.addItem(sampleBook(id));
         assertTrue(LibraryService.updateItemPrice(id, 555));

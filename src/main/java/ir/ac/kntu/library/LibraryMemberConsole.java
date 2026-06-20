@@ -13,12 +13,8 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * welcome to people who seek for knowledge
- * Guest, Student, Teacher :)
- */
 public class LibraryMemberConsole {
-
+    // member console: where dreams of borrowing come true
     private static final String PROMPT_ITEM_ID = "Item ID: ";
     private static final String NOT_OWNED = "You have not borrowed that item.";
     private static final int EXTENSION_FEE = 25_000;
@@ -102,6 +98,10 @@ public class LibraryMemberConsole {
     private static void doBorrow(Scanner scanner, Persona user) {
         String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
         if (!canBorrow(user)) {
+            return;
+        }
+        if (user.hasBorrowed(itemId)) {
+            ConsoleColor.printError("You already have this item.");
             return;
         }
         if (LibraryService.executeBorrow(itemId)) {

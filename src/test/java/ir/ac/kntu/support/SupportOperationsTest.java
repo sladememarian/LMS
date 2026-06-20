@@ -14,14 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Tests ticket status transitions, the CallCenter -> Support -> Library add
- * bridge, and the Support notification centre (backed by Mail).
- */
 class SupportOperationsTest {
+    // Ticket operations: where we close things (eventually)
 
     @Test
     void updateTicketStatusFindsAndUpdates() {
+        // From OPEN to CLOSED in 6-8 business weeks
         String title = "Status case " + System.nanoTime();
         SupportService.createTicket("STU-100000", "Technical", title, "desc");
         String id = findId(title);
@@ -31,6 +29,7 @@ class SupportOperationsTest {
 
     @Test
     void addLibraryItemViaSupportRequiresOperatorRole() {
+        // With great power comes great book-adding responsibility
         Book book = new Book("ITEM-S" + (System.nanoTime() % 100_000), "Bridged", "Cat", 2021);
         book.setSupplierId("SUP-101");
         book.setTotalCopies(2);
@@ -48,6 +47,7 @@ class SupportOperationsTest {
 
     @Test
     void notificationsAreDeliveredThroughMail() {
+        // Notification delivery: we guarantee it hits the spam folder
         String address = "notif_" + System.nanoTime() + "@test.com";
         NotificationService.notifyAddress(address, "Role Update", "Approved");
         Inbox inbox = MailService.getInbox(address);

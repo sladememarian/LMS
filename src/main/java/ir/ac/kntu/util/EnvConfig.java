@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class EnvConfig {
+    // config: because hardcoding is for amateurs
     private static final Properties PROPS = new Properties();
 
     static {

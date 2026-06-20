@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ItemModelsTest {
+    // Item models: a taxonomy of stuff you can borrow
 
     @Test
     void bookIsPhysicalWithMetadata() {
+        // The kind you can throw at someone
         Book book = new Book("BOK-1", "Title", "Cat", 2010);
         book.setAuthor("Author");
         book.setIsbn("9780132350884");
@@ -24,6 +26,7 @@ class ItemModelsTest {
 
     @Test
     void ebookIsDigital() {
+        // The kind that lives in the cloud and DRM
         EBook ebook = new EBook("EBK-1", "T", "C", 2020);
         ebook.setDownloadUrl("https://x");
         ebook.setFileSize(1_000L);
@@ -35,6 +38,7 @@ class ItemModelsTest {
 
     @Test
     void magazineAndAudioBook() {
+        // For people who read AND people who "read"
         Magazine magazine = new Magazine("MAG-1", "T", "C", 2021);
         magazine.setIssueNumber(7);
         assertEquals("MAGAZINE", magazine.getItemType());
@@ -50,6 +54,7 @@ class ItemModelsTest {
 
     @Test
     void supplierCompanyGetters() {
+        // SUP-900: over 9000 units supplied
         SupplierCompany supplier = new SupplierCompany("SUP-900", "Acme");
         assertEquals("SUP-900", supplier.getCompanyId());
         assertEquals("Acme", supplier.getCompanyName());

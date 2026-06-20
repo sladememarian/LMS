@@ -1,7 +1,7 @@
 package ir.ac.kntu.library;
 
 public class EBook extends DigitalItem {
-
+    // it's a book but also not a book - welcome to the future
     private int pageCount;
 
     public EBook(String id, String ttl, String cat, int yr) {

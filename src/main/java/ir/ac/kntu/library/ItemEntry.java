@@ -2,14 +2,12 @@ package ir.ac.kntu.library;
 
 import java.util.Scanner;
 
+import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
+import ir.ac.kntu.util.Validator;
 
-/**
- * Shared interactive builder for new catalog books, reused by the Admin and
- * CallCenter "Add Item" flows so the prompts are written only once.
- */
 public class ItemEntry {
-
+    // reading book details from stdin, one field at a time
     private static final String CONDITION_GOOD = "GOOD";
 
     public static Book readNewBook(Scanner scanner) {
@@ -20,7 +18,15 @@ public class ItemEntry {
         Book book = new Book(id, title, category, year);
         configureCopies(scanner, book);
         book.setAuthor(ConsoleMenu.readLine(scanner, "Author: "));
-        book.setIsbn(ConsoleMenu.readLine(scanner, "ISBN: "));
+        String isbn;
+        while (true) {
+            isbn = ConsoleMenu.readLine(scanner, "ISBN-13 (or 0 to skip): ");
+            if ("0".equals(isbn) || Validator.isValidISBN13(isbn)) {
+                break;
+            }
+            ConsoleColor.printError("Invalid ISBN-13. Must be 13 digits starting with 978 or 979.");
+        }
+        book.setIsbn(isbn);
         book.setShelfLocation("Shelf NEW");
         book.setPhysicalCondition(CONDITION_GOOD);
         return book;

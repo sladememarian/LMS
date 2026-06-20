@@ -5,13 +5,10 @@ import java.util.Scanner;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.util.ConsoleColor;
 
-/**
- * Entry point for the Finance microservice UI. Users never start here; Finance
- * is reached from Library/Persona when money is involved. Routes by role.
- */
 public class FinanceConsole {
 
     public static void open(Scanner scanner) {
+        // money talks, this console listens
         Persona user = Persona.getCurrentUser();
         if (user == null) {
             ConsoleColor.printError("Log in first to open Finance.");

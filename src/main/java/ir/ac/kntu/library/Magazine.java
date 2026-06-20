@@ -1,7 +1,7 @@
 package ir.ac.kntu.library;
 
 public class Magazine extends PhysicalItem {
-
+    // periodicals: because news doesn't wait for your attention span
     private int issueNumber;
 
     public Magazine(String id, String ttl, String cat, int yr) {

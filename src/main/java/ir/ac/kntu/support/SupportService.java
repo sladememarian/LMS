@@ -17,7 +17,7 @@ import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.util.EnvConfig;
 
 public class SupportService {
-
+    // managing tickets like a pro (or at least we try)
     private static final List<SupportTicket> TICKETS = new ArrayList<>();
     private static final String FILE_PATH = "support_tickets.json";
 
@@ -98,7 +98,6 @@ public class SupportService {
     }
 
     public static boolean submitLibraryItemPlaceholder(String type, String title, String author) {
-        // Placeholder bridge for future library item submissions via support.
         return type != null && title != null && author != null;
     }
 

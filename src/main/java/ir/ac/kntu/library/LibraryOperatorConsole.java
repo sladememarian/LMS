@@ -7,13 +7,8 @@ import ir.ac.kntu.support.SupportService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Library dashboard for the CallCenter operator role.
- * Catalog changes are intentionally routed through the Support microservice
- * (CallCenter -> Support -> Library) to honour the project's communication map.
- */
 public class LibraryOperatorConsole {
-
+    // callcenter: the middleman nobody asked for
     private static final String PROMPT_ITEM_ID = "Item ID: ";
 
     public static void open(Scanner scanner) {

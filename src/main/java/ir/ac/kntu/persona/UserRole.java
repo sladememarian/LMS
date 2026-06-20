@@ -1,6 +1,7 @@
 package ir.ac.kntu.persona;
 
 public enum UserRole {
+    // ADMIN can borrow the whole library, hope they have a big bag
     ADMIN(Integer.MAX_VALUE, "ADM-"),
     CALLCENTER(0, "CC-"),
     TEACHER(15, "FAC-"),

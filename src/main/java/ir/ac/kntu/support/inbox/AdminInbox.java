@@ -23,12 +23,8 @@ import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Admin inbox: the master operator console of Support. Approves/rejects role
- * requests, monitors tickets and CallCenter activity, and inspects the store.
- */
 public class AdminInbox {
-
+    // the admin's inbox: where requests go to be approved or ignored
     private static final String PROMPT_REQUEST = "Request ID: ";
 
     public static void open(Scanner scanner, Persona admin) {

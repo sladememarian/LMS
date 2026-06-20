@@ -9,16 +9,12 @@ public final class Validator {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
-    //email
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\\.[a-zA-Z]{2,}$");
 
-    // Starts with +989, 989, or 09 - 9digits
     private static final Pattern PHONE_PATTERN = Pattern.compile("^(\\+98|98|0)9\\d{9}$");
 
-    //prefix must be FAC, STU, or GST - 6digitts
     private static final Pattern MEMBER_ID_PATTERN = Pattern.compile("^(FAC|STU|GST)-\\d{6}$");
 
-    //prefix must be BOK, MAG, EBK, or AUD
     private static final Pattern ITEM_ID_PATTERN = Pattern.compile("^(BOK|MAG|EBK|AUD)-\\d{8}$");
 
     private static final Pattern ISBN13_PATTERN = Pattern.compile("^(978|979)\\d{10}$");
@@ -67,7 +63,11 @@ public final class Validator {
     }
 
     public static boolean isValidISBN13(String isbn) {
-        return isbn != null && ISBN13_PATTERN.matcher(isbn).matches();
+        if (isbn == null) {
+            return false;
+        }
+        String cleaned = isbn.replace("-", "").replace(" ", "");
+        return ISBN13_PATTERN.matcher(cleaned).matches();
     }
 
     public static boolean isValidISSN(String issn) {

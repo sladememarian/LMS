@@ -8,11 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Persona registration, role promotion, wallet operations and the member-id
- * lookup added to route ticket replies and overdue fines to the right user.
- */
 class PersonaServiceTest {
+    // Persona service: the person factory
 
     private String unique() {
         return "persona_" + System.nanoTime() + "@test.com";
@@ -20,6 +17,7 @@ class PersonaServiceTest {
 
     @Test
     void registerCreatesGuestAndValidates() {
+        // Guest: the "free trial" of user roles
         String email = unique();
         Persona persona = PersonaService.registerPersona(email, "Passw0rd!");
         assertEquals(UserRole.GUEST, persona.getRole());
@@ -29,6 +27,7 @@ class PersonaServiceTest {
 
     @Test
     void promoteRoleUpgradesPersona() {
+        // Level up! You are now a STUDENT. +5 to book borrowing.
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
         assertTrue(PersonaService.promoteRole(email, UserRole.STUDENT));
@@ -37,6 +36,7 @@ class PersonaServiceTest {
 
     @Test
     void walletOperations() {
+        // Wallet: where money goes to die (and occasionally grow)
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
         assertEquals(0, PersonaService.getWalletBalance(email));
@@ -46,6 +46,7 @@ class PersonaServiceTest {
 
     @Test
     void lookupByMemberId() {
+        // Find by ID: the database's favorite party trick
         String email = unique();
         Persona persona = PersonaService.registerPersona(email, "Passw0rd!");
         Persona found = PersonaService.getProfileByMemberId(persona.getMemberId());

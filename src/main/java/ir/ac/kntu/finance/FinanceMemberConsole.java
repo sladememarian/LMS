@@ -7,12 +7,8 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Finance dashboard for Guest, Student and Teacher. Guests may charge, view and
- * pay debts; Students and Teachers may additionally pay return-date extensions.
- */
 public class FinanceMemberConsole {
-
+    // members checking their wallet more than their email
     private static final int EXTENSION_FEE = 25_000;
 
     public static void open(Scanner scanner, Persona user) {

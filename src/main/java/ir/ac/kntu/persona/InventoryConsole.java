@@ -8,14 +8,8 @@ import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Persona-owned inventory feature ("My Inventory").
- * Library exposes a shortcut to this view, but the owned items belong to the
- * Persona microservice, keeping discovery (Library) and ownership (Persona)
- * cleanly separated.
- */
 public class InventoryConsole {
-
+    // showing users what they've hoarded so far
     public static void show(Scanner scanner, Persona user) {
         ConsoleMenu.banner("MY INVENTORY (" + user.getRole().name() + ")");
         int limit = user.getRole().getMaxBorrowLimit();

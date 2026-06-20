@@ -12,7 +12,7 @@ import java.util.Map;
 import ir.ac.kntu.util.EnvConfig;
 
 public class MailService {
-
+    // delivering emails to the void (and sometimes to users)
     private static final List<MailMessage> ALL_MESSAGES = new ArrayList<>();
     private static final Map<String, String> ACTIVE_CODES = new HashMap<>();
     private static final Map<String, Long> CODE_ISSUED_AT = new HashMap<>();

@@ -5,13 +5,8 @@ import java.util.Scanner;
 
 import ir.ac.kntu.util.ConsoleColor;
 
-/**
- * Shared, role-aware rendering for library items so every Library console
- * (member, operator, admin) and the Persona inventory view reuse one
- * presentation layer instead of duplicating print logic.
- */
 public class LibraryPrinter {
-
+    // printing things because actual paper is so last century
     private static final String YES = "Yes";
     private static final String NO = "No";
     private static final String LABEL_AVAILABLE = "Available: ";

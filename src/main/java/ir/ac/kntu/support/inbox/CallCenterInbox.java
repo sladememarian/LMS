@@ -11,12 +11,8 @@ import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * CallCenter inbox: the operator side of Support. Handles ticket queues,
- * responses and the CallCenter -> Support -> Library item-add bridge.
- */
 public class CallCenterInbox {
-
+    // callcenter: first line of defense against bugs
     private static final String PROMPT_TICKET = "Ticket ID: ";
 
     public static void open(Scanner scanner, Persona operator) {

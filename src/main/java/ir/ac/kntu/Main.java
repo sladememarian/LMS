@@ -21,6 +21,7 @@ import ir.ac.kntu.util.ConsoleColor;
 public class Main {
 
     public static void main(String[] args) {
+        // TODO: convert this to a proper GUI (lol, as if)
         boolean running = true;
         printHeader();
         try (Scanner scanner = new Scanner(System.in)) {
@@ -65,16 +66,10 @@ public class Main {
             default:
                 System.out.println(ConsoleColor.BRIGHT_RED + "\n[ERROR] Invalid entry." + ConsoleColor.RESET);
                 return true;
-            // default:
-            //     return routeApps(choice, scanner);
         }
     }
 
-    // private static boolean routeApps(String choice, Scanner scanner) {
-    //     switch (choice) {
 
-    //     }
-    // }
 
     private static void handleLogin(Scanner scanner) {
         IamService.loginMenu(scanner);

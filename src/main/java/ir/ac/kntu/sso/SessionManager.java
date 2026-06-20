@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import ir.ac.kntu.persona.Persona;
 
 public class SessionManager {
-
+    // holding sessions like my browser holds tabs - too many
     private static String currentEmail;
     private static String sessionToken;
     private static LocalDateTime loginTime;

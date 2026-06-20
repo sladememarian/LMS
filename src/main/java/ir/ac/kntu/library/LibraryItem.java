@@ -12,6 +12,7 @@ public abstract class LibraryItem {
     private int unitPrice;
 
     public LibraryItem(String id, String title, String cat, int year) {
+        // an item without a title is just a... well, nothing
         this.itemId = id;
         this.title = title;
         this.category = cat;

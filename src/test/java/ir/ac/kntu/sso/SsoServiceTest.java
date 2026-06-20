@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SsoServiceTest {
+    // SSO: one ring to log them all
 
     private String register() {
         String email = "sso_" + System.nanoTime() + "@test.com";
@@ -24,6 +25,7 @@ class SsoServiceTest {
 
     @Test
     void viewProfileContainsIdentity() {
+        // Profile: contains everything but your soul
         String email = register();
         String profile = SsoService.viewProfile(email);
         assertTrue(profile.contains("First"));
@@ -33,6 +35,7 @@ class SsoServiceTest {
 
     @Test
     void editProfileUpdatesFields() {
+        // Neo Anderson: the chosen one of unit tests
         String email = register();
         SsoService.editProfile(email, "Neo", "Anderson", "09129998877");
         Persona persona = PersonaService.getProfile(email);
@@ -42,6 +45,7 @@ class SsoServiceTest {
 
     @Test
     void editProfileRejectsInvalidPhone() {
+        // "not-a-phone" - well actually it's a string
         String email = register();
         assertThrows(IllegalArgumentException.class,
                 () -> SsoService.editProfile(email, "X", "Y", "not-a-phone"));
@@ -49,6 +53,7 @@ class SsoServiceTest {
 
     @Test
     void changePasswordRequiresMatchingConfirm() {
+        // Passwords must match. Computers are literal.
         String email = register();
         assertThrows(IllegalArgumentException.class,
                 () -> SsoService.changePassword(email, "Passw0rd!", "Newpass1!", "Mismatch1!"));
@@ -57,6 +62,7 @@ class SsoServiceTest {
 
     @Test
     void themeSettingsValidatedAndPersisted() {
+        // #000000 is the new black
         String email = register();
         SsoService.changeTheme(email, "dark");
         assertEquals("DARK", SsoService.getTheme(email));
@@ -65,6 +71,7 @@ class SsoServiceTest {
 
     @Test
     void sessionLifecycleAndLogout() {
+        // You can check out any time you like, but you can never leave... jk you just log out
         String email = register();
         Persona persona = PersonaService.getProfile(email);
         SessionManager.createSession(persona);
@@ -76,6 +83,7 @@ class SsoServiceTest {
 
     @Test
     void createSessionRejectsNull() {
+        // Throws on null: protecting the world from NullPointerException one session at a time
         assertThrows(IllegalArgumentException.class, () -> SessionManager.createSession(null));
     }
 }

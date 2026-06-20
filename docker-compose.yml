@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    container_name: lms-app
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app-data
+    working_dir: /app-data
+    entrypoint: ["java", "-jar", "/app/app.jar"]

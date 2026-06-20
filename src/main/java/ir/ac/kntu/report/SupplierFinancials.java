@@ -3,7 +3,7 @@ package ir.ac.kntu.report;
 import ir.ac.kntu.library.LibraryItem;
 
 public class SupplierFinancials {
-
+    // tracking the money we owe to book suppliers
     private final String companyId;
     private final String companyName;
     private int itemCount;

@@ -11,17 +11,8 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.EnvConfig;
 
-/**
- * Tracks borrowed-item loans with a simulated due day and accrues overdue
- * fines as the Admin advances {@link SimulationClock}. It does NOT reimplement
- * debt bookkeeping: every fine is injected through the existing
- * {@link FinanceService#recordDebt} API, so overdue fines behave like any other
- * debt (they block borrowing and are cleared via Pay Debt). Loans are persisted
- * to a local XOR-encrypted file and reloaded on every operation so two running
- * instances stay in sync.
- */
 public class LoanService {
-
+    // tracking who borrowed what since forever
     private static final List<Loan> LOANS = new ArrayList<>();
     private static final String FILE_PATH = "loans_secure.json";
     private static final int LOAN_PERIOD_DAYS = 3;

@@ -1,7 +1,7 @@
 package ir.ac.kntu.library;
 
 public class PhysicalItem extends LibraryItem {
-
+    // physical things wear out, unlike this comment
     @Override
     public String getItemType() {
         return "PHYSICAL";

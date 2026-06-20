@@ -2,13 +2,8 @@ package ir.ac.kntu.util;
 
 import java.util.Scanner;
 
-/**
- * Small shared helper for the interactive dashboards.
- * Centralises prompt reading, banners and the "press enter" pause so the
- * per-microservice consoles do not duplicate the same console plumbing.
- */
 public class ConsoleMenu {
-
+    // reusable UI components for the terminal aesthetic
     private static final String DIVIDER =
         "=============================================";
     private static final String PAUSE_TEXT = "Press Enter to continue...";

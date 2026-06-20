@@ -7,7 +7,7 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.Validator;
 
 public class SsoService {
-
+    // the S in SSO stands for 'Seriously Secure' (not really)
     private static final String THEME_LIGHT = "LIGHT";
     private static final String THEME_DARK = "DARK";
 

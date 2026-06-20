@@ -10,7 +10,7 @@ import java.util.List;
 import ir.ac.kntu.util.EnvConfig;
 
 public class PersonaService {
-
+    // we serialize with XOR because AES was 'too complicated'
     private static final String FILE_PATH = "persona_secure.json";
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
     private static final String KEY_EMAIL = "email";

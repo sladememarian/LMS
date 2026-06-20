@@ -1,11 +1,7 @@
 package ir.ac.kntu.support.rolerequest;
 
-/**
- * A request from a Guest to be upgraded to Student or Teacher. Created in
- * Support, reviewed in the Admin inbox, and (if approved) applied in Persona.
- */
 public class RoleRequest {
-
+    // a request that might change your digital life
     public static final String STATUS_PENDING = "PENDING";
     public static final String STATUS_APPROVED = "APPROVED";
     public static final String STATUS_REJECTED = "REJECTED";

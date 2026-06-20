@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Persona {
-
+    // representing humans as objects, what could go wrong
     private static final String DEFAULT_THEME = "LIGHT";
 
     private static Persona currentUser;
@@ -146,7 +146,7 @@ public class Persona {
     }
 
     public void addBorrowedItem(String itemId) {
-        if (itemId != null && !itemId.isEmpty()) {
+        if (itemId != null && !itemId.isEmpty() && !borrowedItemIds.contains(itemId)) {
             borrowedItemIds.add(itemId);
         }
     }

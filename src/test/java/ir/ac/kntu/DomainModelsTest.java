@@ -10,15 +10,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Core domain-model behaviour, including the fields added for the new features:
- * a Transaction timestamp (history sorting), a SupportTicket response (call
- * centre replies) and the Loan due-day model (date-simulation debts).
- */
 class DomainModelsTest {
+    // Domain models: where data goes to put on pants one leg at a time
 
     @Test
     void transactionCarriesTimestamp() {
+        // Time waits for no Transaction
         Transaction auto = new Transaction("TX-1", "STU-1", 250, "CHARGE", "topup");
         assertEquals(250, auto.getAmount());
         assertTrue(auto.getTimestamp() > 0, "default constructor stamps creation time");
@@ -28,6 +25,7 @@ class DomainModelsTest {
 
     @Test
     void supportTicketStoresResponse() {
+        // "We are on it" - famous last words
         SupportTicket ticket = new SupportTicket("T1", "U1", "title", "desc");
         assertEquals("", ticket.getResponse());
         ticket.setResponse("We are on it");
@@ -36,6 +34,7 @@ class DomainModelsTest {
 
     @Test
     void loanTracksDueAndChargedDays() {
+        // 3 days due, 4 days charged, 5 days crying
         Loan loan = new Loan("STU-1", "ITEM-001", 3, 4);
         assertEquals("ITEM-001", loan.getItemId());
         assertEquals(3, loan.getBorrowDay());
@@ -47,6 +46,7 @@ class DomainModelsTest {
 
     @Test
     void personaRoleUpgradeRegeneratesMemberId() {
+        // From GST to STU: a glow-up story
         Persona guest = new Persona("g@test.com", "Passw0rd!");
         assertEquals(UserRole.GUEST, guest.getRole());
         assertTrue(guest.getMemberId().startsWith("GST-"));
@@ -57,6 +57,7 @@ class DomainModelsTest {
 
     @Test
     void userRoleBorrowLimits() {
+        // GUEST borrows 2, STUDENT borrows 10, TEACHER asks "do you have a library card?"
         assertEquals(2, UserRole.GUEST.getMaxBorrowLimit());
         assertEquals(10, UserRole.STUDENT.getMaxBorrowLimit());
         assertEquals(15, UserRole.TEACHER.getMaxBorrowLimit());

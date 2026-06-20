@@ -11,13 +11,8 @@ import ir.ac.kntu.util.EnvConfig;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Admin Library dashboard: full catalog control plus reporting, encrypted
- * database inspection and debug tooling. Delegates to LibraryService and
- * ReportService; the dispatch is split in two to respect complexity limits.
- */
 public class LibraryAdminConsole {
-
+    // with great power comes great responsibility (and debug tools)
     private static final String PROMPT_ITEM_ID = "Item ID: ";
     private static final String REPORT_PATH = "library_financial_report.html";
     private static final String DB_PATH = "library.enc";

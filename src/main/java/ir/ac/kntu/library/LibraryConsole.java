@@ -5,13 +5,10 @@ import java.util.Scanner;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.util.ConsoleColor;
 
-/**
- * Welcome to library app :) have fun
- * (Admin, CallCenter, student, teacher, guest i guess).
- */
 public class LibraryConsole {
 
     public static void open(Scanner scanner) {
+        // routing users based on their role, like a bouncer
         LibraryService.initCatalog();
         Persona user = Persona.getCurrentUser();
         if (user == null) {

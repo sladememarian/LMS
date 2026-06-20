@@ -12,13 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Guest -> Support -> Admin -> Persona role-request workflow. Because requests
- * are now persisted and reloaded on every call, a request raised in one
- * instance is visible to a separate Admin instance; these tests assert against
- * the reloaded view (look up by request id) rather than object identity.
- */
 class RoleRequestServiceTest {
+    // Role requests: "Mother, may I?" for permissions
 
     private Persona freshGuest() {
         String email = "rr_" + System.nanoTime() + "@test.com";
@@ -36,6 +31,7 @@ class RoleRequestServiceTest {
 
     @Test
     void submittedRequestIsVisibleAfterReload() {
+        // Did you save? Did you? Did you reload?
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.STUDENT.name(), "please");
         boolean foundPending = false;
@@ -50,6 +46,7 @@ class RoleRequestServiceTest {
 
     @Test
     void approveUpgradesPersonaRole() {
+        // You get a role! You get a role! EVERYONE GETS... oh wait, rejected
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.STUDENT.name(), "please");
         assertTrue(RoleRequestService.approve(request.getRequestId()));
@@ -59,6 +56,7 @@ class RoleRequestServiceTest {
 
     @Test
     void rejectMarksRequestRejected() {
+        // Rejected: the "thanks for playing" of role requests
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.TEACHER.name(), "please");
         assertTrue(RoleRequestService.reject(request.getRequestId()));

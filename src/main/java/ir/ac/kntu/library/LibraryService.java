@@ -10,7 +10,7 @@ import java.util.List;
 import ir.ac.kntu.util.EnvConfig;
 
 public class LibraryService {
-
+    // managing books like a librarian with OCD
     private static final List<LibraryItem> INVENTORY = new ArrayList<>();
     private static final List<SupplierCompany> SUPPLIERS = new ArrayList<>();
     private static final String FILE_PATH = "library.enc";

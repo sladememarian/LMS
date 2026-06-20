@@ -6,12 +6,8 @@ import java.util.Scanner;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Finance dashboard for the CallCenter role. View-only: CallCenter never moves
- * money, it only reads summarised debt information to help users.
- */
 public class FinanceOperatorConsole {
-
+    // view only - because trust but verify
     private static final String TYPE_DEBT = "DEBT";
 
     public static void open(Scanner scanner) {

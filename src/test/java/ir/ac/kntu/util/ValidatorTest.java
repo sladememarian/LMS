@@ -5,13 +5,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * The validation rules that guard registration and catalog input.
- */
 class ValidatorTest {
+    // Validation: the bouncer of the data nightclub
 
     @Test
     void emailValidation() {
+        // Contains @ or gtfo
         assertTrue(Validator.isValidEmail("user.name@example.com"));
         assertFalse(Validator.isValidEmail("no-at-symbol"));
         assertFalse(Validator.isValidEmail(null));
@@ -19,6 +18,7 @@ class ValidatorTest {
 
     @Test
     void passwordPolicy() {
+        // "Passw0rd!" is unironically valid, I hate it here
         assertTrue(Validator.isValidPassword("Passw0rd!"));
         assertFalse(Validator.isValidPassword("short1!"));
         assertFalse(Validator.isValidPassword("NoSpecial123"));
@@ -27,6 +27,7 @@ class ValidatorTest {
 
     @Test
     void identifierValidation() {
+        // Regex: where sanity goes to die
         assertTrue(Validator.isValidMemberId("STU-123456"));
         assertFalse(Validator.isValidMemberId("XYZ-123456"));
         assertTrue(Validator.isValidItemId("BOK-12345678"));

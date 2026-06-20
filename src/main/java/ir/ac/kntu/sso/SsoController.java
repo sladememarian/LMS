@@ -12,6 +12,7 @@ public class SsoController {
         "----------------------------------------------";
 
     public static void settingsMenu(Scanner scanner) {
+        // settings? more like 'yet another while loop'
         Persona user = Persona.getCurrentUser();
         if (user == null || user.getEmail() == null) {
             ConsoleColor.printError("You must be logged in to open Settings.");

@@ -1,7 +1,7 @@
 package ir.ac.kntu.library;
 
 public class Book extends PhysicalItem {
-
+    // pages may vary, sanity not included
     private String author;
     private String isbn;
 

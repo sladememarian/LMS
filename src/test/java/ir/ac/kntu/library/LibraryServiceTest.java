@@ -8,11 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Core Library catalog behaviour: seeding, search, and borrow/return
- * availability accounting.
- */
 class LibraryServiceTest {
+    // Library: where books go to be "borrowed" and never returned
 
     private LibraryItem findById(String id) {
         for (LibraryItem item : LibraryService.getAllItems()) {
@@ -25,12 +22,14 @@ class LibraryServiceTest {
 
     @Test
     void inventoryIsSeeded() {
+        // Seeded inventory: the library equivalent of "it's not much but it's honest work"
         List<LibraryItem> items = LibraryService.getAllItems();
         assertFalse(items.isEmpty(), "Inventory should be seeded");
     }
 
     @Test
     void searchHandlesKeywordAndBlankInput() {
+        // Searching "" returns nothing. Shocking.
         assertFalse(LibraryService.searchItems("clean").isEmpty());
         assertTrue(LibraryService.searchItems("").isEmpty());
         assertTrue(LibraryService.searchItems(null).isEmpty());
@@ -38,6 +37,7 @@ class LibraryServiceTest {
 
     @Test
     void borrowAndReturnAdjustsAvailability() {
+        // Borrow one, minus one. Return one, plus one. Math checks out.
         String id = LibraryService.getAllItems().get(0).getItemId();
         int before = findById(id).getAvailableCopies();
         assertTrue(LibraryService.executeBorrow(id));
@@ -48,6 +48,7 @@ class LibraryServiceTest {
 
     @Test
     void borrowUnknownItemFails() {
+        // "ITEM-DOES-NOT-EXIST" - no, really?
         assertFalse(LibraryService.executeBorrow("ITEM-DOES-NOT-EXIST"));
     }
 }

@@ -1,7 +1,7 @@
 package ir.ac.kntu.library;
 
 public class AudioBook extends DigitalItem {
-
+    // for people who say 'I don't have time to read'
     private String narrator;
     private int durationMinutes;
 

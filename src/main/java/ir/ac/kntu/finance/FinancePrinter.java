@@ -10,13 +10,8 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Shared rendering and the simulated card-payment capture for the Finance
- * dashboards. No real banking happens; the card is validated and the charge is
- * delegated to FinanceService.proccessWalletCharge.
- */
 public class FinancePrinter {
-
+    // formatting money amounts so they look real
     private static final DateTimeFormatter TS_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 

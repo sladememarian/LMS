@@ -9,13 +9,8 @@ import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Support dashboard for Guest, Student and Teacher. Guests can additionally
- * request a Student/Teacher upgrade; everyone can open tickets and read
- * notifications. All ticket creation delegates to SupportService.createTicket.
- */
 public class SupportMemberConsole {
-
+    // members typing their problems hoping for solutions
     private static final String CAT_TECHNICAL = "Technical";
     private static final String CAT_BOOK = "BookRequest";
     private static final String GUEST_ONLY = "Only guests can request a role upgrade.";

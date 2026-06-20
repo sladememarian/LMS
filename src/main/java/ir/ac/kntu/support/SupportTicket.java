@@ -1,6 +1,7 @@
 package ir.ac.kntu.support;
 
 public class SupportTicket implements Comparable<SupportTicket> {
+    // each ticket is someone's cry for help
     private final String ticketId;
     private final String userId;
     private String title;

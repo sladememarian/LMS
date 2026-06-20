@@ -23,6 +23,7 @@ public class IamService {
     private static final String BACK_OPTION = "0";
 
     public static void signUpMenu(Scanner scanner) {
+        // step 1: collect data, step 2: pretend it's secure
         System.out.println(ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET);
         System.out.println(ConsoleColor.BOLD + "            REGISTRATION PORTAL               " + ConsoleColor.RESET);
         System.out.println(ConsoleColor.CYAN + DIVIDER + ConsoleColor.RESET);

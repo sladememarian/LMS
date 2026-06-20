@@ -1,6 +1,7 @@
 package ir.ac.kntu.finance;
 
 public class Transaction {
+    // each transaction is a tiny story
     private final String transactionId;
     private final String memberId;
     private final int amount;

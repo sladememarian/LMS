@@ -10,11 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Finance wallet, debt and tax behaviour plus the time-ordered transaction
- * history (feature: history sorted by time).
- */
 class FinanceServiceTest {
+    // Finance service: where money goes to do accounting things
 
     private Persona freshUser() {
         String email = "fin_" + System.nanoTime() + "@test.com";
@@ -23,6 +20,7 @@ class FinanceServiceTest {
 
     @Test
     void chargeRecordsTransactionHistory() {
+        // Cha-ching! Cha-ching! That's two transactions.
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 5_000);
         FinanceService.proccessWalletCharge(user, 7_000);
@@ -31,6 +29,7 @@ class FinanceServiceTest {
 
     @Test
     void debtBlocksBorrowingAndPaymentClearsIt() {
+        // Debt -> blocked -> payment -> free. The arc of the universe bends toward... payment.
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 100_000);
         FinanceService.recordDebt(user, 20_000, "overdue item");
@@ -43,6 +42,7 @@ class FinanceServiceTest {
 
     @Test
     void taxRevenueAccumulatesOnExtension() {
+        // Tax revenue: the government simulator
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 100_000);
         int before = FinanceService.getTaxRevenueCollected();
@@ -52,6 +52,7 @@ class FinanceServiceTest {
 
     @Test
     void transactionHistoryIsSortedByTime() {
+        // Time ordering: because chaos theory is not a feature
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 1_000);
         FinanceService.proccessWalletCharge(user, 2_000);

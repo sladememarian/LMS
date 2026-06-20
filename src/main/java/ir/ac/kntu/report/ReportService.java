@@ -17,7 +17,7 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 
 public class ReportService {
-
+    // generating HTML reports that nobody will read
     private static final String[] PALETTE = {
         "#2563eb", "#16a34a", "#f59e0b", "#db2777", "#7c3aed", "#0891b2"
     };

@@ -6,11 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Tests for the per-user inventory tracking added to Persona and the
- * borrow/return/role-promotion persistence helpers in PersonaService.
- */
 class PersonaInventoryTest {
+    // Persona inventory: I have many leather-bound books
 
     private String unique() {
         return "inv_" + System.nanoTime() + "@test.com";
@@ -18,6 +15,7 @@ class PersonaInventoryTest {
 
     @Test
     void personaTracksBorrowedItems() {
+        // Item borrowed. Item returned. Item tracked. Item forgotten.
         Persona persona = new Persona("e@test.com", "Passw0rd!");
         assertEquals(0, persona.getBorrowCount());
         persona.addBorrowedItem("ITEM-001");
@@ -31,6 +29,7 @@ class PersonaInventoryTest {
 
     @Test
     void blankBorrowIdsAreIgnored() {
+        // "" and null are the invisible borrowers
         Persona persona = new Persona("e2@test.com", "Passw0rd!");
         persona.addBorrowedItem("");
         persona.addBorrowedItem(null);
@@ -39,6 +38,7 @@ class PersonaInventoryTest {
 
     @Test
     void recordBorrowAndReturnPersist() {
+        // Borrow, return, borrow again. The circle of library life.
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
         PersonaService.recordBorrow(email, "ITEM-003");
@@ -50,6 +50,7 @@ class PersonaInventoryTest {
 
     @Test
     void promoteRoleChangesRoleAndPrefix() {
+        // Promotion: now with extra prefix!
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
         assertTrue(PersonaService.promoteRole(email, UserRole.STUDENT));

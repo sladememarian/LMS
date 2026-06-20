@@ -5,12 +5,8 @@ import java.util.List;
 
 import ir.ac.kntu.util.ConsoleColor;
 
-/**
- * Shared rendering and filtering for support tickets, reused by the member
- * "My Tickets" view and by the CallCenter inbox queues.
- */
 public class TicketPrinter {
-
+    // printing tickets to the console, saving trees
     public static void printTickets(List<SupportTicket> tickets) {
         if (tickets.isEmpty()) {
             System.out.println(ConsoleColor.gray("  (no tickets)"));

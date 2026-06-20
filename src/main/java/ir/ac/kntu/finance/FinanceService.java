@@ -12,7 +12,7 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.EnvConfig;
 
 public class FinanceService {
-
+    // handling money like a crypto startup - carefully
     private static final List<Transaction> TX_LOGS = new ArrayList<>();
     private static final String FILE_PATH = "finance_secure.json";
     private static final double TAX_RATE = 0.10;
@@ -57,7 +57,6 @@ public class FinanceService {
 
     private static void logTransaction(String memberId, int amount, String type, String description) {
         loadTransactions();
-        // String txId = "TX-" + System.currentTimeMillis();
         String txId = "TX-" + ((int) (Math.random() * 900_000) + 100_000);
         Transaction tx = new Transaction(txId, memberId, amount, type, description);
         TX_LOGS.add(tx);

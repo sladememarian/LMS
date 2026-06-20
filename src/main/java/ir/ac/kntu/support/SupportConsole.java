@@ -7,13 +7,10 @@ import ir.ac.kntu.support.inbox.AdminInbox;
 import ir.ac.kntu.support.inbox.CallCenterInbox;
 import ir.ac.kntu.util.ConsoleColor;
 
-/**
- * Entry point for the Support microservice UI. Routes to the Admin inbox, the
- * CallCenter inbox, or the member support dashboard based on the logged-in role.
- */
 public class SupportConsole {
 
     public static void open(Scanner scanner) {
+        // routing users to the right level of support (or chaos)
         Persona user = Persona.getCurrentUser();
         if (user == null) {
             ConsoleColor.printError("Log in first to open Support.");

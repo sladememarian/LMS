@@ -6,12 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Support ticket priority rules, the call-centre login, and the feature where
- * a call-centre reply both stores a message on the ticket and moves it to
- * IN_PROGRESS.
- */
 class SupportServiceTest {
+    // Support tickets: digital papercuts that need attention
 
     private SupportTicket findByTitle(String title) {
         for (SupportTicket ticket : SupportService.getAllTickets()) {
@@ -24,6 +20,7 @@ class SupportServiceTest {
 
     @Test
     void technicalTicketIsHighPriority() {
+        // Printer is on fire? That's HIGH priority
         String title = "Printer issue " + System.nanoTime();
         SupportService.createTicket("STU-100000", "Technical", title, "desc");
         assertEquals("HIGH", findByTitle(title).getPriority());
@@ -31,6 +28,7 @@ class SupportServiceTest {
 
     @Test
     void urgentKeywordEscalatesToCritical() {
+        // URGENT in the title? CRITICAL it is
         String title = "URGENT outage " + System.nanoTime();
         SupportService.createTicket("STU-100000", "General", title, "desc");
         assertEquals("CRITICAL", findByTitle(title).getPriority());
@@ -38,6 +36,7 @@ class SupportServiceTest {
 
     @Test
     void respondStoresMessageAndMarksInProgress() {
+        // "We are looking into it" - TM for generic response
         String title = "Need help " + System.nanoTime();
         SupportService.createTicket("STU-100000", "General", title, "desc");
         String ticketId = findByTitle(title).getTicketId();
@@ -50,6 +49,7 @@ class SupportServiceTest {
 
     @Test
     void callCenterLoginValidates() {
+        // callcenter/ccpass: the fort knox of credentials
         assertTrue(SupportService.validateCallCenterLogin("callcenter", "ccpass"));
         assertFalse(SupportService.validateCallCenterLogin("callcenter", "wrong"));
     }

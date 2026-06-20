@@ -13,12 +13,8 @@ import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 import ir.ac.kntu.util.EnvConfig;
 
-/**
- * Admin Finance dashboard: read-only oversight of wallets, debts, transactions,
- * tax revenue and reports. Admin inspects but does not hand-edit balances.
- */
 public class FinanceAdminConsole {
-
+    // admin sees all the money flows
     private static final String DB_PATH = "finance_secure.json";
     private static final String REPORT_PATH = "library_financial_report.html";
 

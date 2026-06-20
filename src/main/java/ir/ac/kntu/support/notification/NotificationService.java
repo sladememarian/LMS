@@ -11,13 +11,8 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
-/**
- * Support notification centre. It does not own its own message store; it reuses
- * the Mail microservice (SYSTEM_NOTIFICATION messages) so there is a single
- * source of truth for everything delivered to a user.
- */
 public class NotificationService {
-
+    // spamming users with notifications since day one
     public static void notify(Persona recipient, String subject, String body) {
         if (recipient != null) {
             MailService.sendSystemNotification(address(recipient), subject, body);

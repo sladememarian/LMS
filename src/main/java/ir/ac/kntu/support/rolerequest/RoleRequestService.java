@@ -13,16 +13,8 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.util.EnvConfig;
 
-/**
- * Stores and processes Guest role-upgrade requests. Requests are persisted to a
- * local XOR-encrypted file and reloaded on every operation, so a request raised
- * in one running instance (e.g. a Guest terminal) is immediately visible to a
- * second instance (e.g. an Admin terminal) without a restart. Approval is
- * delegated to Persona (role change) and announced through the Support
- * notification centre.
- */
 public class RoleRequestService {
-
+    // processing role requests like a bureaucratic machine
     private static final List<RoleRequest> REQUESTS = new ArrayList<>();
     private static final String SUBJECT = "Role Request Update";
     private static final String FILE_PATH = "role_requests.json";
