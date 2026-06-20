@@ -21,9 +21,7 @@ public class FinanceService {
     private static final String TYPE_TAX = "TAX";
 
     private static void ensureLoaded() {
-        if (TX_LOGS.isEmpty()) {
-            loadTransactions();
-        }
+        loadTransactions();
     }
 
     private static byte[] getEncryptionKey() {
@@ -58,9 +56,7 @@ public class FinanceService {
     }
 
     private static void logTransaction(String memberId, int amount, String type, String description) {
-        if(TX_LOGS.isEmpty()) {
-            loadTransactions();
-        }
+        loadTransactions();
         // String txId = "TX-" + System.currentTimeMillis();
         String txId = "TX-" + ((int) (Math.random() * 900_000) + 100_000);
         Transaction tx = new Transaction(txId, memberId, amount, type, description);
@@ -78,7 +74,8 @@ public class FinanceService {
                     .append("    \"mid\": \"").append(tx.getMemberId()).append(fieldSuffix)
                     .append("    \"amt\": \"").append(tx.getAmount()).append(fieldSuffix)
                     .append("    \"type\": \"").append(tx.getType()).append(fieldSuffix)
-                    .append("    \"desc\": \"").append(tx.getDescription()).append("\"\n")
+                    .append("    \"desc\": \"").append(tx.getDescription()).append(fieldSuffix)
+                    .append("    \"ts\": \"").append(tx.getTimestamp()).append("\"\n")
                     .append("  }");
             if (i < TX_LOGS.size() - 1) {
                 jsonBuilder.append(",");
@@ -151,16 +148,18 @@ public class FinanceService {
             String amtStr = fetchToken(obj, "amt");
             String type = fetchToken(obj, "type");
             String desc = fetchToken(obj, "desc");
+            String tsStr = fetchToken(obj, "ts");
 
             if (txId != null && amtStr != null) {
                 int amt = Integer.parseInt(amtStr);
-                TX_LOGS.add(new Transaction(txId, mid, amt, type, desc));
+                long timestamp = tsStr == null || tsStr.isEmpty() ? 0L : Long.parseLong(tsStr);
+                TX_LOGS.add(new Transaction(txId, mid, amt, type, desc, timestamp));
             }
         }
     }
 
     private static String fetchToken(String source, String key) {
-        String pattern = "\"" + key + "\":\"";
+        String pattern = "\"" + key + "\": \"";
         int start = source.indexOf(pattern);
         if (start == -1) {
             return null;
@@ -178,12 +177,15 @@ public class FinanceService {
                 result.add(tx);
             }
         }
+        result.sort((left, right) -> Long.compare(left.getTimestamp(), right.getTimestamp()));
         return result;
     }
 
     public static List<Transaction> getAllTransactions() {
         ensureLoaded();
-        return new ArrayList<>(TX_LOGS);
+        List<Transaction> all = new ArrayList<>(TX_LOGS);
+        all.sort((left, right) -> Long.compare(left.getTimestamp(), right.getTimestamp()));
+        return all;
     }
 
     public static int getTaxRevenueCollected() {

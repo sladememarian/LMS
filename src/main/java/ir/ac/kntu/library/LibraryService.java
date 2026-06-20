@@ -160,6 +160,7 @@ public class LibraryService {
     }
 
     public static boolean executeBorrow(String itemId) {
+        loadLibraryDatabaseEncrypted();
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() > 0) {
@@ -177,6 +178,7 @@ public class LibraryService {
     }
 
     public static void executeReturn(String itemId) {
+        loadLibraryDatabaseEncrypted();
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() < item.getTotalCopies()) {
@@ -193,6 +195,7 @@ public class LibraryService {
     }
 
     public static List<LibraryItem> searchItems(String keyword) {
+        loadLibraryDatabaseEncrypted();
         List<LibraryItem> results = new ArrayList<>();
         if (keyword == null || keyword.trim().isEmpty()) {
             return results;
@@ -222,6 +225,7 @@ public class LibraryService {
     }
 
     public static boolean addItem(LibraryItem item) {
+        loadLibraryDatabaseEncrypted();
         if (item == null || getItemById(item.getItemId()) != null) {
             return false;
         }
@@ -426,6 +430,7 @@ public class LibraryService {
     }
 
     public static List<LibraryItem> getAllItems() {
+        loadLibraryDatabaseEncrypted();
         return new ArrayList<>(INVENTORY);
     }
 
@@ -452,5 +457,9 @@ public class LibraryService {
             }
         }
         return supplierId;
+    }
+
+    public static void initCatalog() {
+        loadLibraryDatabaseEncrypted();
     }
 }

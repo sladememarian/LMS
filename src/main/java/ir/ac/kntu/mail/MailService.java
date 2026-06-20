@@ -25,8 +25,6 @@ public class MailService {
     private static final String KEY_READ = "read";
     private static final String KEY_ID = "mid";
     private static final long MILLIS_PER_MINUTE = 60_000L;
-    private static boolean loaded;
-
     private static byte[] getEncryptionKey() {
         return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
     }
@@ -44,10 +42,7 @@ public class MailService {
     }
 
     private static void ensureLoaded() {
-        if (!loaded) {
-            loadFromEncryptedFile();
-            loaded = true;
-        }
+        loadFromEncryptedFile();
     }
 
     public static MailMessage deliverMessage(String recipient, String subject, String body, MessageType type) {

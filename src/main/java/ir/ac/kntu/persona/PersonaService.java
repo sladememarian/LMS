@@ -31,14 +31,29 @@ public class PersonaService {
     }
 
     static {
+        loadFromEncryptedFile();
+
         String defaultCcUser = EnvConfig.get("DEFAULT_CALLCENTER_USERNAME", "callcenter");
         String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
-
         String defaultAdminUser = EnvConfig.get("DEFAULT_ADMIN_USERNAME", "admin");
         String defaultAdminPass = EnvConfig.get("DEFAULT_ADMIN_PASSWORD", "adminpass");
 
-        PERSONA_DATABASE.add(new Persona(defaultCcUser, defaultCcPass, UserRole.CALLCENTER));
-        PERSONA_DATABASE.add(new Persona(defaultAdminUser, defaultAdminPass, UserRole.ADMIN));
+        boolean hasAdmin = false;
+        boolean hasCallcenter = false;
+        for (Persona p : PERSONA_DATABASE) {
+            if (p.getRole() == UserRole.ADMIN) {
+                hasAdmin = true;
+            }
+            if (p.getRole() == UserRole.CALLCENTER) {
+                hasCallcenter = true;
+            }
+        }
+        if (!hasAdmin) {
+            PERSONA_DATABASE.add(new Persona(defaultAdminUser, defaultAdminPass, UserRole.ADMIN));
+        }
+        if (!hasCallcenter) {
+            PERSONA_DATABASE.add(new Persona(defaultCcUser, defaultCcPass, UserRole.CALLCENTER));
+        }
     }
 
     public static Persona registerPersona(String email, String password) {
@@ -49,9 +64,7 @@ public class PersonaService {
     }
 
     public static boolean validateCredentials(String email, String password) {
-        if (PERSONA_DATABASE.isEmpty()) {
-            loadFromEncryptedFile();
-        }
+        loadFromEncryptedFile();
         for (Persona persona : PERSONA_DATABASE) {
             if (persona.getEmail() != null && persona.getEmail().equalsIgnoreCase(email)
                     && persona.getPassword().equals(password)) {
@@ -234,6 +247,14 @@ public class PersonaService {
         if (persona != null) {
             persona.setWalletBalance(persona.getWalletBalance() + amount);
             saveToEncryptedFile();
+            syncCurrentUserWallet(email, persona.getWalletBalance());
+        }
+    }
+
+    private static void syncCurrentUserWallet(String email, int newBalance) {
+        Persona current = Persona.getCurrentUser();
+        if (email != null && current != null && email.equalsIgnoreCase(current.getEmail())) {
+            current.setWalletBalance(newBalance);
         }
     }
 
@@ -241,6 +262,7 @@ public class PersonaService {
         for (Persona persona : PERSONA_DATABASE) {
             if (persona.getRole() == UserRole.ADMIN) {
                 persona.setWalletBalance(persona.getWalletBalance() + taxAmount);
+                syncCurrentUserWallet(persona.getEmail(), persona.getWalletBalance());
                 break;
             }
         }
@@ -252,10 +274,15 @@ public class PersonaService {
         if (persona != null) {
             persona.addBorrowedItem(itemId);
             saveToEncryptedFile();
+            Persona current = Persona.getCurrentUser();
+            if (current != null && email.equalsIgnoreCase(current.getEmail())) {
+                current.addBorrowedItem(itemId);
+            }
         }
     }
 
     public static boolean promoteRole(String email, UserRole newRole) {
+        loadFromEncryptedFile();
         Persona persona = getProfile(email);
         if (persona == null) {
             return false;
@@ -273,14 +300,32 @@ public class PersonaService {
         boolean removed = persona.removeBorrowedItem(itemId);
         if (removed) {
             saveToEncryptedFile();
+            Persona current = Persona.getCurrentUser();
+            if (current != null && email.equalsIgnoreCase(current.getEmail())) {
+                current.removeBorrowedItem(itemId);
+            }
         }
         return removed;
+    }
+
+    public static Persona getProfileByMemberId(String memberId) {
+        if (memberId == null) {
+            return null;
+        }
+        loadFromEncryptedFile();
+        for (Persona profile : PERSONA_DATABASE) {
+            if (memberId.equals(profile.getMemberId())) {
+                return profile;
+            }
+        }
+        return null;
     }
 
     public static Persona getProfileByUsername(String username) {
         if (username == null) {
             return null;
         }
+        loadFromEncryptedFile();
         for (Persona profile : PERSONA_DATABASE) {
             if (username.equalsIgnoreCase(profile.getUsername())) {
                 return profile;

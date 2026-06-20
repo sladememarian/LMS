@@ -13,6 +13,7 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
+import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.util.EnvConfig;
 
 public class SupportService {
@@ -35,9 +36,7 @@ public class SupportService {
     }
 
     public static void createTicket(String userId, String category, String title, String description) {
-        if (TICKETS.isEmpty()) {
-            loadTicketsFromEncryptedFile();
-        }
+        loadTicketsFromEncryptedFile();
         String priority = "LOW";
         if ("Technical".equalsIgnoreCase(category)) {
             priority = "HIGH";
@@ -58,9 +57,7 @@ public class SupportService {
     }
 
     public static boolean updateTicketStatus(String ticketId, String status) {
-        if (TICKETS.isEmpty()) {
-            loadTicketsFromEncryptedFile();
-        }
+        loadTicketsFromEncryptedFile();
         for (SupportTicket ticket : TICKETS) {
             if (ticket.getTicketId().equals(ticketId)) {
                 ticket.setStatus(status);
@@ -71,10 +68,32 @@ public class SupportService {
         return false;
     }
 
-    public static List<SupportTicket> getAllTickets() {
-        if (TICKETS.isEmpty()) {
-            loadTicketsFromEncryptedFile();
+    public static boolean respondToTicket(String ticketId, String message) {
+        loadTicketsFromEncryptedFile();
+        for (SupportTicket ticket : TICKETS) {
+            if (ticket.getTicketId().equals(ticketId)) {
+                ticket.setResponse(message);
+                ticket.setStatus("IN_PROGRESS");
+                saveTicketsToEncryptedFile();
+                notifyCreator(ticket, message);
+                return true;
+            }
         }
+        return false;
+    }
+
+    private static void notifyCreator(SupportTicket ticket, String message) {
+        Persona creator = PersonaService.getProfileByMemberId(ticket.getUserId());
+        String subject = "Reply to ticket " + ticket.getTicketId();
+        if (creator != null) {
+            NotificationService.notify(creator, subject, message);
+        } else {
+            NotificationService.notifyAddress(ticket.getUserId(), subject, message);
+        }
+    }
+
+    public static List<SupportTicket> getAllTickets() {
+        loadTicketsFromEncryptedFile();
         return new ArrayList<>(TICKETS);
     }
 
@@ -92,8 +111,16 @@ public class SupportService {
                 .append("    \"ttl\": \"").append(ticket.getTitle()).append(suffix)
                 .append("    \"desc\": \"").append(ticket.getDescription()).append(suffix)
                 .append("    \"stat\": \"").append(ticket.getStatus()).append(suffix)
-                .append("    \"pri\": \"").append(ticket.getPriority()).append("\"\n")
+                .append("    \"pri\": \"").append(ticket.getPriority()).append(suffix)
+                .append("    \"resp\": \"").append(clean(ticket.getResponse())).append("\"\n")
                 .append("  }");
+    }
+
+    private static String clean(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\"", "'").replace("\n", " ").replace("\r", " ");
     }
 
     private static void saveTicketsToEncryptedFile() {
@@ -144,6 +171,8 @@ public class SupportService {
         String priority = extract(obj, "pri");
         ticket.setPriority(priority != null ? priority : "LOW");
         ticket.setStatus(extract(obj, "stat"));
+        String resp = extract(obj, "resp");
+        ticket.setResponse(resp != null ? resp : "");
         return ticket;
     }
 
