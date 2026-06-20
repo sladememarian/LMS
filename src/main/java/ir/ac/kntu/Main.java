@@ -3,6 +3,7 @@ package ir.ac.kntu;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.finance.FinanceConsole;
 import ir.ac.kntu.iam.IamService;
 import ir.ac.kntu.library.LibraryConsole;
@@ -148,6 +149,8 @@ public class Main {
     }
 
     private static void printMainMenu() {
+        System.out.println(ConsoleColor.CYAN + ConsoleColor.BOLD
+                + "  [Simulated Date: " + SimulationClock.formatCurrentDate() + "]" + ConsoleColor.RESET);
         System.out.println(ConsoleColor.BOLD + "MAIN MENU OPTIONS:" + ConsoleColor.RESET);
         System.out.println(ConsoleColor.CYAN + "1. " + ConsoleColor.RESET + "Sign Up       "
                 + ConsoleColor.gray("- Registration, Welcome Mail"));
