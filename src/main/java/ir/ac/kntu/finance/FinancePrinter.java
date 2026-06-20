@@ -1,5 +1,8 @@
 package ir.ac.kntu.finance;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -13,6 +16,16 @@ import ir.ac.kntu.util.ConsoleMenu;
  * delegated to FinanceService.proccessWalletCharge.
  */
 public class FinancePrinter {
+
+    private static final DateTimeFormatter TS_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
+
+    private static String formatTime(long timestamp) {
+        if (timestamp <= 0) {
+            return "----------  --------";
+        }
+        return TS_FORMAT.format(Instant.ofEpochMilli(timestamp));
+    }
 
     public static void printHeader(Persona user) {
         ConsoleMenu.banner("FINANCE DASHBOARD (" + user.getRole().name() + ")");
@@ -31,7 +44,7 @@ public class FinancePrinter {
             return;
         }
         for (Transaction tx : history) {
-            System.out.println("  " + tx.getType() + " " + tx.getAmount()
+            System.out.println("  " + formatTime(tx.getTimestamp()) + "  " + tx.getType() + " " + tx.getAmount()
                     + ConsoleColor.gray("  " + tx.getDescription() + " [" + tx.getTransactionId() + "]"));
         }
     }
