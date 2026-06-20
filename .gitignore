@@ -45,6 +45,7 @@ out/
 
 ### none ###
 INSTRUCTION_README.md
+test_docs/
 
 ### database ###
 library.enc
