@@ -33,8 +33,15 @@ Added for the role dashboards:
 | `deleteItem(id)` | Removes an item; saves; returns success. |
 | `updateItemPrice(id, price)` | Edits unit price; saves. |
 
-Supporting UI classes: `LibraryPrinter` (role-aware rendering), `ItemEntry`
-(shared "add book" prompt used by both Admin and CallCenter).
+Supporting UI classes: `LibraryPrinter` (role-aware rendering, including
+**paginated** result lists), `ItemEntry` (shared "add book" prompt used by both
+Admin and CallCenter).
+
+### Search-result pagination (`LibraryPrinter.printListPaginated`)
+Search/browse/filter results are shown **10 per page**. Navigation accepts
+`[N]ext`, `[P]revious`, a **page number to jump** (e.g. `1` jumps to page 1),
+and `[Q]uit` to return to the menu. Navigation is bounded (no overflow past the
+first/last page) and `Q` reliably exits.
 
 ## Communications
 - Operator/Admin catalog changes route through **Support**
@@ -42,7 +49,18 @@ Supporting UI classes: `LibraryPrinter` (role-aware rendering), `ItemEntry`
   honour the *CallCenter → Support → Library* workflow.
 - **Report** reads `getAllItems`/`getAllSuppliers` to build the HTML report.
 - **Persona.InventoryConsole** reads `getItemById` to show owned items.
+- **Finance** is called on borrow/return to record/clear a `Loan`
+  (`LoanService.recordLoan` / `clearLoan`) for the date-simulation overdue-fine
+  feature.
 
 ## Mock data
 Eleven seeded items across 4 suppliers (programming, academic, periodical,
 fiction, reference). See `docs/mock_data.md`.
+
+## Cross-process catalog visibility (updated)
+
+`LibraryService` key operations (`getAllItems`, `searchItems`, `getItemById`,
+`executeBorrow`, `executeReturn`, `addItem`) now call
+`loadLibraryDatabaseEncrypted()` before accessing the catalog. An item added or
+stock updated by the CallCenter / Admin in one instance is immediately visible
+in a second instance.

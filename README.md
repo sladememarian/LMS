@@ -69,10 +69,35 @@ Each app routes the logged-in user to a dashboard for their role:
   CallCenter (view-only debt stats/alerts),
   Admin (wallets, debts, tax revenue, admin wallet, reports, encrypted DB).
 - **Support** — Guest (role requests + tickets), Student/Teacher (tickets),
-  CallCenter inbox (respond/close tickets, add items), Admin inbox (approve roles, monitor).
+  CallCenter inbox (reply to tickets with a message + close, add items), Admin
+  inbox (approve roles, monitor, **Advance Simulated Day**).
 
 Borrowing enforces each role's limit (Guest 2, Student 10, Teacher 15) and is blocked while a
 user has outstanding Finance debt. "My Inventory" lives in Persona; the Library only links to it.
+
+## Recent feature changes
+
+- **Item-search pagination** — results paginate 10 per page with `[N]ext`,
+  `[P]revious`, jump-to-page-number, and a working `[Q]uit` (`LibraryPrinter`).
+- **Full cross-instance data sharing** — Tickets, debts, library catalog, notifications, and
+  role requests are now persisted and **reloaded on every operation** so any data change
+  made in one running instance (e.g. a user terminal) is immediately visible to a second
+  running instance (e.g. the CallCenter or Admin terminal). No restart required.
+  *(Fixes: SupportService, FinanceService, LibraryService, MailService, PersonaService.)*
+- **Cross-instance role requests** — role-upgrade requests are persisted to an
+  XOR-encrypted `role_requests.json` and reloaded on every read, so a request
+  raised in a Guest instance is visible to a separate Admin instance with no
+  restart (`RoleRequestService`).
+- **CallCenter ticket replies** — "Respond To Ticket" takes a message, stores it
+  on the ticket, marks it `IN_PROGRESS`, and notifies the creator.
+- **Time-ordered Finance history** — transactions carry a timestamp and history
+  is shown oldest → newest.
+- **Date simulation (Admin = god of time)** — the Admin's *Advance Simulated
+  Day* button moves a persisted simulated real-calendar clock forward (shown as
+  `M/d/yyyy` in the main menu for every role); borrowed items are due **3 simulated
+  days** after borrowing and accrue a daily overdue fine (reusing
+  `FinanceService.recordDebt`). The admin's "View Encrypted Database" export now
+  includes all 8 stores (existing ones as JSON, not-yet-created ones as `null`).
 
 ## Configuration (`.env`)
 
@@ -112,14 +137,16 @@ Copy `.env.example` to `.env` and adjust values. The whole system stays 100% off
 
 ## Testing
 
-`./gradlew clean test` runs **92 tests**:
+`./gradlew clean test` runs **36 tests** (consolidated from an earlier 92):
 
 - **Functional JUnit tests** for every microservice and model (`src/test/java/ir/ac/kntu/...`).
 - **CheckStyleTest** — enforces indentation and naming conventions on `src/main`.
 - **CheckPMDTest** — enforces the project's PMD ruleset on `src/main`.
 
-A green build means all functional tests pass **and** the production code is style-clean.
-See [`test_docs/`](test_docs/README.md) for an explanation of every test.
+The functional suite was trimmed to the most important tests per microservice
+plus the new features. A green build means all functional tests pass **and** the
+production code is style-clean. See [`test_docs/`](test_docs/README.md) for an
+explanation of every test.
 
 ## Documentation
 

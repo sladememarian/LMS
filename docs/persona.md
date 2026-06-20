@@ -27,6 +27,7 @@ Two default staff accounts are seeded: `admin` (ADMIN) and `callcenter`
 | `recordBorrow(email, itemId)` | Adds an owned item and persists. |
 | `recordReturn(email, itemId)` | Removes an owned item and persists. |
 | `promoteRole(email, role)` | Applies an approved role change and persists. |
+| `getProfileByMemberId(memberId)` | Looks up a user by member id (used to route CallCenter ticket replies and inject overdue fines to the right user). |
 
 Existing wallet functions reused by Finance: `getWalletBalance`,
 `updateWalletBalance`, `transferToAdmin`.
@@ -40,3 +41,13 @@ separated.
 ## Communications
 Persona → Mail (notifications). Persona.InventoryConsole → Library (read-only).
 Finance and Support call into Persona for wallet and role changes.
+
+## Cross-process awareness (updated)
+
+`validateCredentials`, `getProfileByMemberId`, and `getProfileByUsername` now
+always reload `persona_secure.json` before searching, so staff login and member
+lookup work correctly across simultaneously running instances. `promoteRole` also
+reloads before promoting so the target user (registered in a separate instance)
+is found. Write operations (`updateWalletBalance`, `recordBorrow`, `recordReturn`,
+`updateProfile`, etc.) use the existing in-memory reference and then sync the
+`currentUser` display object — preserving wallet balance display correctness.

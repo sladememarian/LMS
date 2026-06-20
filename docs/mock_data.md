@@ -41,5 +41,9 @@ Run the app (`java -cp build/classes/java/main ir.ac.kntu.Main`) and:
 - Charge a wallet / extend a loan to create Finance transactions
   (`finance_secure.json`).
 - Create a ticket in Support to populate `support_tickets.json`.
-The repo's `.gitignore` excludes all these runtime stores so they never pollute
-version control.
+- Request a role upgrade (Guest) to populate `role_requests.json`.
+- Borrow an item then have the Admin *Advance Simulated Day* to populate
+  `loans_secure.json` / `clock_secure.json` and accrue overdue debts.
+The repo's `.gitignore` excludes all these runtime stores (including
+`role_requests.json`, `loans_secure.json`, `clock_secure.json`) so they never
+pollute version control.

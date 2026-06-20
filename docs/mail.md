@@ -19,3 +19,11 @@ everything delivered to a user.
 
 ## Message types (`MessageType`)
 `TWO_FA`, `WELCOME`, `PASSWORD_RESET`, `SYSTEM_NOTIFICATION`.
+
+## Cross-process notification visibility (updated)
+
+`MailService.ensureLoaded()` now **always reloads** `mail.enc` rather than
+loading once per process. When the CallCenter sends a ticket reply (which
+creates a notification via `NotificationService`), the recipient's inbox in a
+second running instance will show the new notification on the next "View
+Notifications" access — without a restart.
