@@ -20,7 +20,7 @@ public class SsoController {
         boolean active = true;
         while (active) {
             printMenu();
-            System.out.print(ConsoleColor.BOLD + ConsoleColor.YELLOW + "Choose (1-5): " + ConsoleColor.RESET);
+            System.out.print(ConsoleColor.BOLD + ConsoleColor.YELLOW + "Choose (0-5): " + ConsoleColor.RESET);
             String choice = scanner.nextLine().trim();
             active = handleChoice(choice, scanner, user.getEmail());
         }
@@ -35,6 +35,7 @@ public class SsoController {
         System.out.println(ConsoleColor.CYAN + "3. " + ConsoleColor.RESET + "Change Password");
         System.out.println(ConsoleColor.CYAN + "4. " + ConsoleColor.RESET + "Theme Settings");
         System.out.println(ConsoleColor.RED + "5. " + ConsoleColor.RESET + "Logout");
+        System.out.println(ConsoleColor.RED + "0. " + ConsoleColor.RESET + "Back");
     }
 
     private static boolean handleChoice(String choice, Scanner scanner, String email) {
@@ -51,6 +52,8 @@ public class SsoController {
             case "4":
                 doChangeTheme(scanner, email);
                 return true;
+            case "0":
+                return false;
             case "5":
                 SsoService.logout();
                 ConsoleColor.printSuccess("Session destroyed. You have been logged out.");
