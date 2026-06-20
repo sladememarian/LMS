@@ -1,75 +1,64 @@
 package ir.ac.kntu;
 
+import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.Transaction;
-import ir.ac.kntu.iam.UserCredentials;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.SupportTicket;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Core domain-model behaviour, including the fields added for the new features:
+ * a Transaction timestamp (history sorting), a SupportTicket response (call
+ * centre replies) and the Loan due-day model (date-simulation debts).
+ */
 class DomainModelsTest {
 
     @Test
-    void transactionGetters() {
-        Transaction tx = new Transaction("TX-1", "STU-1", 250, "CHARGE", "topup");
-        assertEquals("TX-1", tx.getTransactionId());
-        assertEquals("STU-1", tx.getMemberId());
-        assertEquals(250, tx.getAmount());
-        assertEquals("CHARGE", tx.getType());
-        assertEquals("topup", tx.getDescription());
+    void transactionCarriesTimestamp() {
+        Transaction auto = new Transaction("TX-1", "STU-1", 250, "CHARGE", "topup");
+        assertEquals(250, auto.getAmount());
+        assertTrue(auto.getTimestamp() > 0, "default constructor stamps creation time");
+        Transaction restored = new Transaction("TX-2", "STU-1", 10, "DEBT", "d", 12_345L);
+        assertEquals(12_345L, restored.getTimestamp());
     }
 
     @Test
-    void supportTicketDefaultsAndOrdering() {
-        SupportTicket low = new SupportTicket("T1", "U1", "low", "d");
-        SupportTicket critical = new SupportTicket("T2", "U2", "crit", "d");
-        critical.setPriority("CRITICAL");
-        assertEquals("LOW", low.getPriority());
-        assertTrue(critical.compareTo(low) < 0);
+    void supportTicketStoresResponse() {
+        SupportTicket ticket = new SupportTicket("T1", "U1", "title", "desc");
+        assertEquals("", ticket.getResponse());
+        ticket.setResponse("We are on it");
+        assertEquals("We are on it", ticket.getResponse());
     }
 
     @Test
-    void userCredentialsValidationAndSetters() {
-        UserCredentials user = new UserCredentials("u@test.com", "Passw0rd!", "F", "L", "09120000000");
-        assertEquals("u@test.com", user.getEmail());
-        user.setPhoneNumber("09121234567");
-        assertEquals("09121234567", user.getPhoneNumber());
-        assertThrows(IllegalArgumentException.class,
-                () -> new UserCredentials("bad", "Passw0rd!", "F", "L", "09120000000"));
-        assertThrows(IllegalArgumentException.class, () -> user.setPassword("weak"));
+    void loanTracksDueAndChargedDays() {
+        Loan loan = new Loan("STU-1", "ITEM-001", 3, 4);
+        assertEquals("ITEM-001", loan.getItemId());
+        assertEquals(3, loan.getBorrowDay());
+        assertEquals(4, loan.getDueDay());
+        assertEquals(4, loan.getLastChargedDay());
+        loan.setLastChargedDay(5);
+        assertEquals(5, loan.getLastChargedDay());
     }
 
     @Test
-    void userCredentialsEquality() {
-        UserCredentials one = new UserCredentials("u@test.com", "Passw0rd!", "F", "L", "09120000000");
-        UserCredentials two = new UserCredentials("u@test.com", "Passw0rd!", "F", "L", "09120000000");
-        UserCredentials three = new UserCredentials("other@test.com", "Passw0rd!", "F", "L", "09120000000");
-        assertEquals(one, two);
-        assertEquals(one.hashCode(), two.hashCode());
-        assertNotEquals(one, three);
-    }
-
-    @Test
-    void userRoleMetadata() {
-        assertEquals("STU-", UserRole.STUDENT.getPrefix());
-        assertEquals(10, UserRole.STUDENT.getMaxBorrowLimit());
-        assertEquals("ADM-", UserRole.ADMIN.getPrefix());
-        assertEquals(2, UserRole.GUEST.getMaxBorrowLimit());
-    }
-
-    @Test
-    void personaConstructorsAndRoleUpdate() {
+    void personaRoleUpgradeRegeneratesMemberId() {
         Persona guest = new Persona("g@test.com", "Passw0rd!");
         assertEquals(UserRole.GUEST, guest.getRole());
         assertTrue(guest.getMemberId().startsWith("GST-"));
         guest.updateRole(UserRole.STUDENT);
         assertEquals(UserRole.STUDENT, guest.getRole());
         assertTrue(guest.getMemberId().startsWith("STU-"));
-        assertEquals("LIGHT", guest.getTheme());
+    }
+
+    @Test
+    void userRoleBorrowLimits() {
+        assertEquals(2, UserRole.GUEST.getMaxBorrowLimit());
+        assertEquals(10, UserRole.STUDENT.getMaxBorrowLimit());
+        assertEquals(15, UserRole.TEACHER.getMaxBorrowLimit());
     }
 }

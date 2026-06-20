@@ -9,10 +9,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests the Guest -> Support -> Admin -> Persona role-request workflow.
+ * Guest -> Support -> Admin -> Persona role-request workflow. Because requests
+ * are now persisted and reloaded on every call, a request raised in one
+ * instance is visible to a separate Admin instance; these tests assert against
+ * the reloaded view (look up by request id) rather than object identity.
  */
 class RoleRequestServiceTest {
 
@@ -21,12 +25,27 @@ class RoleRequestServiceTest {
         return PersonaService.registerPersona(email, "Passw0rd!");
     }
 
+    private RoleRequest reloadById(String requestId) {
+        for (RoleRequest request : RoleRequestService.getAll()) {
+            if (request.getRequestId().equals(requestId)) {
+                return request;
+            }
+        }
+        return null;
+    }
+
     @Test
-    void submitCreatesPendingRequest() {
+    void submittedRequestIsVisibleAfterReload() {
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.STUDENT.name(), "please");
-        assertEquals(RoleRequest.STATUS_PENDING, request.getStatus());
-        assertTrue(RoleRequestService.getPending().contains(request));
+        boolean foundPending = false;
+        for (RoleRequest pending : RoleRequestService.getPending()) {
+            if (pending.getRequestId().equals(request.getRequestId())) {
+                foundPending = true;
+                assertEquals(RoleRequest.STATUS_PENDING, pending.getStatus());
+            }
+        }
+        assertTrue(foundPending, "a freshly submitted request must be visible to another reader");
     }
 
     @Test
@@ -39,11 +58,13 @@ class RoleRequestServiceTest {
     }
 
     @Test
-    void rejectMarksRejected() {
+    void rejectMarksRequestRejected() {
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.TEACHER.name(), "please");
         assertTrue(RoleRequestService.reject(request.getRequestId()));
-        assertEquals(RoleRequest.STATUS_REJECTED, request.getStatus());
+        RoleRequest reloaded = reloadById(request.getRequestId());
+        assertNotNull(reloaded);
+        assertEquals(RoleRequest.STATUS_REJECTED, reloaded.getStatus());
         assertFalse(RoleRequestService.reject("RR-000000"));
     }
 }

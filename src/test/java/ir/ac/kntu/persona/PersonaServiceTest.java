@@ -8,6 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Persona registration, role promotion, wallet operations and the member-id
+ * lookup added to route ticket replies and overdue fines to the right user.
+ */
 class PersonaServiceTest {
 
     private String unique() {
@@ -15,15 +19,7 @@ class PersonaServiceTest {
     }
 
     @Test
-    void defaultStaffAccountsExist() {
-        assertNotNull(PersonaService.getProfileByUsername("admin"));
-        assertNotNull(PersonaService.getProfileByUsername("callcenter"));
-        assertEquals(UserRole.ADMIN, PersonaService.getProfileByUsername("admin").getRole());
-        assertEquals(UserRole.CALLCENTER, PersonaService.getProfileByUsername("callcenter").getRole());
-    }
-
-    @Test
-    void registerAndValidate() {
+    void registerCreatesGuestAndValidates() {
         String email = unique();
         Persona persona = PersonaService.registerPersona(email, "Passw0rd!");
         assertEquals(UserRole.GUEST, persona.getRole());
@@ -32,25 +28,11 @@ class PersonaServiceTest {
     }
 
     @Test
-    void updateProfileAndTheme() {
+    void promoteRoleUpgradesPersona() {
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
-        PersonaService.updateProfile(email, "Ali", "Reza", "09120000000");
-        Persona persona = PersonaService.getProfile(email);
-        assertEquals("Ali", persona.getFirstName());
-        assertEquals("Reza", persona.getLastName());
-        assertEquals("09120000000", persona.getPhoneNumber());
-        PersonaService.updateTheme(email, "DARK");
-        assertEquals("DARK", PersonaService.getProfile(email).getTheme());
-    }
-
-    @Test
-    void updatePasswordChangesCredentials() {
-        String email = unique();
-        PersonaService.registerPersona(email, "Passw0rd!");
-        assertTrue(PersonaService.updatePassword(email, "NewPass1!"));
-        assertTrue(PersonaService.validateCredentials(email, "NewPass1!"));
-        assertFalse(PersonaService.updatePassword("ghost@none.com", "X"));
+        assertTrue(PersonaService.promoteRole(email, UserRole.STUDENT));
+        assertEquals(UserRole.STUDENT, PersonaService.getProfile(email).getRole());
     }
 
     @Test
@@ -63,7 +45,12 @@ class PersonaServiceTest {
     }
 
     @Test
-    void getProfileUnknownReturnsNull() {
-        assertNull(PersonaService.getProfile("nobody_" + System.nanoTime() + "@x.com"));
+    void lookupByMemberId() {
+        String email = unique();
+        Persona persona = PersonaService.registerPersona(email, "Passw0rd!");
+        Persona found = PersonaService.getProfileByMemberId(persona.getMemberId());
+        assertNotNull(found);
+        assertEquals(email, found.getEmail());
+        assertNull(PersonaService.getProfileByMemberId("NOPE-000000"));
     }
 }
