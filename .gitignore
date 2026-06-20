@@ -53,7 +53,7 @@ mail.enc
 persona_secure.json
 support_tickets.json
 finance_secure.json
-
+merged_decrypted_export.json
 
 ### messages ###
 msg.txt
