@@ -49,8 +49,8 @@ public class LibraryAdminConsole {
     private static boolean handle(String choice, Scanner scanner) {
         switch (choice) {
             case "1":
-                LibraryPrinter.printList(LibraryService.searchItems(
-                        ConsoleMenu.readLine(scanner, "Keyword: ")), true);
+                LibraryPrinter.printListPaginated(LibraryService.searchItems(
+                        ConsoleMenu.readLine(scanner, "Keyword: ")), true, scanner);
                 return true;
             case "2":
                 doAdd(scanner);

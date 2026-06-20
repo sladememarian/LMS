@@ -39,8 +39,8 @@ public class LibraryOperatorConsole {
     private static boolean handle(String choice, Scanner scanner) {
         switch (choice) {
             case "1":
-                LibraryPrinter.printList(LibraryService.searchItems(
-                        ConsoleMenu.readLine(scanner, "Keyword: ")), true);
+                LibraryPrinter.printListPaginated(LibraryService.searchItems(
+                        ConsoleMenu.readLine(scanner, "Keyword: ")), true, scanner);
                 return true;
             case "2":
                 doAdd(scanner);
@@ -55,7 +55,7 @@ public class LibraryOperatorConsole {
                 printSuppliers();
                 return true;
             case "6":
-                LibraryPrinter.printList(LibraryService.getAllItems(), true);
+                LibraryPrinter.printListPaginated(LibraryService.getAllItems(), true, scanner);
                 return true;
             case "0":
                 return false;

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Scanner;
 
 import ir.ac.kntu.finance.FinanceService;
+import ir.ac.kntu.finance.LoanService;
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.persona.InventoryConsole;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
@@ -13,7 +15,7 @@ import ir.ac.kntu.util.ConsoleMenu;
 
 /**
  * welcome to people who seek for knowledge
- * Guest, Student, Teacher)
+ * Guest, Student, Teacher :)
  */
 public class LibraryMemberConsole {
 
@@ -79,13 +81,13 @@ public class LibraryMemberConsole {
         String keyword = ConsoleMenu.readLine(scanner, "Search (blank = all): ");
         List<LibraryItem> results = keyword.isEmpty()
                 ? LibraryService.getAllItems() : LibraryService.searchItems(keyword);
-        LibraryPrinter.printList(results, false);
+        LibraryPrinter.printListPaginated(results, false, scanner);
     }
 
     private static void doFilter(Scanner scanner) {
         String category = ConsoleMenu.readLine(scanner, "Filter by category keyword: ");
         List<LibraryItem> matches = LibraryService.searchItems(category);
-        LibraryPrinter.printList(matches, false);
+        LibraryPrinter.printListPaginated(matches, false, scanner);
     }
 
     private static void doDetails(Scanner scanner) {
@@ -104,6 +106,7 @@ public class LibraryMemberConsole {
         }
         if (LibraryService.executeBorrow(itemId)) {
             PersonaService.recordBorrow(user.getEmail(), itemId);
+            LoanService.recordLoan(user.getMemberId(), itemId, SimulationClock.getCurrentDay());
             ConsoleColor.printSuccess("Borrowed " + itemId + ".");
         } else {
             ConsoleColor.printError("Borrow failed (item missing or no copies).");
@@ -130,6 +133,7 @@ public class LibraryMemberConsole {
         }
         LibraryService.executeReturn(itemId);
         PersonaService.recordReturn(user.getEmail(), itemId);
+        LoanService.clearLoan(user.getMemberId(), itemId);
         ConsoleColor.printSuccess("Returned " + itemId + ".");
     }
 

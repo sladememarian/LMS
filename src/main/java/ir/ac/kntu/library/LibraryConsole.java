@@ -12,6 +12,7 @@ import ir.ac.kntu.util.ConsoleColor;
 public class LibraryConsole {
 
     public static void open(Scanner scanner) {
+        LibraryService.initCatalog();
         Persona user = Persona.getCurrentUser();
         if (user == null) {
             ConsoleColor.printError("Log in first to open the Library.");
