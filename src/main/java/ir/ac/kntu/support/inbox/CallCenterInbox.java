@@ -48,7 +48,7 @@ public class CallCenterInbox {
                 TicketPrinter.printTickets(TicketPrinter.byCategoryContains("Book"));
                 return true;
             case "3":
-                changeStatus(scanner, "IN_PROGRESS", "Ticket marked in progress.");
+                respondTicket(scanner);
                 return true;
             case "4":
                 changeStatus(scanner, "CLOSED", "Ticket closed.");
@@ -64,6 +64,20 @@ public class CallCenterInbox {
             default:
                 ConsoleColor.printError("Invalid entry.");
                 return true;
+        }
+    }
+
+    private static void respondTicket(Scanner scanner) {
+        String ticketId = ConsoleMenu.readLine(scanner, PROMPT_TICKET);
+        String message = ConsoleMenu.readLine(scanner, "Response message: ");
+        if (message.isEmpty()) {
+            ConsoleColor.printError("Response message cannot be empty.");
+            return;
+        }
+        if (SupportService.respondToTicket(ticketId, message)) {
+            ConsoleColor.printSuccess("Response sent to the member; ticket marked IN_PROGRESS.");
+        } else {
+            ConsoleColor.printError("Ticket not found.");
         }
     }
 

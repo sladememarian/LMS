@@ -21,6 +21,9 @@ public class TicketPrinter {
                     + " | " + ticket.getTitle()
                     + ConsoleColor.gray(" [" + ticket.getCategory() + "/" + ticket.getPriority()
                             + "] " + ticket.getStatus()));
+            if (ticket.getResponse() != null && !ticket.getResponse().isEmpty()) {
+                System.out.println(ConsoleColor.gray("      Support reply: " + ticket.getResponse()));
+            }
         }
     }
 

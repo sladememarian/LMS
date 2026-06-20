@@ -8,6 +8,7 @@ public class SupportTicket implements Comparable<SupportTicket> {
     private String category;
     private String priority;
     private String status;
+    private String response;
 
     public SupportTicket(String ticketId, String userId, String title, String description) {
         this.ticketId = ticketId;
@@ -17,6 +18,7 @@ public class SupportTicket implements Comparable<SupportTicket> {
         this.category = "General";
         this.priority = "LOW";
         this.status = "Open";
+        this.response = "";
     }
 
     public String getTicketId() {
@@ -65,6 +67,14 @@ public class SupportTicket implements Comparable<SupportTicket> {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
     }
 
     private int getPriorityValue() {
