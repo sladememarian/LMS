@@ -44,6 +44,29 @@ public class LoanService {
         return removed;
     }
 
+    public static boolean extendLoan(String memberId, String itemId, int extraDays) {
+        load();
+        for (Loan loan : LOANS) {
+            if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
+                loan.setDueDay(loan.getDueDay() + extraDays);
+                loan.setLastChargedDay(loan.getDueDay());
+                save();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static int getDueDay(String memberId, String itemId) {
+        load();
+        for (Loan loan : LOANS) {
+            if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
+                return loan.getDueDay();
+            }
+        }
+        return -1;
+    }
+
     public static List<Loan> getLoans() {
         load();
         return new ArrayList<>(LOANS);

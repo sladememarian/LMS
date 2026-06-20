@@ -47,6 +47,26 @@ class LoanSimulationTest {
     }
 
     @Test
+    void extendLoanPushesDueDayAndAvoidsFine() {
+        // Extending: like a pause button for overdue fines
+        Persona user = freshUser();
+        String memberId = user.getMemberId();
+        int day = SimulationClock.getCurrentDay();
+        LoanService.recordLoan(memberId, "ITEM-EXT", day);
+
+        assertEquals(day + 3, LoanService.getDueDay(memberId, "ITEM-EXT"));
+
+        assertTrue(LoanService.extendLoan(memberId, "ITEM-EXT", 3));
+        assertEquals(day + 6, LoanService.getDueDay(memberId, "ITEM-EXT"));
+
+        LoanService.accrueOverdueDebts(day + 6);
+        assertEquals(0, FinanceService.getOutstandingDebt(memberId));
+
+        LoanService.accrueOverdueDebts(day + 7);
+        assertEquals(DAILY_FINE, FinanceService.getOutstandingDebt(memberId));
+    }
+
+    @Test
     void returnedLoanDoesNotAccrueDebt() {
         // Returned? No debt. It's that simple, Karen.
         Persona user = freshUser();

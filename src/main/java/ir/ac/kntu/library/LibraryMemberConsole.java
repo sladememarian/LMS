@@ -144,7 +144,11 @@ public class LibraryMemberConsole {
             return;
         }
         if (FinanceService.proccessExtentionPayment(user, EXTENSION_FEE)) {
-            ConsoleColor.printSuccess("Return date extended (fee " + EXTENSION_FEE + " charged).");
+            if (LoanService.extendLoan(user.getMemberId(), itemId, 3)) {
+                ConsoleColor.printSuccess("Return date extended +3 days (fee " + EXTENSION_FEE + " charged).");
+            } else {
+                ConsoleColor.printError("Loan record not found for this item.");
+            }
         } else {
             ConsoleColor.printError("Extension failed. Charge your wallet under Finance first.");
         }
