@@ -56,3 +56,6 @@ finance_secure.json
 
 ### messages ###
 msg.txt
+role_requests.json
+loans_secure.json
+clock_secure.json
