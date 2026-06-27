@@ -1,15 +1,7 @@
 package ir.ac.kntu.support.inbox;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-
-import ir.ac.kntu.util.EnvConfig;
 
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
@@ -22,9 +14,9 @@ import ir.ac.kntu.support.rolerequest.RoleRequest;
 import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
+import ir.ac.kntu.util.DatabaseAccess;
 
 public class AdminInbox {
-    // the admin's inbox: where requests go to be approved or ignored
     private static final String PROMPT_REQUEST = "Request ID: ";
 
     public static void open(Scanner scanner, Persona admin) {
@@ -44,7 +36,7 @@ public class AdminInbox {
         ConsoleMenu.option("4", "View User Tickets");
         ConsoleMenu.option("5", "View CallCenter Activity");
         ConsoleMenu.option("6", "View Notifications");
-        ConsoleMenu.option("7", "View Encrypted Database");
+        ConsoleMenu.option("7", "View Database Records");
         ConsoleMenu.option("8", "Debug Tools");
         ConsoleMenu.option("9", "Advance Simulated Day (Time God)");
         ConsoleMenu.back();
@@ -144,73 +136,16 @@ public class AdminInbox {
         System.out.println("  Closed tickets: " + closed);
     }
 
-    private static String decryptFile(String path) throws IOException {
-        File file = new File(path);
-        System.out.println("  Size: " + file.length() + " bytes");
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] encryptedData = fis.readAllBytes();
-            byte[] keyBytes = EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
-            byte[] decrypted = new byte[encryptedData.length];
-            for (int i = 0; i < encryptedData.length; i++) {
-                decrypted[i] = (byte) (encryptedData[i] ^ keyBytes[i % keyBytes.length]);
-            }
-            return new String(decrypted);
-        }
-    }
-
-    private static void writeMergedExport(Map<String, String> merged) {
-        String exportPath = "merged_decrypted_export.json";
-        try (FileOutputStream fos = new FileOutputStream(exportPath)) {
-            StringBuilder sb = new StringBuilder("{\n");
-            int idx = 0;
-            for (Map.Entry<String, String> entry : merged.entrySet()) {
-                sb.append("  \"").append(entry.getKey()).append("\": ").append(entry.getValue());
-                if (idx < merged.size() - 1) {
-                    sb.append(",");
-                }
-                sb.append("\n");
-                idx++;
-            }
-            sb.append("}\n");
-            fos.write(sb.toString().getBytes());
-            System.out.println(ConsoleColor.BOLD + "Merged export written to: " + exportPath + ConsoleColor.RESET);
-            ConsoleColor.printError("WARNING: This file contains ALL decrypted data in plain text.");
-            ConsoleColor.printError("DELETE " + exportPath + " IMMEDIATELY after closing the program!");
-        } catch (IOException ex) {
-            ConsoleColor.printError("Failed to write merged export: " + ex.getMessage());
-        }
-    }
-
     private static void inspectDatabase() {
-        String[] encryptedFiles = {
-            "support_tickets.json",
-            "finance_secure.json",
-            "persona_secure.json",
-            "role_requests.json",
-            "loans_secure.json",
-            "clock_secure.json",
-            "mail.enc",
-            "library.enc"
-        };
-        Map<String, String> merged = new LinkedHashMap<>();
-        for (String path : encryptedFiles) {
-            System.out.println(ConsoleColor.BOLD + "--- " + path + " ---" + ConsoleColor.RESET);
-            File file = new File(path);
-            if (!file.exists()) {
-                System.out.println(ConsoleColor.gray("  (not yet created)"));
-                merged.put(path, "null");
-                System.out.println();
-                continue;
-            }
-            try {
-                String content = decryptFile(path);
-                System.out.println(content);
-                merged.put(path, content);
-            } catch (IOException ex) {
-                ConsoleColor.printError("  Failed to read: " + ex.getMessage());
-            }
-            System.out.println();
-        }
-        writeMergedExport(merged);
+        System.out.println(ConsoleColor.BOLD + "--- Database Records ---" + ConsoleColor.RESET);
+        System.out.println("  Personas: " + DatabaseAccess.getAllPersonas().size());
+        System.out.println("  Mail messages: " + DatabaseAccess.getAllMailMessages().size());
+        System.out.println("  Transactions: " + DatabaseAccess.getAllTransactions().size());
+        System.out.println("  Loans: " + DatabaseAccess.getAllLoans().size());
+        System.out.println("  Library items: " + DatabaseAccess.getAllLibraryItems().size());
+        System.out.println("  Suppliers: " + DatabaseAccess.getAllSuppliers().size());
+        System.out.println("  Support tickets: " + DatabaseAccess.getAllSupportTickets().size());
+        System.out.println("  Role requests: " + DatabaseAccess.getAllRoleRequests().size());
+        System.out.println("  Simulated day: " + SimulationClock.getCurrentDay());
     }
 }

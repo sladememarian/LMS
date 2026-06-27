@@ -1,8 +1,5 @@
 package ir.ac.kntu.finance;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -11,11 +8,9 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.report.ReportService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
-import ir.ac.kntu.util.EnvConfig;
+import ir.ac.kntu.util.DatabaseAccess;
 
 public class FinanceAdminConsole {
-    // admin sees all the money flows
-    private static final String DB_PATH = "finance_secure.json";
     private static final String REPORT_PATH = "library_financial_report.html";
 
     public static void open(Scanner scanner) {
@@ -35,7 +30,7 @@ public class FinanceAdminConsole {
         ConsoleMenu.option("4", "View Tax Revenue");
         ConsoleMenu.option("5", "View Admin Wallet");
         ConsoleMenu.option("6", "View Financial Reports");
-        ConsoleMenu.option("7", "View Encrypted Database");
+        ConsoleMenu.option("7", "View Database Records");
         ConsoleMenu.option("8", "Debug Tools");
         ConsoleMenu.back();
     }
@@ -117,23 +112,7 @@ public class FinanceAdminConsole {
     }
 
     private static void inspectDatabase() {
-        File file = new File(DB_PATH);
-        System.out.println(ConsoleColor.BOLD + "--- " + DB_PATH + " ---" + ConsoleColor.RESET);
-        if (!file.exists()) {
-            System.out.println(ConsoleColor.gray("  (file does not exist)"));
-            return;
-        }
-        System.out.println("  Size: " + file.length() + " bytes");
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] encryptedData = fis.readAllBytes();
-            byte[] keyBytes = EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
-            byte[] decrypted = new byte[encryptedData.length];
-            for (int i = 0; i < encryptedData.length; i++) {
-                decrypted[i] = (byte) (encryptedData[i] ^ keyBytes[i % keyBytes.length]);
-            }
-            System.out.println(new String(decrypted));
-        } catch (IOException ex) {
-            ConsoleColor.printError("Failed to read: " + ex.getMessage());
-        }
+        System.out.println(ConsoleColor.BOLD + "--- Finance Database Records ---" + ConsoleColor.RESET);
+        System.out.println("  Transactions: " + DatabaseAccess.getAllTransactions().size());
     }
 }

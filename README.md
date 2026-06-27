@@ -1,8 +1,8 @@
 # Modular Monolith LMS (Library Management System)
 
-A Java, fully **offline / self-contained** Library Management System built as a modular monolith.
+A Java Library Management System built as a modular monolith.
 Every microservice lives in its own package under `ir.ac.kntu` and communicates through plain
-method calls. Data is persisted to local **XOR-encrypted** files — no external server or database is required.
+method calls. Data is stored in a **PostgreSQL** database (or **H2** in-memory during tests) — no file-based persistence.
 
 > Full design docs live in [`docs/`](docs/README.md) and every test is explained in
 > [`test_docs/`](test_docs/README.md). The cross-service contract is in
@@ -28,7 +28,7 @@ FrontPanel (Main)  ── orchestrates everything
 ├── SSO       Settings & Session                                     → IAM, Persona
 ├── Mail      Simulated offline mail provider (2FA, welcome, notifications)
 ├── Report    Supplier financial HTML report (Admin)                 → Library
-└── util      ConsoleColor, ConsoleMenu, EnvConfig, Validator
+└── util      Database, DatabaseAccess, DatabaseException, ConsoleColor, ConsoleMenu, EnvConfig, Validator
 ```
 
 Communication rules (kept deliberately strict to avoid a spaghetti architecture):
@@ -93,11 +93,66 @@ user has outstanding Finance debt. "My Inventory" lives in Persona; the Library 
 - **Time-ordered Finance history** — transactions carry a timestamp and history
   is shown oldest → newest.
 - **Date simulation (Admin = god of time)** — the Admin's *Advance Simulated
-  Day* button moves a persisted simulated real-calendar clock forward (shown as
-  `M/d/yyyy` in the main menu for every role); borrowed items are due **3 simulated
-  days** after borrowing and accrue a daily overdue fine (reusing
-  `FinanceService.recordDebt`). The admin's "View Encrypted Database" export now
-  includes all 8 stores (existing ones as JSON, not-yet-created ones as `null`).
+Day* button moves a persisted simulated real-calendar clock forward (shown as
+`M/d/yyyy` in the main menu for every role); borrowed items are due **3 simulated
+days** after borrowing and accrue a daily overdue fine (reusing
+`FinanceService.recordDebt`). The admin's "View Encrypted Database" export now
+includes all 8 stores (existing ones as JSON, not-yet-created ones as `null`).
+
+## Database migration (PostgreSQL)
+
+All XOR-encrypted file persistence has been replaced with a relational database.
+The data layer lives in `ir.ac.kntu.util`:
+
+| Class | Role |
+|-------|------|
+| `Database` | Connection management, schema initialisation (11 tables), helper methods (`withPs`, `queryAll`, `querySingle`, `queryPrepared`, `executeUpdate`) |
+| `DatabaseAccess` | Every CRUD operation exposed as static methods — `insertPersona()`, `getAllLoans()`, `deleteLibraryItem()`, … |
+| `DatabaseException` | Custom runtime exception wrapping `SQLException` |
+
+### How Java connects to Docker Compose PostgreSQL
+
+The Java code **does not hardcode** a database address. Instead it reads
+`JDBC_URL`, `JDBC_USER`, `JDBC_PASSWORD` from environment variables.
+When you run `docker-compose up`:
+
+1. Docker Compose starts **PostgreSQL 16** in the `db` container.
+2. Docker Compose starts the **app** container and sets:
+   ```
+   JDBC_URL=jdbc:postgresql://db:5432/lms
+   JDBC_USER=lms
+   JDBC_PASSWORD=lms
+   ```
+3. `Database.getConnection()` reads these env vars, connects to `db:5432`,
+   and runs `CREATE TABLE IF NOT EXISTS …` for all 11 tables.
+4. Services call `DatabaseAccess.insertPersona(…)` etc., which internally use
+   `Database.withPs(…)` — all SQL goes to **PostgreSQL** at `db:5432`.
+
+When **no env vars** are set (e.g. running `java -jar …` locally, or during
+`gradle test`), the code defaults to an **H2 in-memory** database:
+`jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1`.
+
+All upserts use **standard SQL `MERGE … USING … ON`** syntax compatible with
+both PostgreSQL 15+ and H2 2.x — so the same code works against both engines
+without change.
+
+```
+                         ┌─────────────────┐
+  docker-compose.yml     │  JDBC_URL=…      │
+  sets env vars ────────→│  JDBC_USER=…     │────→ Database.getConnection()
+                         │  JDBC_PASSWORD=… │         │
+                         └─────────────────┘         │
+                                          PostgreSQL  │
+                                          at db:5432  │
+                                                      ▼
+                                              initTables() → 11 tables
+                                                      │
+                                                      ▼
+                                         Service code → DatabaseAccess.* → Database.withPs/queryAll
+```
+
+See [`docs/db.md`](docs/db.md) for the full schema, connection flow, and Docker
+integration details.
 
 ## Configuration (`.env`)
 
@@ -106,14 +161,14 @@ DEFAULT_ADMIN_USERNAME=admin
 DEFAULT_ADMIN_PASSWORD=adminpass
 DEFAULT_CALLCENTER_USERNAME=callcenter
 DEFAULT_CALLCENTER_PASSWORD=ccpass
-MASTER_ADMIN_DATABASE_PASSWORD=supersecureXORkey
 SIMULATED_2FA_EXPIRE_MINUTES=5
-SIMULATED_2FA_CODE=135790        # leave empty to auto-generate a 6-digit code
 MAILBOX_MAX_MESSAGES=100
 MAIL_SYSTEM_NAME=UniLibraryMail
+# JDBC_URL / JDBC_USER / JDBC_PASSWORD — set for PostgreSQL in Docker Compose;
+# defaults to H2 in-memory when unset.
 ```
 
-Copy `.env.example` to `.env` and adjust values. The whole system stays 100% offline.
+Copy `.env.example` to `.env` and adjust values. Tests run against H2 in-memory automatically.
 
 ## Commands
 
@@ -137,7 +192,7 @@ Copy `.env.example` to `.env` and adjust values. The whole system stays 100% off
 
 ## Testing
 
-`./gradlew clean test` runs **36 tests** (consolidated from an earlier 92):
+`./gradlew clean test` runs **100 tests**:
 
 - **Functional JUnit tests** for every microservice and model (`src/test/java/ir/ac/kntu/...`).
 - **CheckStyleTest** — enforces indentation and naming conventions on `src/main`.

@@ -20,6 +20,7 @@ communicate for every flow of the application.
 | [mail.md](mail.md) | Simulated offline mail provider (also backs notifications) |
 | [report.md](report.md) | Supplier financial HTML report |
 | [util.md](util.md) | ConsoleColor, ConsoleMenu, EnvConfig, Validator |
+| [db.md](db.md) | Database schema, connection flow, Docker integration |
 
 ## Data
 - [mock_data.md](mock_data.md) — seeded suppliers, items, and default accounts.

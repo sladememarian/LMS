@@ -4,11 +4,14 @@ Cross-cutting helpers shared by every microservice.
 
 | Class | Responsibility |
 |-------|----------------|
+| `Database` | PostgreSQL/H2 connection management, schema initialisation (11 tables), package-private helper methods (`withPs`, `queryAll`, `querySingle`, `queryPrepared`, `executeUpdate`). |
+| `DatabaseAccess` | All public CRUD operations (`insertPersona`, `getAllLoans`, `deleteLibraryItem`, …) — the only class services import. |
+| `DatabaseException` | Custom `RuntimeException` that wraps `SQLException` with a user-friendly message. |
 | `ConsoleColor` | ANSI colour constants and `gray/printError/printSuccess` helpers. |
-| `ConsoleMenu` | **New.** Shared dashboard plumbing: `readLine`, `readInt`, `banner`, `option`, `back`, `pause`. Centralises prompt/menu rendering so the Library/Finance/Support consoles do not duplicate it. |
-| `EnvConfig` | Reads configuration from `.env` (XOR key, default accounts, 2FA settings). |
+| `ConsoleMenu` | Shared dashboard plumbing: `readLine`, `readInt`, `banner`, `option`, `back`, `pause`. |
+| `EnvConfig` | Reads configuration from `.env` (default accounts, 2FA settings). |
 | `Validator` | Regex validation for email, phone, password, member id, item id, ISBN-13, ISSN, publish year, download URL. |
 
-`ConsoleMenu` is the only addition here; it exists to keep the new role-based
-consoles small enough to satisfy the project's CheckStyle/PMD limits
-(method length, cyclomatic complexity, duplicate literals).
+The old XOR-encrypted file persistence (`persona_secure.json`, `finance_secure.json`,
+`mail.enc`, `library.enc`, …) has been fully replaced by `Database` + `DatabaseAccess`.
+See [`db.md`](db.md) for the full schema and Docker integration.

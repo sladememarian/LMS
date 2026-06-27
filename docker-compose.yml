@@ -1,10 +1,50 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: lms-db
+    environment:
+      POSTGRES_DB: lms
+      POSTGRES_USER: lms
+      POSTGRES_PASSWORD: lms
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: lms-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
   app:
     build: .
     container_name: lms-app
     stdin_open: true
     tty: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      JDBC_URL: jdbc:postgresql://db:5432/lms
+      JDBC_USER: lms
+      JDBC_PASSWORD: lms
     volumes:
       - .:/app-data
     working_dir: /app-data
-    entrypoint: ["java", "-jar", "/app/app.jar"]
+    entrypoint: >
+      sh -c "java -jar /app/app.jar"
+
+volumes:
+  pgdata:

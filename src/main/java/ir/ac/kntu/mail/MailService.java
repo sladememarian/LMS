@@ -1,32 +1,17 @@
 package ir.ac.kntu.mail;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import ir.ac.kntu.util.DatabaseAccess;
 import ir.ac.kntu.util.EnvConfig;
 
 public class MailService {
-    // delivering emails to the void (and sometimes to users)
     private static final List<MailMessage> ALL_MESSAGES = new ArrayList<>();
-    private static final Map<String, String> ACTIVE_CODES = new HashMap<>();
-    private static final Map<String, Long> CODE_ISSUED_AT = new HashMap<>();
-    private static final String FILE_PATH = "mail.enc";
-    private static final String KEY_EMAIL = "email";
-    private static final String KEY_SUBJECT = "subject";
-    private static final String KEY_BODY = "body";
-    private static final String KEY_TYPE = "type";
-    private static final String KEY_DATE = "date";
-    private static final String KEY_READ = "read";
-    private static final String KEY_ID = "mid";
     private static final long MILLIS_PER_MINUTE = 60_000L;
-    private static byte[] getEncryptionKey() {
-        return EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
+
+    static {
+        ALL_MESSAGES.addAll(DatabaseAccess.getAllMailMessages());
     }
 
     public static String getSystemName() {
@@ -42,15 +27,16 @@ public class MailService {
     }
 
     private static void ensureLoaded() {
-        loadFromEncryptedFile();
+        ALL_MESSAGES.clear();
+        ALL_MESSAGES.addAll(DatabaseAccess.getAllMailMessages());
     }
 
     public static MailMessage deliverMessage(String recipient, String subject, String body, MessageType type) {
         ensureLoaded();
         MailMessage message = new MailMessage(recipient, subject, body, type);
         ALL_MESSAGES.add(message);
+        DatabaseAccess.insertMailMessage(message);
         enforceMailboxCap(recipient);
-        saveToEncryptedFile();
         return message;
     }
 
@@ -63,15 +49,22 @@ public class MailService {
             }
         }
         int removeCount = owned.size() - maxMessages;
-        for (int i = 0; i < removeCount; i++) {
-            ALL_MESSAGES.remove(owned.get(i));
+        if (removeCount > 0) {
+            for (int i = 0; i < removeCount; i++) {
+                ALL_MESSAGES.remove(owned.get(i));
+            }
+            DatabaseAccess.deleteMailMessagesForRecipient(recipient);
+            for (MailMessage msg : ALL_MESSAGES) {
+                if (msg.getRecipientEmail().equalsIgnoreCase(recipient)) {
+                    DatabaseAccess.insertMailMessage(msg);
+                }
+            }
         }
     }
 
     public static String deliver2FACode(String recipient) {
         String code = String.valueOf((int) (Math.random() * 900_000) + 100_000);
-        ACTIVE_CODES.put(recipient.toLowerCase(), code);
-        CODE_ISSUED_AT.put(recipient.toLowerCase(), System.currentTimeMillis());
+        DatabaseAccess.saveTwoFactorCode(recipient.toLowerCase(), code, System.currentTimeMillis());
         String body = "Your " + getSystemName() + " verification code is " + code
                 + ". It expires in " + getExpireMinutes() + " minutes.";
         deliverMessage(recipient, "Your 2FA Verification Code", body, MessageType.TWO_FA);
@@ -80,16 +73,15 @@ public class MailService {
 
     public static boolean verifyCode(String recipient, String code) {
         String key = recipient.toLowerCase();
-        String stored = ACTIVE_CODES.get(key);
-        Long issuedAt = CODE_ISSUED_AT.get(key);
+        String stored = DatabaseAccess.getTwoFactorCode(key);
+        Long issuedAt = DatabaseAccess.getTwoFactorCodeIssuedAt(key);
         if (stored == null || issuedAt == null || !stored.equals(code)) {
             return false;
         }
         long ageMillis = System.currentTimeMillis() - issuedAt;
         boolean valid = ageMillis <= (long) getExpireMinutes() * MILLIS_PER_MINUTE;
         if (valid) {
-            ACTIVE_CODES.remove(key);
-            CODE_ISSUED_AT.remove(key);
+            DatabaseAccess.removeTwoFactorCode(key);
         }
         return valid;
     }
@@ -132,7 +124,7 @@ public class MailService {
                 message.setRead(true);
             }
         }
-        saveToEncryptedFile();
+        DatabaseAccess.markMailRead(recipient);
     }
 
     public static int deleteInbox(String recipient) {
@@ -148,102 +140,7 @@ public class MailService {
         }
         ALL_MESSAGES.clear();
         ALL_MESSAGES.addAll(remaining);
-        saveToEncryptedFile();
+        DatabaseAccess.deleteMailMessagesForRecipient(recipient);
         return removed;
-    }
-
-    private static String escape(String value) {
-        return value == null ? "" : value.replace("\"", "'").replace("\n", " ");
-    }
-
-    private static void appendMessage(StringBuilder builder, MailMessage message) {
-        String suffix = "\",\n";
-        builder.append("  {\n")
-                .append("    \"mid\": \"").append(message.getMessageId()).append(suffix)
-                .append("    \"email\": \"").append(message.getRecipientEmail()).append(suffix)
-                .append("    \"subject\": \"").append(escape(message.getSubject())).append(suffix)
-                .append("    \"body\": \"").append(escape(message.getBody())).append(suffix)
-                .append("    \"type\": \"").append(message.getMessageType().getLabel()).append(suffix)
-                .append("    \"date\": \"").append(message.getSentDate()).append(suffix)
-                .append("    \"read\": \"").append(message.isRead()).append("\"\n")
-                .append("  }");
-    }
-
-    private static void saveToEncryptedFile() {
-        StringBuilder builder = new StringBuilder("[\n");
-        for (int i = 0; i < ALL_MESSAGES.size(); i++) {
-            appendMessage(builder, ALL_MESSAGES.get(i));
-            if (i < ALL_MESSAGES.size() - 1) {
-                builder.append(",");
-            }
-            builder.append("\n");
-        }
-        builder.append("]");
-        byte[] keyBytes = getEncryptionKey();
-        byte[] rawBytes = builder.toString().getBytes();
-        byte[] encrypted = new byte[rawBytes.length];
-        for (int i = 0; i < rawBytes.length; i++) {
-            encrypted[i] = (byte) (rawBytes[i] ^ keyBytes[i % keyBytes.length]);
-        }
-        try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {
-            fos.write(encrypted);
-        } catch (IOException ex) {
-            System.err.println("Error saving mail data: " + ex.getMessage());
-        }
-    }
-
-    private static void loadFromEncryptedFile() {
-        File file = new File(FILE_PATH);
-        if (!file.exists()) {
-            return;
-        }
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] encrypted = fis.readAllBytes();
-            byte[] keyBytes = getEncryptionKey();
-            byte[] decrypted = new byte[encrypted.length];
-            for (int i = 0; i < encrypted.length; i++) {
-                decrypted[i] = (byte) (encrypted[i] ^ keyBytes[i % keyBytes.length]);
-            }
-            parseMailJson(new String(decrypted));
-        } catch (IOException ex) {
-            System.err.println("Error loading mail data: " + ex.getMessage());
-        }
-    }
-
-    private static void parseMailJson(String raw) {
-        ALL_MESSAGES.clear();
-        String clean = raw.replace("[", "").replace("]", "").trim();
-        if (clean.isEmpty()) {
-            return;
-        }
-        String[] blocks = clean.split("\\},");
-        for (String block : blocks) {
-            String obj = block.replace("{", "").replace("}", "").trim();
-            if (obj.contains("\"" + KEY_ID + "\":")) {
-                ALL_MESSAGES.add(reconstructMessage(obj));
-            }
-        }
-    }
-
-    private static MailMessage reconstructMessage(String obj) {
-        String recipient = extract(obj, KEY_EMAIL);
-        String subject = extract(obj, KEY_SUBJECT);
-        String body = extract(obj, KEY_BODY);
-        MessageType type = MessageType.fromLabel(extract(obj, KEY_TYPE));
-        MailMessage message = new MailMessage(recipient, subject, body, type);
-        message.setMessageId(extract(obj, KEY_ID));
-        message.setSentDate(extract(obj, KEY_DATE));
-        message.setRead(Boolean.parseBoolean(extract(obj, KEY_READ)));
-        return message;
-    }
-
-    private static String extract(String src, String key) {
-        String token = "\"" + key + "\": \"";
-        int start = src.indexOf(token);
-        if (start == -1) {
-            return "";
-        }
-        start += token.length();
-        return src.substring(start, src.indexOf("\"", start));
     }
 }

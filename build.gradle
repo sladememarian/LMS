@@ -19,6 +19,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.postgresql:postgresql:42.7.4'
+    testRuntimeOnly 'com.h2database:h2:2.2.224'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'net.sourceforge.pmd:pmd-java:6.55.0'
@@ -30,8 +32,15 @@ jar {
     manifest {
         attributes 'Main-Class': 'ir.ac.kntu.Main'
     }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 test {
     useJUnitPlatform()
+    environment 'JDBC_URL', 'jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1'
+    environment 'JDBC_USER', 'sa'
+    environment 'JDBC_PASSWORD', ''
 }

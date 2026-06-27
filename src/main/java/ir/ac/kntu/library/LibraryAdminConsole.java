@@ -1,21 +1,16 @@
 package ir.ac.kntu.library;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
 import ir.ac.kntu.report.ReportService;
-import ir.ac.kntu.util.EnvConfig;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
+import ir.ac.kntu.util.DatabaseAccess;
 
 public class LibraryAdminConsole {
-    // with great power comes great responsibility (and debug tools)
     private static final String PROMPT_ITEM_ID = "Item ID: ";
     private static final String REPORT_PATH = "library_financial_report.html";
-    private static final String DB_PATH = "library.enc";
 
     public static void open(Scanner scanner) {
         boolean active = true;
@@ -36,7 +31,7 @@ public class LibraryAdminConsole {
         ConsoleMenu.option("6", "View Companies");
         ConsoleMenu.option("7", "Generate HTML Report");
         ConsoleMenu.option("8", "View Borrow Statistics");
-        ConsoleMenu.option("9", "View Encrypted Database");
+        ConsoleMenu.option("9", "View Database Records");
         ConsoleMenu.option("10", "Debug Tools");
         ConsoleMenu.back();
     }
@@ -147,25 +142,9 @@ public class LibraryAdminConsole {
     }
 
     private static void inspectDatabase() {
-        File file = new File(DB_PATH);
-        System.out.println(ConsoleColor.BOLD + "--- " + DB_PATH + " ---" + ConsoleColor.RESET);
-        if (!file.exists()) {
-            System.out.println(ConsoleColor.gray("  (file does not exist)"));
-            return;
-        }
-        System.out.println("  Size: " + file.length() + " bytes");
-        System.out.println("  Decrypted records in memory: " + LibraryService.getAllItems().size());
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] encryptedData = fis.readAllBytes();
-            byte[] keyBytes = EnvConfig.get("MASTER_ADMIN_DATABASE_PASSWORD", "fallbackKey").getBytes();
-            byte[] decrypted = new byte[encryptedData.length];
-            for (int i = 0; i < encryptedData.length; i++) {
-                decrypted[i] = (byte) (encryptedData[i] ^ keyBytes[i % keyBytes.length]);
-            }
-            System.out.println(new String(decrypted));
-        } catch (IOException ex) {
-            ConsoleColor.printError("Failed to read: " + ex.getMessage());
-        }
+        System.out.println(ConsoleColor.BOLD + "--- Library Database Records ---" + ConsoleColor.RESET);
+        System.out.println("  Library items: " + DatabaseAccess.getAllLibraryItems().size());
+        System.out.println("  Suppliers: " + DatabaseAccess.getAllSuppliers().size());
     }
 
     private static void printDebug() {
