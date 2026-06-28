@@ -49,8 +49,8 @@ class SupportServiceTest {
 
     @Test
     void callCenterLoginValidates() {
-        // callcenter/ccpass: the fort knox of credentials
-        assertTrue(SupportService.validateCallCenterLogin("callcenter", "ccpass"));
-        assertFalse(SupportService.validateCallCenterLogin("callcenter", "wrong"));
+        // callcenter@system.local / ccpass: the fort knox of credentials
+        assertTrue(SupportService.validateCallCenterLogin("callcenter@system.local", "ccpass"));
+        assertFalse(SupportService.validateCallCenterLogin("callcenter@system.local", "wrong"));
     }
 }

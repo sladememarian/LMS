@@ -32,7 +32,7 @@ public class DatabaseAccess {
 
     public static void insertPersona(Persona persona) {
         String email = resolveEmail(persona);
-        Database.withPs("INSERT INTO personas (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (email) DO UPDATE SET username = EXCLUDED.username, password = EXCLUDED.password, role = EXCLUDED.role, member_id = EXCLUDED.member_id, wallet_balance = EXCLUDED.wallet_balance, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, phone = EXCLUDED.phone, theme = EXCLUDED.theme", ps -> {
+        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme)", ps -> {
             ps.setString(1, email);
             ps.setString(2, persona.getUsername());
             ps.setString(3, persona.getPassword());
@@ -69,9 +69,7 @@ public class DatabaseAccess {
         UserRole role = UserRole.valueOf(rs.getString("role"));
         String memberId = rs.getString("member_id");
         int wallet = rs.getInt("wallet_balance");
-        Persona persona = isSystemEmail(email)
-            ? new Persona(null, username, password, role, memberId, wallet)
-            : new Persona(email, username, password, role, memberId, wallet);
+        Persona persona = new Persona(email, username, password, role, memberId, wallet);
         persona.setFirstName(rs.getString("first_name"));
         persona.setLastName(rs.getString("last_name"));
         persona.setPhoneNumber(rs.getString("phone"));
@@ -151,7 +149,7 @@ public class DatabaseAccess {
     }
 
     public static void saveTwoFactorCode(String email, String code, long issuedAt) {
-        Database.withPs("INSERT INTO two_factor_codes (email, code, issued_at) VALUES (?, ?, ?) ON CONFLICT (email) DO UPDATE SET code = EXCLUDED.code, issued_at = EXCLUDED.issued_at", ps -> {
+        Database.withPs("MERGE INTO two_factor_codes USING (VALUES (?, ?, ?)) AS s(email, code, issued_at) ON two_factor_codes.email = s.email WHEN MATCHED THEN UPDATE SET code = s.code, issued_at = s.issued_at WHEN NOT MATCHED THEN INSERT (email, code, issued_at) VALUES (s.email, s.code, s.issued_at)", ps -> {
             ps.setString(1, email.toLowerCase());
             ps.setString(2, code);
             ps.setLong(3, issuedAt);
@@ -204,7 +202,7 @@ public class DatabaseAccess {
     }
 
     public static void insertLoan(Loan loan) {
-        Database.withPs("INSERT INTO loans (member_id, item_id, borrow_day, due_day, last_charged_day) VALUES (?, ?, ?, ?, ?) ON CONFLICT (member_id, item_id) DO UPDATE SET borrow_day = EXCLUDED.borrow_day, due_day = EXCLUDED.due_day, last_charged_day = EXCLUDED.last_charged_day", ps -> {
+        Database.withPs("MERGE INTO loans USING (VALUES (?, ?, ?, ?, ?)) AS s(member_id, item_id, borrow_day, due_day, last_charged_day) ON loans.member_id = s.member_id AND loans.item_id = s.item_id WHEN MATCHED THEN UPDATE SET borrow_day = s.borrow_day, due_day = s.due_day, last_charged_day = s.last_charged_day WHEN NOT MATCHED THEN INSERT (member_id, item_id, borrow_day, due_day, last_charged_day) VALUES (s.member_id, s.item_id, s.borrow_day, s.due_day, s.last_charged_day)", ps -> {
             ps.setString(1, loan.getMemberId());
             ps.setString(2, loan.getItemId());
             ps.setInt(3, loan.getBorrowDay());
@@ -236,7 +234,7 @@ public class DatabaseAccess {
     }
 
     public static void saveClock(int currentDay, LocalDate startDate) {
-        Database.withPs("INSERT INTO clock_state (id, current_day, start_date) VALUES (1, ?, ?) ON CONFLICT (id) DO UPDATE SET current_day = EXCLUDED.current_day, start_date = EXCLUDED.start_date", ps -> {
+        Database.withPs("MERGE INTO clock_state USING (VALUES (1, ?, ?)) AS s(id, current_day, start_date) ON clock_state.id = s.id WHEN MATCHED THEN UPDATE SET current_day = s.current_day, start_date = s.start_date WHEN NOT MATCHED THEN INSERT (id, current_day, start_date) VALUES (s.id, s.current_day, s.start_date)", ps -> {
             ps.setInt(1, currentDay);
             ps.setString(2, startDate.toString());
             ps.executeUpdate();
@@ -257,7 +255,7 @@ public class DatabaseAccess {
     }
 
     public static void insertSupplier(SupplierCompany supplier) {
-        Database.withPs("INSERT INTO suppliers (company_id, company_name) VALUES (?, ?) ON CONFLICT (company_id) DO UPDATE SET company_name = EXCLUDED.company_name", ps -> {
+        Database.withPs("MERGE INTO suppliers USING (VALUES (?, ?)) AS s(company_id, company_name) ON suppliers.company_id = s.company_id WHEN MATCHED THEN UPDATE SET company_name = s.company_name WHEN NOT MATCHED THEN INSERT (company_id, company_name) VALUES (s.company_id, s.company_name)", ps -> {
             ps.setString(1, supplier.getCompanyId());
             ps.setString(2, supplier.getCompanyName());
             ps.executeUpdate();
@@ -274,7 +272,7 @@ public class DatabaseAccess {
     }
 
     public static void insertLibraryItem(LibraryItem item) {
-        Database.withPs("INSERT INTO library_items (item_id, type, title, category, publish_year, supplier_id, total_copies, available_copies, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (item_id) DO UPDATE SET type = EXCLUDED.type, title = EXCLUDED.title, category = EXCLUDED.category, publish_year = EXCLUDED.publish_year, supplier_id = EXCLUDED.supplier_id, total_copies = EXCLUDED.total_copies, available_copies = EXCLUDED.available_copies, unit_price = EXCLUDED.unit_price", ps -> {
+        Database.withPs("MERGE INTO library_items USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(item_id, type, title, category, publish_year, supplier_id, total_copies, available_copies, unit_price) ON library_items.item_id = s.item_id WHEN MATCHED THEN UPDATE SET type = s.type, title = s.title, category = s.category, publish_year = s.publish_year, supplier_id = s.supplier_id, total_copies = s.total_copies, available_copies = s.available_copies, unit_price = s.unit_price WHEN NOT MATCHED THEN INSERT (item_id, type, title, category, publish_year, supplier_id, total_copies, available_copies, unit_price) VALUES (s.item_id, s.type, s.title, s.category, s.publish_year, s.supplier_id, s.total_copies, s.available_copies, s.unit_price)", ps -> {
             ps.setString(1, item.getItemId());
             ps.setString(2, item.getItemType());
             ps.setString(3, item.getTitle());
@@ -335,7 +333,7 @@ public class DatabaseAccess {
     }
 
     public static void insertSupportTicket(SupportTicket ticket) {
-        Database.withPs("INSERT INTO support_tickets (ticket_id, user_id, title, description, category, priority, status, response) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (ticket_id) DO UPDATE SET user_id = EXCLUDED.user_id, title = EXCLUDED.title, description = EXCLUDED.description, category = EXCLUDED.category, priority = EXCLUDED.priority, status = EXCLUDED.status, response = EXCLUDED.response", ps -> {
+        Database.withPs("MERGE INTO support_tickets USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?)) AS s(ticket_id, user_id, title, description, category, priority, status, response) ON support_tickets.ticket_id = s.ticket_id WHEN MATCHED THEN UPDATE SET user_id = s.user_id, title = s.title, description = s.description, category = s.category, priority = s.priority, status = s.status, response = s.response WHEN NOT MATCHED THEN INSERT (ticket_id, user_id, title, description, category, priority, status, response) VALUES (s.ticket_id, s.user_id, s.title, s.description, s.category, s.priority, s.status, s.response)", ps -> {
             ps.setString(1, ticket.getTicketId());
             ps.setString(2, ticket.getUserId());
             ps.setString(3, ticket.getTitle());
@@ -382,7 +380,7 @@ public class DatabaseAccess {
     }
 
     public static void insertRoleRequest(RoleRequest request) {
-        Database.withPs("INSERT INTO role_requests (request_id, requester_email, requested_role, message, status) VALUES (?, ?, ?, ?, ?) ON CONFLICT (request_id) DO UPDATE SET requester_email = EXCLUDED.requester_email, requested_role = EXCLUDED.requested_role, message = EXCLUDED.message, status = EXCLUDED.status", ps -> {
+        Database.withPs("MERGE INTO role_requests USING (VALUES (?, ?, ?, ?, ?)) AS s(request_id, requester_email, requested_role, message, status) ON role_requests.request_id = s.request_id WHEN MATCHED THEN UPDATE SET requester_email = s.requester_email, requested_role = s.requested_role, message = s.message, status = s.status WHEN NOT MATCHED THEN INSERT (request_id, requester_email, requested_role, message, status) VALUES (s.request_id, s.requester_email, s.requested_role, s.message, s.status)", ps -> {
             ps.setString(1, request.getRequestId());
             ps.setString(2, request.getRequesterEmail());
             ps.setString(3, request.getRequestedRole());

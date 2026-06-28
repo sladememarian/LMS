@@ -11,8 +11,6 @@ import ir.ac.kntu.mail.Inbox;
 import ir.ac.kntu.mail.MailMessage;
 import ir.ac.kntu.mail.MailService;
 import ir.ac.kntu.persona.Persona;
-import ir.ac.kntu.persona.PersonaService;
-import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.sso.SessionManager;
 import ir.ac.kntu.sso.SsoController;
 import ir.ac.kntu.support.SupportConsole;
@@ -102,36 +100,11 @@ public class Main {
 
     private static void supportEntry(Scanner scanner) {
         Persona current = Persona.getCurrentUser();
-        if (current != null && current.getEmail() != null && isMember(current)) {
-            SupportConsole.open(scanner);
-        } else {
-            staffConsole(scanner);
-        }
-    }
-
-    private static boolean isMember(Persona persona) {
-        return persona.getRole() == UserRole.GUEST
-                || persona.getRole() == UserRole.STUDENT
-                || persona.getRole() == UserRole.TEACHER;
-    }
-
-    private static void staffConsole(Scanner scanner) {
-        System.out.print("Staff Username: ");
-        String username = scanner.nextLine().trim();
-        System.out.print("Staff Password: ");
-        String password = scanner.nextLine().trim();
-        Persona staff = PersonaService.getProfileByUsername(username);
-        if (staff == null || !staff.getPassword().equals(password) || !isStaff(staff)) {
-            ConsoleColor.printError("Invalid staff credentials.");
+        if (current == null) {
+            ConsoleColor.printError("Please log in first using option 2 from the main menu.");
             return;
         }
-        Persona.setCurrentUser(staff);
-        ConsoleColor.printSuccess("Authenticated as " + staff.getRole().name() + ".");
         SupportConsole.open(scanner);
-    }
-
-    private static boolean isStaff(Persona staff) {
-        return staff.getRole() == UserRole.ADMIN || staff.getRole() == UserRole.CALLCENTER;
     }
 
     private static void printHeader() {

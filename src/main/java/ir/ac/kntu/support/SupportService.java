@@ -20,10 +20,12 @@ public class SupportService {
         Collections.sort(TICKETS);
     }
 
-    public static boolean validateCallCenterLogin(String username, String password) {
-        Persona profile = PersonaService.getProfileByUsername(username);
-
-        if (profile != null && profile.getPassword().equals(password) && profile.getRole() == UserRole.CALLCENTER) {
+    public static boolean validateCallCenterLogin(String email, String password) {
+        if (!PersonaService.validateCredentials(email, password)) {
+            return false;
+        }
+        Persona profile = PersonaService.getProfile(email);
+        if (profile != null && profile.getRole() == UserRole.CALLCENTER) {
             Persona.setCurrentUser(profile);
             return true;
         }

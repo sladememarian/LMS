@@ -27,9 +27,11 @@ class ReportServiceTest {
         // Not authorized? No report. Authorized? Here's a PDF.
         Persona.setCurrentUser(null);
         assertFalse(ReportService.isAuthorized());
-        Persona.setCurrentUser(PersonaService.getProfileByUsername("admin"));
+        PersonaService.validateCredentials("admin@system.local", "adminpass");
+        Persona.setCurrentUser(PersonaService.getProfile("admin@system.local"));
         assertTrue(ReportService.isAuthorized());
-        Persona.setCurrentUser(PersonaService.getProfileByUsername("callcenter"));
+        PersonaService.validateCredentials("callcenter@system.local", "ccpass");
+        Persona.setCurrentUser(PersonaService.getProfile("callcenter@system.local"));
         assertTrue(ReportService.isAuthorized());
         String email = "rep_" + System.nanoTime() + "@test.com";
         PersonaService.registerPersona(email, "Passw0rd!");
@@ -71,7 +73,8 @@ class ReportServiceTest {
     @Test
     void exportWritesFileWhenAuthorized() {
         // With auth comes great file-writing power
-        Persona.setCurrentUser(PersonaService.getProfileByUsername("admin"));
+        PersonaService.validateCredentials("admin@system.local", "adminpass");
+        Persona.setCurrentUser(PersonaService.getProfile("admin@system.local"));
         String path = ReportService.exportReport("build/test_financial_report.html");
         assertTrue(new File(path).exists());
     }

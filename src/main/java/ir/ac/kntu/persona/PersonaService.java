@@ -12,10 +12,8 @@ public class PersonaService {
     static {
         PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
 
-        String defaultCcUser = EnvConfig.get("DEFAULT_CALLCENTER_USERNAME", "callcenter");
-        String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
-        String defaultAdminUser = EnvConfig.get("DEFAULT_ADMIN_USERNAME", "admin");
         String defaultAdminPass = EnvConfig.get("DEFAULT_ADMIN_PASSWORD", "adminpass");
+        String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
 
         boolean hasAdmin = false;
         boolean hasCallcenter = false;
@@ -28,12 +26,14 @@ public class PersonaService {
             }
         }
         if (!hasAdmin) {
-            Persona admin = new Persona(defaultAdminUser, defaultAdminPass, UserRole.ADMIN);
+            Persona admin = new Persona("admin@system.local", defaultAdminPass);
+            admin.updateRole(UserRole.ADMIN);
             PERSONA_DATABASE.add(admin);
             DatabaseAccess.insertPersona(admin);
         }
         if (!hasCallcenter) {
-            Persona cc = new Persona(defaultCcUser, defaultCcPass, UserRole.CALLCENTER);
+            Persona cc = new Persona("callcenter@system.local", defaultCcPass);
+            cc.updateRole(UserRole.CALLCENTER);
             PERSONA_DATABASE.add(cc);
             DatabaseAccess.insertPersona(cc);
         }

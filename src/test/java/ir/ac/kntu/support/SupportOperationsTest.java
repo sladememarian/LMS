@@ -35,7 +35,8 @@ class SupportOperationsTest {
         book.setTotalCopies(2);
         book.setAvailableCopies(2);
         book.setUnitPrice(50);
-        Persona callCenter = PersonaService.getProfileByUsername("callcenter");
+        PersonaService.validateCredentials("callcenter@system.local", "ccpass");
+        Persona callCenter = PersonaService.getProfile("callcenter@system.local");
         Persona.setCurrentUser(callCenter);
         assertTrue(SupportService.addLibraryItemViaSupport(book));
         assertNotNull(LibraryService.getItemById(book.getItemId()));
