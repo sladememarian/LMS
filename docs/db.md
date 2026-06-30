@@ -1,8 +1,8 @@
 # Database Layer
 
 All XOR-encrypted file persistence has been replaced with a relational database.
-The app supports **PostgreSQL** (production, via Docker Compose) and **H2** (in-memory,
-default for tests and when no `JDBC_*` environment variables are set).
+The app uses **PostgreSQL** (production, via Docker Compose) and **H2** (in-memory,
+for JUnit tests only — Gradle automatically injects the H2 URL during test runs).
 
 ---
 
@@ -31,9 +31,17 @@ docker-compose up
             initTables() → CREATE TABLE IF NOT EXISTS … (11 tables)
 ```
 
-When running **without** Docker (e.g. during development or tests), no env vars
-are set, so the code defaults to H2 in-memory:
-`jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1`.
+When running **tests** (`./gradlew test`), Gradle injects the H2 URL automatically
+via the `test { environment … }` block in `build.gradle` — no manual setup needed.
+
+When running **locally outside Docker** (e.g. `java -jar app.jar`), you must point
+the app at your Docker PostgreSQL by creating a `.env` file:
+```
+JDBC_URL=jdbc:postgresql://localhost:5432/lms
+JDBC_USER=lms
+JDBC_PASSWORD=lms
+```
+Without any configuration, the app throws: `JDBC_URL is not configured`.
 
 Two classes in `ir.ac.kntu.util` implement the data layer:
 
@@ -92,10 +100,9 @@ getConnection()
   │
   └─ resolve JDBC_URL, JDBC_USER, JDBC_PASSWORD:
        │
-       ├─ System.getenv("JDBC_URL") set? → use it
-       ├─ .env file has JDBC_URL? → use it
-       └─ neither set → H2 in-memory default
-            jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+       ├─ System.getenv("JDBC_URL") set? → use it   (tests: Gradle injects H2 URL)
+       ├─ .env file has JDBC_URL? → use it           (local dev: points to localhost)
+       └─ neither set → throws DatabaseException: "JDBC_URL is not configured"
        │
        └─ DriverManager.getConnection(url, user, password)
             │
@@ -106,7 +113,7 @@ getConnection()
 
 | Variable | Default | When to set |
 |----------|---------|-------------|
-| `JDBC_URL` | `jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1` | Docker Compose sets this to `jdbc:postgresql://db:5432/lms` |
+| `JDBC_URL` | none — throws an error if missing | Docker Compose: `jdbc:postgresql://db:5432/lms`; Tests (auto): `jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1`; Local dev: set in `.env` |
 | `JDBC_USER` | `sa` | Docker Compose sets this to `lms` |
 | `JDBC_PASSWORD` | `` (empty) | Docker Compose sets this to `lms` |
 
@@ -399,22 +406,27 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ### How to run with Docker
 
 ```bash
-# 1. Build the jar
-./gradlew build
+# Build the image and start both db + app together
+docker compose up --build
 
-# 2. Start everything
-docker-compose up --build
+# Or run the app interactively (keeps stdin open for the menu)
+docker compose run app
 
-# 3. The app connects to PostgreSQL at jdbc:postgresql://db:5432/lms
-#    Schema is auto-created on first connection.
+# The app connects to PostgreSQL at jdbc:postgresql://db:5432/lms
+# Schema is auto-created on first connection.
 ```
+
+> The Docker image builds its own JAR internally (see Dockerfile). Running
+> `./gradlew build` beforehand is only needed if you want a local JAR — it is
+> not required for Docker.
 
 ---
 
 ## Testing — H2 In-Memory
 
-When no `JDBC_*` environment variables are set, the app uses an H2 in-memory
-database running in PostgreSQL compatibility mode:
+During `./gradlew test`, Gradle injects these environment variables into the test JVM
+(defined in `build.gradle`), pointing at an H2 in-memory database in PostgreSQL
+compatibility mode:
 
 ```
 jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
@@ -431,8 +443,8 @@ Key points:
 
 ```groovy
 dependencies {
-    implementation 'org.postgresql:postgresql:42.7.4'   // production
-    testImplementation 'com.h2database:h2:2.2.224'      // tests
+    implementation    'org.postgresql:postgresql:42.7.4'  // production
+    testRuntimeOnly   'com.h2database:h2:2.2.224'         // tests only — not in production classpath
 }
 ```
 

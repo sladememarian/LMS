@@ -15,24 +15,16 @@ public class Database {
 
     private static Connection connection;
 
-    static {
-        try {
-            Class.forName("org.h2.Driver");
-        } catch (ClassNotFoundException ignored) {
-        }
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException ignored) {
-        }
-    }
-
     public static synchronized Connection getConnection() {
         if (connection != null) {
             return connection;
         }
         String url = resolveDbConfig("JDBC_URL", null);
         if (url == null) {
-            throw new DatabaseException("JDBC_URL is not configured. Set it as an environment variable or in .env", null);
+            throw new DatabaseException(
+                "JDBC_URL is not configured. Set it as an environment variable or in .env",
+                null
+            );
         }
         String user = resolveDbConfig("JDBC_USER", "sa");
         String password = resolveDbConfig("JDBC_PASSWORD", "");
@@ -40,7 +32,10 @@ public class Database {
             connection = DriverManager.getConnection(url, user, password);
             initTables();
         } catch (SQLException e) {
-            throw new DatabaseException("Failed to connect to database: " + e.getMessage(), e);
+            throw new DatabaseException(
+                "Failed to connect to database: " + e.getMessage(),
+                e
+            );
         }
         return connection;
     }
@@ -57,8 +52,7 @@ public class Database {
         if (connection != null) {
             try {
                 connection.close();
-            } catch (SQLException ignored) {
-            }
+            } catch (SQLException ignored) {}
             connection = null;
         }
     }
@@ -80,7 +74,7 @@ public class Database {
         "CREATE TABLE IF NOT EXISTS suppliers (company_id VARCHAR(50) PRIMARY KEY, company_name VARCHAR(255) NOT NULL)",
         "CREATE TABLE IF NOT EXISTS library_items (item_id VARCHAR(50) PRIMARY KEY, type VARCHAR(50) NOT NULL, title VARCHAR(500) NOT NULL, category VARCHAR(255), publish_year INTEGER, supplier_id VARCHAR(50), total_copies INTEGER DEFAULT 0, available_copies INTEGER DEFAULT 0, unit_price INTEGER DEFAULT 0)",
         "CREATE TABLE IF NOT EXISTS support_tickets (ticket_id VARCHAR(50) PRIMARY KEY, user_id VARCHAR(50), title VARCHAR(500), description TEXT, category VARCHAR(100), priority VARCHAR(50), status VARCHAR(50), response TEXT)",
-        "CREATE TABLE IF NOT EXISTS role_requests (request_id VARCHAR(50) PRIMARY KEY, requester_email VARCHAR(255), requested_role VARCHAR(50), message TEXT, status VARCHAR(50) DEFAULT 'PENDING')"
+        "CREATE TABLE IF NOT EXISTS role_requests (request_id VARCHAR(50) PRIMARY KEY, requester_email VARCHAR(255), requested_role VARCHAR(50), message TEXT, status VARCHAR(50) DEFAULT 'PENDING')",
     };
 
     public static void executeUpdate(String sql) {
@@ -109,7 +103,10 @@ public class Database {
 
     public static <T> List<T> queryAll(String sql, RowMapper<T> mapper) {
         List<T> result = new ArrayList<>();
-        try (Statement stmt = getConnection().createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (
+            Statement stmt = getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery(sql)
+        ) {
             while (rs.next()) {
                 result.add(mapper.map(rs));
             }
@@ -124,7 +121,11 @@ public class Database {
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public static <T> T queryPrepared(String sql, SqlRunner binder, RowMapper<T> mapper) {
+    public static <T> T queryPrepared(
+        String sql,
+        SqlRunner binder,
+        RowMapper<T> mapper
+    ) {
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             binder.run(ps);
             try (ResultSet rs = ps.executeQuery()) {
