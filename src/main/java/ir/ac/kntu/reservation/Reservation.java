@@ -12,7 +12,7 @@ public class Reservation {
     private String status;
 
     public Reservation(String reservationId, String memberId, String itemId,
-                       int reservedOnDay, int expiresOnDay) {
+            int reservedOnDay, int expiresOnDay) {
         this.reservationId = reservationId;
         this.memberId = memberId;
         this.itemId = itemId;
