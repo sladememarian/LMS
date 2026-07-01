@@ -1,25 +1,39 @@
 package ir.ac.kntu.sso;
 
-import ir.ac.kntu.iam.IamService;
-import ir.ac.kntu.iam.UserCredentials;
-import ir.ac.kntu.persona.Persona;
-import ir.ac.kntu.persona.PersonaService;
-import ir.ac.kntu.sso.SsoService;
-import ir.ac.kntu.sso.SessionManager;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ir.ac.kntu.exception.InvalidPasswordException;
+import ir.ac.kntu.exception.InvalidPhoneFormatException;
+import ir.ac.kntu.exception.InvalidThemeException;
+import ir.ac.kntu.exception.UserNotFoundException;
+import ir.ac.kntu.exception.ValidationException;
+import ir.ac.kntu.iam.IamService;
+import ir.ac.kntu.iam.UserCredentials;
+import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.sso.SessionManager;
+import ir.ac.kntu.sso.SsoService;
+import org.junit.jupiter.api.Test;
+
 class SsoServiceTest {
+
     // SSO: one ring to log them all
 
     private String register() {
         String email = "sso_" + System.nanoTime() + "@test.com";
-        IamService.registerUser(new UserCredentials(email, "Passw0rd!", "First", "Last", "09120000000"));
+        IamService.registerUser(
+            new UserCredentials(
+                email,
+                "Passw0rd!",
+                "First",
+                "Last",
+                "09120000000"
+            )
+        );
         return email;
     }
 
@@ -47,17 +61,31 @@ class SsoServiceTest {
     void editProfileRejectsInvalidPhone() {
         // "not-a-phone" - well actually it's a string
         String email = register();
-        assertThrows(IllegalArgumentException.class,
-                () -> SsoService.editProfile(email, "X", "Y", "not-a-phone"));
+        assertThrows(InvalidPhoneFormatException.class, () ->
+            SsoService.editProfile(email, "X", "Y", "not-a-phone")
+        );
     }
 
     @Test
     void changePasswordRequiresMatchingConfirm() {
         // Passwords must match. Computers are literal.
         String email = register();
-        assertThrows(IllegalArgumentException.class,
-                () -> SsoService.changePassword(email, "Passw0rd!", "Newpass1!", "Mismatch1!"));
-        assertTrue(SsoService.changePassword(email, "Passw0rd!", "Newpass1!", "Newpass1!"));
+        assertThrows(InvalidPasswordException.class, () ->
+            SsoService.changePassword(
+                email,
+                "Passw0rd!",
+                "Newpass1!",
+                "Mismatch1!"
+            )
+        );
+        assertTrue(
+            SsoService.changePassword(
+                email,
+                "Passw0rd!",
+                "Newpass1!",
+                "Newpass1!"
+            )
+        );
     }
 
     @Test
@@ -66,7 +94,9 @@ class SsoServiceTest {
         String email = register();
         SsoService.changeTheme(email, "dark");
         assertEquals("DARK", SsoService.getTheme(email));
-        assertThrows(IllegalArgumentException.class, () -> SsoService.changeTheme(email, "NEON"));
+        assertThrows(InvalidThemeException.class, () ->
+            SsoService.changeTheme(email, "NEON")
+        );
     }
 
     @Test
@@ -84,6 +114,18 @@ class SsoServiceTest {
     @Test
     void createSessionRejectsNull() {
         // Throws on null: protecting the world from NullPointerException one session at a time
-        assertThrows(IllegalArgumentException.class, () -> SessionManager.createSession(null));
+        assertThrows(ValidationException.class, () ->
+            SessionManager.createSession(null)
+        );
+    }
+
+    @Test
+    void viewProfileForUnknownEmailThrowsUserNotFoundException() {
+        // No account, no profile to view
+        assertThrows(UserNotFoundException.class, () ->
+            SsoService.viewProfile(
+                "ghost_" + System.nanoTime() + "@nowhere.com"
+            )
+        );
     }
 }

@@ -1,14 +1,17 @@
 package ir.ac.kntu.iam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
+import ir.ac.kntu.exception.BaseException;
+import ir.ac.kntu.exception.InvalidCredentialsException;
+import ir.ac.kntu.exception.InvalidPasswordException;
+import ir.ac.kntu.exception.InvalidVerificationCodeException;
 import ir.ac.kntu.mail.MailService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.Validator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class IamService {
 
@@ -24,8 +27,14 @@ public class IamService {
 
     public static void signUpMenu(Scanner scanner) {
         // step 1: collect data, step 2: pretend it's secure
-        System.out.println(ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET);
-        System.out.println(ConsoleColor.BOLD + "            REGISTRATION PORTAL               " + ConsoleColor.RESET);
+        System.out.println(
+            ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET
+        );
+        System.out.println(
+            ConsoleColor.BOLD +
+                "            REGISTRATION PORTAL               " +
+                ConsoleColor.RESET
+        );
         System.out.println(ConsoleColor.CYAN + DIVIDER + ConsoleColor.RESET);
 
         System.out.print("First Name (or 0 to go back): ");
@@ -43,7 +52,11 @@ public class IamService {
         scanner.nextLine();
     }
 
-    private static void registerLoop(Scanner scanner, String firstName, String lastName) {
+    private static void registerLoop(
+        Scanner scanner,
+        String firstName,
+        String lastName
+    ) {
         while (true) {
             try {
                 System.out.print("Email (or 0 to cancel): ");
@@ -58,10 +71,20 @@ public class IamService {
                 System.out.print("Password: ");
                 String password = scanner.nextLine().trim();
 
-                registerUser(new UserCredentials(email, password, firstName, lastName, phoneNumber));
-                ConsoleColor.printSuccess("Registration successful! A welcome email is in your inbox.");
+                registerUser(
+                    new UserCredentials(
+                        email,
+                        password,
+                        firstName,
+                        lastName,
+                        phoneNumber
+                    )
+                );
+                ConsoleColor.printSuccess(
+                    "Registration successful! A welcome email is in your inbox."
+                );
                 break;
-            } catch (IllegalArgumentException ex) {
+            } catch (BaseException ex) {
                 ConsoleColor.printError(ex.getMessage());
             }
         }
@@ -71,13 +94,24 @@ public class IamService {
         DATABASE.add(user);
         String email = user.getEmail();
         PersonaService.registerPersona(email, user.getPassword());
-        PersonaService.updateProfile(email, user.getFirstName(), user.getLastName(), user.getPhoneNumber());
+        PersonaService.updateProfile(
+            email,
+            user.getFirstName(),
+            user.getLastName(),
+            user.getPhoneNumber()
+        );
         MailService.sendWelcome(email);
     }
 
     public static void loginMenu(Scanner scanner) {
-        System.out.println(ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET);
-        System.out.println(ConsoleColor.BOLD + "                LOGIN PORTAL                  " + ConsoleColor.RESET);
+        System.out.println(
+            ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET
+        );
+        System.out.println(
+            ConsoleColor.BOLD +
+                "                LOGIN PORTAL                  " +
+                ConsoleColor.RESET
+        );
         System.out.println(ConsoleColor.CYAN + DIVIDER + ConsoleColor.RESET);
 
         while (true) {
@@ -90,12 +124,22 @@ public class IamService {
             System.out.print("Password: ");
             String password = scanner.nextLine().trim();
 
-            if (PersonaService.validateCredentials(email, password) && performTwoFactor(scanner, email)) {
-                Persona.setCurrentUser(PersonaService.getProfile(email));
-                ConsoleColor.printSuccess("Login successful! Welcome to the portal.");
-                break;
+            try {
+                if (!PersonaService.validateCredentials(email, password)) {
+                    throw new InvalidCredentialsException(
+                        "Incorrect email or password."
+                    );
+                }
+                if (performTwoFactor(scanner, email)) {
+                    Persona.setCurrentUser(PersonaService.getProfile(email));
+                    ConsoleColor.printSuccess(
+                        "Login successful! Welcome to the portal."
+                    );
+                    break;
+                }
+            } catch (BaseException ex) {
+                ConsoleColor.printError(ex.getMessage());
             }
-            ConsoleColor.printError("Login failed. Please try again.");
         }
         System.out.println(ConsoleColor.gray(BACK_TO_MENU));
         scanner.nextLine();
@@ -105,10 +149,26 @@ public class IamService {
         String code = MailService.deliver2FACode(email);
         System.out.println();
         ConsoleColor.printSuccess("=== MAIL NOTIFICATION ===");
-        System.out.println(ConsoleColor.BOLD + "  From: " + MailService.getSystemName() + ConsoleColor.RESET);
-        System.out.println(ConsoleColor.BOLD + "  Subject: Your 2FA Verification Code" + ConsoleColor.RESET);
-        System.out.println(ConsoleColor.BOLD + "  Body: Your verification code is " + code
-                + ". It expires in " + MailService.getExpireMinutes() + " minutes." + ConsoleColor.RESET);
+        System.out.println(
+            ConsoleColor.BOLD +
+                "  From: " +
+                MailService.getSystemName() +
+                ConsoleColor.RESET
+        );
+        System.out.println(
+            ConsoleColor.BOLD +
+                "  Subject: Your 2FA Verification Code" +
+                ConsoleColor.RESET
+        );
+        System.out.println(
+            ConsoleColor.BOLD +
+                "  Body: Your verification code is " +
+                code +
+                ". It expires in " +
+                MailService.getExpireMinutes() +
+                " minutes." +
+                ConsoleColor.RESET
+        );
         ConsoleColor.printSuccess("=========================");
         System.out.println();
         System.out.print("Enter the 2FA code (or 'quit'): ");
@@ -116,19 +176,28 @@ public class IamService {
         if ("quit".equalsIgnoreCase(input)) {
             return false;
         }
-        if (MailService.verifyCode(email, input)) {
-            return true;
+        if (!MailService.verifyCode(email, input)) {
+            throw new InvalidVerificationCodeException(
+                "Invalid or expired 2FA code."
+            );
         }
-        ConsoleColor.printError("Invalid or expired 2FA code.");
-        return false;
+        return true;
     }
 
-    public static boolean changePassword(String email, String currentPassword, String newPassword) {
+    public static boolean changePassword(
+        String email,
+        String currentPassword,
+        String newPassword
+    ) {
         if (!PersonaService.validateCredentials(email, currentPassword)) {
-            throw new IllegalArgumentException("Current password is incorrect");
+            throw new InvalidCredentialsException(
+                "Current password is incorrect"
+            );
         }
         if (!Validator.isValidPassword(newPassword)) {
-            throw new IllegalArgumentException("New password does not meet the security policy");
+            throw new InvalidPasswordException(
+                "New password does not meet the security policy"
+            );
         }
         boolean updated = PersonaService.updatePassword(email, newPassword);
         if (updated) {

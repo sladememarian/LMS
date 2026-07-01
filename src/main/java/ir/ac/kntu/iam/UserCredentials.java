@@ -1,8 +1,10 @@
 package ir.ac.kntu.iam;
 
-import java.util.Objects;
-
+import ir.ac.kntu.exception.InvalidEmailFormatException;
+import ir.ac.kntu.exception.InvalidPasswordException;
+import ir.ac.kntu.exception.InvalidPhoneFormatException;
 import ir.ac.kntu.util.Validator;
+import java.util.Objects;
 
 public class UserCredentials {
 
@@ -12,15 +14,25 @@ public class UserCredentials {
     private final String email;
     private String password;
 
-    public UserCredentials(String email, String password, String firstName, String lastName, String phoneNumber) {
+    public UserCredentials(
+        String email,
+        String password,
+        String firstName,
+        String lastName,
+        String phoneNumber
+    ) {
         if (!Validator.isValidEmail(email)) {
-            throw new IllegalArgumentException("Invalid email format");
+            throw new InvalidEmailFormatException("Invalid email format");
         }
         if (!Validator.isValidPassword(password)) {
-            throw new IllegalArgumentException("Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character");
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character"
+            );
         }
         if (!Validator.isValidPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("Invalid phone number format");
+            throw new InvalidPhoneFormatException(
+                "Invalid phone number format"
+            );
         }
         this.email = email;
         this.password = password;
@@ -51,14 +63,18 @@ public class UserCredentials {
 
     public void setPassword(String password) {
         if (!Validator.isValidPassword(password)) {
-            throw new IllegalArgumentException("[SECURITY ERROR]Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character");
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character"
+            );
         }
         this.password = password;
     }
 
     public void setPhoneNumber(String phoneNumber) {
         if (!Validator.isValidPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("[VALIDATION ERROR]Invalid phone number format");
+            throw new InvalidPhoneFormatException(
+                "Invalid phone number format"
+            );
         }
         this.phoneNumber = phoneNumber;
     }
@@ -100,6 +116,4 @@ public class UserCredentials {
         }
         return Objects.equals(this.password, other.password);
     }
-
-    
 }

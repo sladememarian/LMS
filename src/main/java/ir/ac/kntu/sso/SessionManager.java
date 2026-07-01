@@ -1,10 +1,11 @@
 package ir.ac.kntu.sso;
 
+import ir.ac.kntu.exception.ValidationException;
+import ir.ac.kntu.persona.Persona;
 import java.time.LocalDateTime;
 
-import ir.ac.kntu.persona.Persona;
-
 public class SessionManager {
+
     // holding sessions like my browser holds tabs - too many
     private static String currentEmail;
     private static String sessionToken;
@@ -12,9 +13,14 @@ public class SessionManager {
 
     public static void createSession(Persona persona) {
         if (persona == null) {
-            throw new IllegalArgumentException("Cannot create a session for a null user");
+            throw new ValidationException(
+                "Cannot create a session for a null user"
+            );
         }
-        currentEmail = persona.getEmail() != null ? persona.getEmail() : persona.getUsername();
+        currentEmail =
+            persona.getEmail() != null
+                ? persona.getEmail()
+                : persona.getUsername();
         sessionToken = "SES-" + ((int) (Math.random() * 900_000) + 100_000);
         loginTime = LocalDateTime.now();
         Persona.setCurrentUser(persona);

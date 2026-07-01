@@ -1,19 +1,27 @@
 package ir.ac.kntu.persona;
 
+import ir.ac.kntu.exception.DuplicateEmailException;
+import ir.ac.kntu.exception.UserNotFoundException;
+import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.EnvConfig;
 import java.util.ArrayList;
 import java.util.List;
 
-import ir.ac.kntu.util.DatabaseAccess;
-import ir.ac.kntu.util.EnvConfig;
-
 public class PersonaService {
+
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
 
     static {
         PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
 
-        String defaultAdminPass = EnvConfig.get("DEFAULT_ADMIN_PASSWORD", "adminpass");
-        String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
+        String defaultAdminPass = EnvConfig.get(
+            "DEFAULT_ADMIN_PASSWORD",
+            "adminpass"
+        );
+        String defaultCcPass = EnvConfig.get(
+            "DEFAULT_CALLCENTER_PASSWORD",
+            "ccpass"
+        );
 
         boolean hasAdmin = false;
         boolean hasCallcenter = false;
@@ -40,6 +48,11 @@ public class PersonaService {
     }
 
     public static Persona registerPersona(String email, String password) {
+        if (getProfile(email) != null) {
+            throw new DuplicateEmailException(
+                "An account with email " + email + " already exists."
+            );
+        }
         Persona persona = new Persona(email, password);
         PERSONA_DATABASE.add(persona);
         DatabaseAccess.insertPersona(persona);
@@ -50,8 +63,11 @@ public class PersonaService {
         PERSONA_DATABASE.clear();
         PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
         for (Persona persona : PERSONA_DATABASE) {
-            if (persona.getEmail() != null && persona.getEmail().equalsIgnoreCase(email)
-                    && persona.getPassword().equals(password)) {
+            if (
+                persona.getEmail() != null &&
+                persona.getEmail().equalsIgnoreCase(email) &&
+                persona.getPassword().equals(password)
+            ) {
                 return true;
             }
         }
@@ -60,14 +76,22 @@ public class PersonaService {
 
     public static Persona getProfile(String email) {
         for (Persona persona : PERSONA_DATABASE) {
-            if (persona.getEmail() != null && persona.getEmail().equalsIgnoreCase(email)) {
+            if (
+                persona.getEmail() != null &&
+                persona.getEmail().equalsIgnoreCase(email)
+            ) {
                 return persona;
             }
         }
         return null;
     }
 
-    public static void updateProfile(String email, String firstName, String lastName, String phoneNumber) {
+    public static void updateProfile(
+        String email,
+        String firstName,
+        String lastName,
+        String phoneNumber
+    ) {
         Persona persona = getProfile(email);
         if (persona != null) {
             persona.setFirstName(firstName);
@@ -100,7 +124,9 @@ public class PersonaService {
         if (persona != null) {
             return persona.getWalletBalance();
         }
-        throw new IllegalArgumentException("Persona not found for email: " + email);
+        throw new UserNotFoundException(
+            "Persona not found for email: " + email
+        );
     }
 
     public static void updateWalletBalance(String email, int amount) {
@@ -114,7 +140,10 @@ public class PersonaService {
 
     private static void syncCurrentUserWallet(String email, int newBalance) {
         Persona current = Persona.getCurrentUser();
-        if (email != null && current != null && email.equalsIgnoreCase(current.getEmail())) {
+        if (email == null || current == null) {
+            return;
+        }
+        if (email.equalsIgnoreCase(current.getEmail())) {
             current.setWalletBalance(newBalance);
         }
     }
@@ -122,8 +151,13 @@ public class PersonaService {
     public static void transferToAdmin(int taxAmount) {
         for (Persona persona : PERSONA_DATABASE) {
             if (persona.getRole() == UserRole.ADMIN) {
-                persona.setWalletBalance(persona.getWalletBalance() + taxAmount);
-                syncCurrentUserWallet(persona.getEmail(), persona.getWalletBalance());
+                persona.setWalletBalance(
+                    persona.getWalletBalance() + taxAmount
+                );
+                syncCurrentUserWallet(
+                    persona.getEmail(),
+                    persona.getWalletBalance()
+                );
                 DatabaseAccess.insertPersona(persona);
                 break;
             }
