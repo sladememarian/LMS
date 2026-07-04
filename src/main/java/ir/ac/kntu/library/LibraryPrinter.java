@@ -10,6 +10,7 @@ public class LibraryPrinter {
     private static final String YES = "Yes";
     private static final String NO = "No";
     private static final String LABEL_AVAILABLE = "Available: ";
+    private static final String INDENT = "     ";
     private static final int QUIT = -1;
 
     public static void printList(List<LibraryItem> items, boolean showSupplier) {
@@ -21,11 +22,11 @@ public class LibraryPrinter {
         for (LibraryItem item : items) {
             System.out.println(ConsoleColor.CYAN + "  " + index + ". " + ConsoleColor.RESET
                     + item.getTitle() + ConsoleColor.gray(" [" + item.getItemType() + "]"));
-            System.out.println("     ID: " + item.getItemId());
-            printAuthorLine(item);
-            System.out.println("     " + LABEL_AVAILABLE + availability(item));
+            System.out.println(INDENT + "ID: " + item.getItemId());
+            printDisplayInfo(item);
+            System.out.println(INDENT + LABEL_AVAILABLE + availability(item));
             if (showSupplier) {
-                System.out.println(ConsoleColor.gray("     Supplier: "
+                System.out.println(ConsoleColor.gray(INDENT + "Supplier: "
                         + LibraryService.getSupplierName(item.getSupplierId())));
             }
             index++;
@@ -38,8 +39,10 @@ public class LibraryPrinter {
         System.out.println("  Type: " + item.getItemType());
         System.out.println("  Category: " + item.getCategory());
         System.out.println("  Publish Year: " + item.getPublishYear());
-        printAuthorLine(item);
+        printDisplayInfo(item);
         System.out.println("  " + LABEL_AVAILABLE + availability(item));
+        System.out.println("  Borrow Period: " + item.borrowPeriod() + " day(s)");
+        System.out.println("  Actions: " + String.join(", ", item.availableActions()));
         if (showStats) {
             System.out.println("  Total Copies: " + item.getTotalCopies());
             System.out.println("  Available Copies: " + item.getAvailableCopies());
@@ -51,19 +54,15 @@ public class LibraryPrinter {
         }
     }
 
-    private static void printAuthorLine(LibraryItem item) {
-        if (item instanceof Book) {
-            System.out.println(ConsoleColor.gray("     Author: " + ((Book) item).getAuthor()));
-        } else if (item instanceof AudioBook) {
-            System.out.println(ConsoleColor.gray("     Narrator: " + ((AudioBook) item).getNarrator()));
-        }
+    private static void printDisplayInfo(LibraryItem item) {
+        System.out.println(ConsoleColor.gray(INDENT + item.displayInfo()));
     }
 
     private static void printItemLine(LibraryItem item, int index, boolean showSupplier) {
         System.out.println(ConsoleColor.CYAN + "  " + index + ". " + ConsoleColor.RESET
                 + item.getTitle() + ConsoleColor.gray(" [" + item.getItemType() + "]"));
-        System.out.println("     ID: " + item.getItemId());
-        printAuthorLine(item);
+        System.out.println(INDENT + "ID: " + item.getItemId());
+        printDisplayInfo(item);
         System.out.println("     " + LABEL_AVAILABLE + availability(item));
         if (showSupplier) {
             System.out.println(ConsoleColor.gray("     Supplier: "

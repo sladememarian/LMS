@@ -1,6 +1,6 @@
 package ir.ac.kntu.library;
 
-public class PhysicalItem extends LibraryItem {
+public abstract class PhysicalItem extends LibraryItem {
     // physical things wear out, unlike this comment
     @Override
     public String getItemType() {
@@ -12,6 +12,11 @@ public class PhysicalItem extends LibraryItem {
 
     public PhysicalItem(String id, String ttl, String cat, int yr) {
         super(id, ttl, cat, yr);
+    }
+
+    @Override
+    public boolean canReserve() {
+        return true;
     }
 
     public String getShelfLocation() {

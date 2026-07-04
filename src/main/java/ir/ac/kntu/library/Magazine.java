@@ -1,7 +1,11 @@
 package ir.ac.kntu.library;
 
+import java.util.List;
+
 public class Magazine extends PhysicalItem {
     // periodicals: because news doesn't wait for your attention span
+    private static final int BORROW_PERIOD_DAYS = 7;
+
     private int issueNumber;
 
     public Magazine(String id, String ttl, String cat, int yr) {
@@ -11,6 +15,27 @@ public class Magazine extends PhysicalItem {
     @Override
     public String getItemType() {
         return "MAGAZINE";
+    }
+
+    @Override
+    public boolean canReserve() {
+        // issues go stale fast; queuing for a specific back-issue isn't worth offering
+        return false;
+    }
+
+    @Override
+    public int borrowPeriod() {
+        return BORROW_PERIOD_DAYS;
+    }
+
+    @Override
+    public String displayInfo() {
+        return "Issue #" + issueNumber;
+    }
+
+    @Override
+    public List<String> availableActions() {
+        return baseActions();
     }
 
     public int getIssueNumber() {

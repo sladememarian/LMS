@@ -1,7 +1,11 @@
 package ir.ac.kntu.library;
 
+import java.util.List;
+
 public class Book extends PhysicalItem {
     // pages may vary, sanity not included
+    private static final int BORROW_PERIOD_DAYS = 14;
+
     private String author;
     private String isbn;
 
@@ -12,6 +16,21 @@ public class Book extends PhysicalItem {
     @Override
     public String getItemType() {
         return "BOOK";
+    }
+
+    @Override
+    public int borrowPeriod() {
+        return BORROW_PERIOD_DAYS;
+    }
+
+    @Override
+    public String displayInfo() {
+        return "Author: " + author;
+    }
+
+    @Override
+    public List<String> availableActions() {
+        return baseActions();
     }
 
     public String getAuthor() {

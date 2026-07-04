@@ -9,17 +9,16 @@ import ir.ac.kntu.util.DatabaseAccess;
 
 public class LoanService {
     private static final List<Loan> LOANS = new ArrayList<>();
-    private static final int LOAN_PERIOD_DAYS = 3;
     private static final int OVERDUE_DAILY_FINE = 10_000;
 
     static {
         LOANS.addAll(DatabaseAccess.getAllLoans());
     }
 
-    public static void recordLoan(String memberId, String itemId, int currentDay) {
+    public static void recordLoan(String memberId, String itemId, int currentDay, int loanPeriodDays) {
         LOANS.clear();
         LOANS.addAll(DatabaseAccess.getAllLoans());
-        int dueDay = currentDay + LOAN_PERIOD_DAYS;
+        int dueDay = currentDay + loanPeriodDays;
         LOANS.add(new Loan(memberId, itemId, currentDay, dueDay));
         DatabaseAccess.insertLoan(new Loan(memberId, itemId, currentDay, dueDay));
     }

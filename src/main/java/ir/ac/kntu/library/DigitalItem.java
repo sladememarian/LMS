@@ -1,6 +1,6 @@
 package ir.ac.kntu.library;
 
-public class DigitalItem extends LibraryItem {
+public abstract class DigitalItem extends LibraryItem {
 
     @Override
     public String getItemType() {
@@ -12,6 +12,11 @@ public class DigitalItem extends LibraryItem {
 
     public DigitalItem(String id, String title, String cat, int yr) {
         super(id, title, cat, yr);
+    }
+
+    @Override
+    public boolean canReserve() {
+        return false;
     }
 
     public String getDownloadUrl() {

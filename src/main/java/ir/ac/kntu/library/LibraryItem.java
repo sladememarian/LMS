@@ -1,5 +1,8 @@
 package ir.ac.kntu.library;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class LibraryItem {
 
     private final String itemId;
@@ -71,5 +74,36 @@ public abstract class LibraryItem {
 
     public int getBorrowedCopies() {
         return totalCopies - availableCopies;
+    }
+
+    /**
+     * Whether stock allows another borrow right now. This is per-instance DATA
+     * (how many copies are left), not per-type behavior, so unlike the methods
+     * below it is intentionally NOT abstract/overridden — see docs/step4.md.
+     */
+    public boolean canBorrow() {
+        return availableCopies > 0;
+    }
+
+    /** Whether this item type supports being placed on a reservation queue. */
+    public abstract boolean canReserve();
+
+    /** Loan length in days for this item type. */
+    public abstract int borrowPeriod();
+
+    /** One-line, type-specific detail (e.g. author, narrator, page count). */
+    public abstract String displayInfo();
+
+    /** Actions a member can perform on this item, tailored to its type. */
+    public abstract List<String> availableActions();
+
+    protected List<String> baseActions() {
+        List<String> actions = new ArrayList<>();
+        actions.add("Borrow");
+        actions.add("Return");
+        if (canReserve()) {
+            actions.add("Reserve");
+        }
+        return actions;
     }
 }

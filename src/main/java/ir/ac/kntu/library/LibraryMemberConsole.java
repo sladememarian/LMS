@@ -104,9 +104,10 @@ public class LibraryMemberConsole {
             ConsoleColor.printError("You already have this item.");
             return;
         }
+        LibraryItem item = LibraryService.getItemById(itemId);
         if (LibraryService.executeBorrow(itemId)) {
             PersonaService.recordBorrow(user.getEmail(), itemId);
-            LoanService.recordLoan(user.getMemberId(), itemId, SimulationClock.getCurrentDay());
+            LoanService.recordLoan(user.getMemberId(), itemId, SimulationClock.getCurrentDay(), item.borrowPeriod());
             ConsoleColor.printSuccess("Borrowed " + itemId + ".");
         } else {
             ConsoleColor.printError("Borrow failed (item missing or no copies).");

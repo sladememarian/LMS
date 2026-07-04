@@ -33,7 +33,7 @@ class LoanSimulationTest {
         Persona user = freshUser();
         String memberId = user.getMemberId();
         int day = SimulationClock.getCurrentDay();
-        LoanService.recordLoan(memberId, "ITEM-001", day);
+        LoanService.recordLoan(memberId, "ITEM-001", day, 3);
 
         LoanService.accrueOverdueDebts(day + 3);
         assertEquals(0, FinanceService.getOutstandingDebt(memberId));
@@ -52,7 +52,7 @@ class LoanSimulationTest {
         Persona user = freshUser();
         String memberId = user.getMemberId();
         int day = SimulationClock.getCurrentDay();
-        LoanService.recordLoan(memberId, "ITEM-EXT", day);
+        LoanService.recordLoan(memberId, "ITEM-EXT", day, 3);
 
         assertEquals(day + 3, LoanService.getDueDay(memberId, "ITEM-EXT"));
 
@@ -72,7 +72,7 @@ class LoanSimulationTest {
         Persona user = freshUser();
         String memberId = user.getMemberId();
         int day = SimulationClock.getCurrentDay();
-        LoanService.recordLoan(memberId, "ITEM-002", day);
+        LoanService.recordLoan(memberId, "ITEM-002", day, 3);
         assertTrue(LoanService.clearLoan(memberId, "ITEM-002"));
         LoanService.accrueOverdueDebts(day + 5);
         assertEquals(0, FinanceService.getOutstandingDebt(memberId));
