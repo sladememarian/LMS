@@ -3,6 +3,7 @@ package ir.ac.kntu.support;
 import java.util.Scanner;
 
 import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.UserProfile;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.support.rolerequest.RoleRequestService;
@@ -20,15 +21,15 @@ public class SupportMemberConsole {
     public static void open(Scanner scanner, Persona user) {
         boolean active = true;
         while (active) {
-            printMenu(user.getRole());
+            printMenu(user.getUserProfile());
             String choice = ConsoleMenu.readLine(scanner, ConsoleColor.YELLOW + "Choose: " + ConsoleColor.RESET);
             active = handle(choice, scanner, user);
         }
     }
 
-    private static void printMenu(UserRole role) {
-        ConsoleMenu.banner("SUPPORT DASHBOARD (" + role.name() + ")");
-        if (role == UserRole.GUEST) {
+    private static void printMenu(UserProfile profile) {
+        ConsoleMenu.banner("SUPPORT DASHBOARD (" + profile.dashboardLabel() + ")");
+        if (profile.canRequestRoleUpgrade()) {
             ConsoleMenu.option("1", "Request Student Role");
             ConsoleMenu.option("2", "Request Teacher Role");
         }
@@ -68,7 +69,7 @@ public class SupportMemberConsole {
     }
 
     private static void requestRole(Scanner scanner, Persona user, UserRole role) {
-        if (user.getRole() != UserRole.GUEST) {
+        if (!user.getUserProfile().canRequestRoleUpgrade()) {
             ConsoleColor.printError(GUEST_ONLY);
             return;
         }

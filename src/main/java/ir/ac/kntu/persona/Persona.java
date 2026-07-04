@@ -154,4 +154,18 @@ public class Persona {
     public boolean removeBorrowedItem(String itemId) {
         return borrowedItemIds.remove(itemId);
     }
+
+    /**
+     * Returns the polymorphic profile for this persona's current role.
+     * Use this instead of comparing getRole() == UserRole.X in console code.
+     *
+     * Example:
+     *   // Old (fragile):
+     *   if (user.getRole() != UserRole.GUEST) { showExtendOption(); }
+     *   // New (polymorphic):
+     *   if (user.getUserProfile().canExtend()) { showExtendOption(); }
+     */
+    public UserProfile getUserProfile() {
+        return UserProfile.forRole(this.role);
+    }
 }

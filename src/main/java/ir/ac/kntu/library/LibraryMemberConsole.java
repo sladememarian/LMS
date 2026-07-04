@@ -9,7 +9,7 @@ import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.persona.InventoryConsole;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
-import ir.ac.kntu.persona.UserRole;
+import ir.ac.kntu.persona.UserProfile;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
@@ -22,20 +22,20 @@ public class LibraryMemberConsole {
     public static void open(Scanner scanner, Persona user) {
         boolean active = true;
         while (active) {
-            printMenu(user.getRole());
+            printMenu(user.getUserProfile());
             String choice = ConsoleMenu.readLine(scanner, ConsoleColor.YELLOW + "Choose: " + ConsoleColor.RESET);
             active = handle(choice, scanner, user);
         }
     }
 
-    private static void printMenu(UserRole role) {
-        ConsoleMenu.banner("LIBRARY DASHBOARD (" + role.name() + ")");
+    private static void printMenu(UserProfile profile) {
+        ConsoleMenu.banner("LIBRARY DASHBOARD (" + profile.dashboardLabel() + ")");
         ConsoleMenu.option("1", "Search / Browse Items");
         ConsoleMenu.option("2", "Filter Items");
         ConsoleMenu.option("3", "View Item Details");
         ConsoleMenu.option("4", "Borrow Item");
         ConsoleMenu.option("5", "Return Item");
-        if (role != UserRole.GUEST) {
+        if (profile.canExtend()) {
             ConsoleMenu.option("6", "Extend Return Date");
         }
         ConsoleMenu.option("7", "My Inventory");
@@ -114,8 +114,13 @@ public class LibraryMemberConsole {
     }
 
     private static boolean canBorrow(Persona user) {
-        if (user.getBorrowCount() >= user.getRole().getMaxBorrowLimit()) {
-            ConsoleColor.printError("Borrow limit reached for role " + user.getRole().name() + ".");
+        UserProfile profile = user.getUserProfile();
+        if (!profile.canBorrow()) {
+            ConsoleColor.printError("Your role (" + profile.dashboardLabel() + ") cannot borrow items.");
+            return false;
+        }
+        if (user.getBorrowCount() >= profile.borrowLimit()) {
+            ConsoleColor.printError("Borrow limit reached for role " + profile.dashboardLabel() + ".");
             return false;
         }
         if (!FinanceService.checkBorrowingPermission(user.getMemberId())) {

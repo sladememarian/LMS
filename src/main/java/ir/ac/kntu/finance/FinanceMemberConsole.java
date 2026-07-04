@@ -3,7 +3,7 @@ package ir.ac.kntu.finance;
 import java.util.Scanner;
 
 import ir.ac.kntu.persona.Persona;
-import ir.ac.kntu.persona.UserRole;
+import ir.ac.kntu.persona.UserProfile;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
@@ -15,16 +15,16 @@ public class FinanceMemberConsole {
         boolean active = true;
         while (active) {
             FinancePrinter.printHeader(user);
-            printMenu(user.getRole());
+            printMenu(user.getUserProfile());
             String choice = ConsoleMenu.readLine(scanner, ConsoleColor.YELLOW + "Choose: " + ConsoleColor.RESET);
             active = handle(choice, scanner, user);
         }
     }
 
-    private static void printMenu(UserRole role) {
+    private static void printMenu(UserProfile profile) {
         ConsoleMenu.option("1", "Charge Wallet");
         ConsoleMenu.option("2", "Pay Debt");
-        if (role != UserRole.GUEST) {
+        if (profile.canExtend()) {
             ConsoleMenu.option("3", "Extend Return Date");
         }
         ConsoleMenu.option("4", "View Transaction History");
@@ -62,8 +62,8 @@ public class FinanceMemberConsole {
     }
 
     private static void doExtend(Persona user) {
-        if (user.getRole() == UserRole.GUEST) {
-            ConsoleColor.printError("Guests cannot extend return dates.");
+        if (!user.getUserProfile().canExtend()) {
+            ConsoleColor.printError(user.getUserProfile().dashboardLabel() + " cannot extend return dates.");
             return;
         }
         if (FinanceService.proccessExtentionPayment(user, EXTENSION_FEE)) {
