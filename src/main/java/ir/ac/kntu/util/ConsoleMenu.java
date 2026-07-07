@@ -1,6 +1,9 @@
 package ir.ac.kntu.util;
 
+import java.util.List;
 import java.util.Scanner;
+
+import ir.ac.kntu.interfaces.Displayable;
 
 public class ConsoleMenu {
     // reusable UI components for the terminal aesthetic
@@ -39,5 +42,20 @@ public class ConsoleMenu {
     public static void pause(Scanner scanner) {
         System.out.println(ConsoleColor.gray(PAUSE_TEXT));
         scanner.nextLine();
+    }
+
+    /**
+     * Prints any list of Displayable items by calling toDisplayString() on each.
+     * This works for SupportTicket, SupplierFinancials, or any future class
+     * that implements Displayable -- the menu code never needs to know which.
+     */
+    public static void printAll(List<? extends Displayable> items) {
+        if (items.isEmpty()) {
+            System.out.println(ConsoleColor.gray("  (nothing to show)"));
+            return;
+        }
+        for (Displayable item : items) {
+            System.out.println(item.toDisplayString());
+        }
     }
 }

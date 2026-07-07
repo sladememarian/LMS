@@ -3,24 +3,12 @@ package ir.ac.kntu.support;
 import java.util.ArrayList;
 import java.util.List;
 
-import ir.ac.kntu.util.ConsoleColor;
+import ir.ac.kntu.util.ConsoleMenu;
 
 public class TicketPrinter {
     // printing tickets to the console, saving trees
     public static void printTickets(List<SupportTicket> tickets) {
-        if (tickets.isEmpty()) {
-            System.out.println(ConsoleColor.gray("  (no tickets)"));
-            return;
-        }
-        for (SupportTicket ticket : tickets) {
-            System.out.println(ConsoleColor.CYAN + "  " + ticket.getTicketId() + ConsoleColor.RESET
-                    + " | " + ticket.getTitle()
-                    + ConsoleColor.gray(" [" + ticket.getCategory() + "/" + ticket.getPriority()
-                            + "] " + ticket.getStatus()));
-            if (ticket.getResponse() != null && !ticket.getResponse().isEmpty()) {
-                System.out.println(ConsoleColor.gray("      Support reply: " + ticket.getResponse()));
-            }
-        }
+        ConsoleMenu.printAll(tickets);
     }
 
     public static List<SupportTicket> byCreator(String userId) {

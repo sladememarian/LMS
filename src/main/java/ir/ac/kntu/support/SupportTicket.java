@@ -1,6 +1,9 @@
 package ir.ac.kntu.support;
 
-public class SupportTicket implements Comparable<SupportTicket> {
+import ir.ac.kntu.interfaces.Displayable;
+import ir.ac.kntu.util.ConsoleColor;
+
+public class SupportTicket implements Comparable<SupportTicket>, Displayable {
     // each ticket is someone's cry for help
     private final String ticketId;
     private final String userId;
@@ -98,4 +101,14 @@ public class SupportTicket implements Comparable<SupportTicket> {
         return Integer.compare(other.getPriorityValue(), this.getPriorityValue());
     }
 
+    @Override
+    public String toDisplayString() {
+        String line = ConsoleColor.CYAN + "  " + ticketId + ConsoleColor.RESET
+                + " | " + title
+                + ConsoleColor.gray(" [" + category + "/" + priority + "] " + status);
+        if (response != null && !response.isEmpty()) {
+            line += "\n" + ConsoleColor.gray("      Support reply: " + response);
+        }
+        return line;
+    }
 }

@@ -1,6 +1,8 @@
 package ir.ac.kntu.library;
 
-public abstract class PhysicalItem extends LibraryItem {
+import ir.ac.kntu.interfaces.Reservable;
+
+public abstract class PhysicalItem extends LibraryItem implements Reservable {
     // physical things wear out, unlike this comment
     @Override
     public String getItemType() {
@@ -18,6 +20,10 @@ public abstract class PhysicalItem extends LibraryItem {
     public boolean canReserve() {
         return true;
     }
+    // Reservable is implemented here (not on DigitalItem) since only physical
+    // copies support a reservation queue. Magazine still overrides canReserve()
+    // back to false below in its own class -- it's still "capable of being
+    // reserved" in the type sense, it just always answers "no" today.
 
     public String getShelfLocation() {
         return shelfLocation;

@@ -199,10 +199,8 @@ public class LibraryService {
         if (keyword == null || keyword.trim().isEmpty()) {
             return results;
         }
-        String cleanKeyword = keyword.toLowerCase().trim();
         for (LibraryItem item : INVENTORY) {
-            if (item.getTitle().toLowerCase().contains(cleanKeyword)
-                    || item.getCategory().toLowerCase().contains(cleanKeyword)) {
+            if (item.matchesQuery(keyword)) {
                 results.add(item);
             }
         }

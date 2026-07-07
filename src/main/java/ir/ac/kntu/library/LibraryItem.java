@@ -3,7 +3,10 @@ package ir.ac.kntu.library;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class LibraryItem {
+import ir.ac.kntu.interfaces.Borrowable;
+import ir.ac.kntu.interfaces.Searchable;
+
+public abstract class LibraryItem implements Borrowable, Searchable {
 
     private final String itemId;
     private final String title;
@@ -81,8 +84,19 @@ public abstract class LibraryItem {
      * (how many copies are left), not per-type behavior, so unlike the methods
      * below it is intentionally NOT abstract/overridden — see docs/step4.md.
      */
+    @Override
     public boolean canBorrow() {
         return availableCopies > 0;
+    }
+
+    /** Whether a search keyword matches this item's title or category. */
+    @Override
+    public boolean matchesQuery(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return false;
+        }
+        String cleanQuery = query.toLowerCase().trim();
+        return title.toLowerCase().contains(cleanQuery) || category.toLowerCase().contains(cleanQuery);
     }
 
     /** Whether this item type supports being placed on a reservation queue. */

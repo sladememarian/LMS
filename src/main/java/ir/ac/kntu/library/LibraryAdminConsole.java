@@ -33,6 +33,7 @@ public class LibraryAdminConsole {
         ConsoleMenu.option("8", "View Borrow Statistics");
         ConsoleMenu.option("9", "View Database Records");
         ConsoleMenu.option("10", "Debug Tools");
+        ConsoleMenu.option("11", "View Supplier Financials");
         ConsoleMenu.back();
     }
 
@@ -77,6 +78,9 @@ public class LibraryAdminConsole {
                 return true;
             case "10":
                 printDebug();
+                return true;
+            case "11":
+                ConsoleMenu.printAll(ReportService.computeSupplierFinancials());
                 return true;
             default:
                 ConsoleColor.printError("Invalid entry.");

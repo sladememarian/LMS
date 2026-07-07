@@ -1,8 +1,9 @@
 package ir.ac.kntu.report;
 
+import ir.ac.kntu.interfaces.Displayable;
 import ir.ac.kntu.library.LibraryItem;
 
-public class SupplierFinancials {
+public class SupplierFinancials implements Displayable {
     // tracking the money we owe to book suppliers
     private final String companyId;
     private final String companyName;
@@ -51,5 +52,11 @@ public class SupplierFinancials {
 
     public long getCirculationValue() {
         return circulationValue;
+    }
+
+    @Override
+    public String toDisplayString() {
+        return "  " + companyName + " (" + companyId + ") - " + itemCount + " item(s), "
+                + totalCopies + " copies, " + borrowedCopies + " borrowed, inventory value " + inventoryValue;
     }
 }
