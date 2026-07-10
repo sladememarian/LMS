@@ -2,23 +2,29 @@ package ir.ac.kntu.reservation;
 
 public class Reservation {
 
-    private static final String STATUS_PENDING = "PENDING";
+    private static final int DEFAULT_RESERVATION_DAYS = 7;
 
     private final String reservationId;
     private final String memberId;
     private final String itemId;
     private final int reservedOnDay;
     private final int expiresOnDay;
-    private String status;
+    private ReservationStatus status;
 
     public Reservation(String reservationId, String memberId, String itemId,
-            int reservedOnDay, int expiresOnDay) {
+            int reservedOnDay, int expiresOnDay, ReservationStatus status) {
         this.reservationId = reservationId;
         this.memberId = memberId;
         this.itemId = itemId;
         this.reservedOnDay = reservedOnDay;
         this.expiresOnDay = expiresOnDay;
-        this.status = STATUS_PENDING;
+        this.status = status;
+    }
+
+    public Reservation(String reservationId, String memberId, String itemId,
+            int reservedOnDay, ReservationStatus status) {
+        this(reservationId, memberId, itemId, reservedOnDay,
+                reservedOnDay + DEFAULT_RESERVATION_DAYS, status);
     }
 
     public String getReservationId() {
@@ -41,19 +47,30 @@ public class Reservation {
         return expiresOnDay;
     }
 
-    public String getStatus() {
+    public ReservationStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String newStatus) {
+    public void setStatus(ReservationStatus newStatus) {
         this.status = newStatus;
     }
 
     public boolean isExpired(int currentDay) {
-        return currentDay > expiresOnDay && STATUS_PENDING.equals(status);
+        return currentDay > expiresOnDay
+                && (status == ReservationStatus.WAITING || status == ReservationStatus.ACTIVE);
     }
 
     public boolean isPending() {
-        return STATUS_PENDING.equals(status);
+        return status == ReservationStatus.WAITING;
+    }
+
+    public boolean isActive() {
+        return status == ReservationStatus.ACTIVE;
+    }
+
+    public boolean isTerminal() {
+        return status == ReservationStatus.COMPLETED
+                || status == ReservationStatus.EXPIRED
+                || status == ReservationStatus.CANCELLED;
     }
 }

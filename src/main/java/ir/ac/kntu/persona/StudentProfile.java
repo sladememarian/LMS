@@ -25,4 +25,14 @@ public class StudentProfile extends UserProfile {
     public boolean isStaff() {
         return false;
     }
+
+    @Override
+    public boolean canReserve() {
+        return true;
+    }
+
+    @Override
+    public int reservationLimit() {
+        return 5;
+    }
 }

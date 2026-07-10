@@ -25,4 +25,14 @@ public class AdminProfile extends UserProfile {
     public boolean isStaff() {
         return true;
     }
+
+    @Override
+    public boolean canReserve() {
+        return false;
+    }
+
+    @Override
+    public int reservationLimit() {
+        return 0;
+    }
 }

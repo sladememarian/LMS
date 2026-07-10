@@ -75,6 +75,7 @@ public class Database {
         "CREATE TABLE IF NOT EXISTS library_items (item_id VARCHAR(50) PRIMARY KEY, type VARCHAR(50) NOT NULL, title VARCHAR(500) NOT NULL, category VARCHAR(255), publish_year INTEGER, supplier_id VARCHAR(50), total_copies INTEGER DEFAULT 0, available_copies INTEGER DEFAULT 0, unit_price INTEGER DEFAULT 0)",
         "CREATE TABLE IF NOT EXISTS support_tickets (ticket_id VARCHAR(50) PRIMARY KEY, user_id VARCHAR(50), title VARCHAR(500), description TEXT, category VARCHAR(100), priority VARCHAR(50), status VARCHAR(50), response TEXT)",
         "CREATE TABLE IF NOT EXISTS role_requests (request_id VARCHAR(50) PRIMARY KEY, requester_email VARCHAR(255), requested_role VARCHAR(50), message TEXT, status VARCHAR(50) DEFAULT 'PENDING')",
+        "CREATE TABLE IF NOT EXISTS reservations (reservation_id VARCHAR(50) PRIMARY KEY, member_id VARCHAR(50) NOT NULL, item_id VARCHAR(50) NOT NULL, reserved_on_day INTEGER NOT NULL, expires_on_day INTEGER NOT NULL, status VARCHAR(50) NOT NULL DEFAULT 'WAITING')",
     };
 
     public static void executeUpdate(String sql) {

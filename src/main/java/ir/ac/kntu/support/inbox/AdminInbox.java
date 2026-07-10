@@ -6,6 +6,7 @@ import java.util.Scanner;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.support.SupportService;
 import ir.ac.kntu.support.SupportTicket;
 import ir.ac.kntu.support.TicketPrinter;
@@ -89,6 +90,7 @@ public class AdminInbox {
     private static void advanceSimulatedDay() {
         int newDay = SimulationClock.advanceDay();
         List<String> charges = LoanService.accrueOverdueDebts(newDay);
+        ReservationService.expireReservations(newDay);
         System.out.println(ConsoleColor.BOLD + "Simulated day advanced to day " + newDay
                 + " (" + SimulationClock.formatCurrentDate() + ")" + ConsoleColor.RESET);
         if (charges.isEmpty()) {

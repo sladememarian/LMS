@@ -61,6 +61,16 @@ public abstract class UserProfile {
      */
     public abstract boolean isStaff();
 
+    /**
+     * Whether this role is permitted to place reservations on library items.
+     */
+    public abstract boolean canReserve();
+
+    /**
+     * Maximum number of active (WAITING + ACTIVE) reservations this role may hold.
+     */
+    public abstract int reservationLimit();
+
     // -----------------------------------------------------------------------
     // Factory
     // -----------------------------------------------------------------------

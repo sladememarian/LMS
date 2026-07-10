@@ -10,6 +10,8 @@ import ir.ac.kntu.persona.InventoryConsole;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserProfile;
+import ir.ac.kntu.reservation.Reservation;
+import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
@@ -39,6 +41,11 @@ public class LibraryMemberConsole {
             ConsoleMenu.option("6", "Extend Return Date");
         }
         ConsoleMenu.option("7", "My Inventory");
+        if (profile.canReserve()) {
+            ConsoleMenu.option("8", "Reserve Item");
+            ConsoleMenu.option("9", "Cancel Reservation");
+            ConsoleMenu.option("10", "My Reservations");
+        }
         ConsoleMenu.back();
     }
 
@@ -67,6 +74,23 @@ public class LibraryMemberConsole {
                 return true;
             case "0":
                 return false;
+            default:
+                return handleReservation(choice, scanner, user);
+        }
+    }
+
+    private static boolean handleReservation(String choice, Scanner scanner,
+            Persona user) {
+        switch (choice) {
+            case "8":
+                doReserve(scanner, user);
+                return true;
+            case "9":
+                doCancelReservation(scanner, user);
+                return true;
+            case "10":
+                doMyReservations(user);
+                return true;
             default:
                 ConsoleColor.printError("Invalid entry.");
                 return true;
@@ -107,7 +131,10 @@ public class LibraryMemberConsole {
         LibraryItem item = LibraryService.getItemById(itemId);
         if (LibraryService.executeBorrow(itemId)) {
             PersonaService.recordBorrow(user.getEmail(), itemId);
-            LoanService.recordLoan(user.getMemberId(), itemId, SimulationClock.getCurrentDay(), item.borrowPeriod());
+            LoanService.recordLoan(user.getMemberId(), itemId,
+                    SimulationClock.getCurrentDay(), item.borrowPeriod());
+            ReservationService.completeReservation(
+                    user.getMemberId(), itemId);
             ConsoleColor.printSuccess("Borrowed " + itemId + ".");
         } else {
             ConsoleColor.printError("Borrow failed (item missing or no copies).");
@@ -140,6 +167,8 @@ public class LibraryMemberConsole {
         LibraryService.executeReturn(itemId);
         PersonaService.recordReturn(user.getEmail(), itemId);
         LoanService.clearLoan(user.getMemberId(), itemId);
+        ReservationService.processReturn(itemId,
+                SimulationClock.getCurrentDay());
         ConsoleColor.printSuccess("Returned " + itemId + ".");
     }
 
@@ -157,6 +186,58 @@ public class LibraryMemberConsole {
             }
         } else {
             ConsoleColor.printError("Extension failed. Charge your wallet under Finance first.");
+        }
+    }
+
+    private static void doReserve(Scanner scanner, Persona user) {
+        String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
+        String result = ReservationService.reserve(
+                user.getMemberId(), itemId,
+                SimulationClock.getCurrentDay());
+        if (result.startsWith("Reservation activated")
+                || result.startsWith("Item unavailable")) {
+            ConsoleColor.printSuccess(result);
+        } else {
+            ConsoleColor.printError(result);
+        }
+    }
+
+    private static void doCancelReservation(Scanner scanner, Persona user) {
+        List<Reservation> reservations =
+                ReservationService.getMemberReservations(
+                        user.getMemberId());
+        if (reservations.isEmpty()) {
+            ConsoleColor.printError("No active reservations to cancel.");
+            return;
+        }
+        for (Reservation reservation : reservations) {
+            System.out.println("  " + reservation.getReservationId()
+                    + " | Item: " + reservation.getItemId()
+                    + " | Status: " + reservation.getStatus().getLabel());
+        }
+        String resId = ConsoleMenu.readLine(scanner,
+                "Reservation ID to cancel: ");
+        if (ReservationService.cancel(resId)) {
+            ConsoleColor.printSuccess("Reservation cancelled.");
+        } else {
+            ConsoleColor.printError("Cancel failed. Check the ID.");
+        }
+    }
+
+    private static void doMyReservations(Persona user) {
+        List<Reservation> reservations =
+                ReservationService.getMemberReservations(
+                        user.getMemberId());
+        if (reservations.isEmpty()) {
+            System.out.println(ConsoleColor.gray("  No active reservations."));
+            return;
+        }
+        System.out.println("  Active reservations:");
+        for (Reservation reservation : reservations) {
+            System.out.println("  " + reservation.getReservationId()
+                    + " | Item: " + reservation.getItemId()
+                    + " | Status: " + reservation.getStatus().getLabel()
+                    + " | Expires: day " + reservation.getExpiresOnDay());
         }
     }
 }
