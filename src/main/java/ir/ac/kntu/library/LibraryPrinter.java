@@ -3,6 +3,7 @@ package ir.ac.kntu.library;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.generic.PagedList;
 import ir.ac.kntu.util.ConsoleColor;
 
 public class LibraryPrinter {
@@ -12,6 +13,7 @@ public class LibraryPrinter {
     private static final String LABEL_AVAILABLE = "Available: ";
     private static final String INDENT = "     ";
     private static final int QUIT = -1;
+    private static final int PAGE_SIZE = 10;
 
     public static void printList(List<LibraryItem> items, boolean showSupplier) {
         if (items.isEmpty()) {
@@ -101,21 +103,20 @@ public class LibraryPrinter {
             System.out.println(ConsoleColor.gray("  (no items)"));
             return;
         }
-        int pageSize = 10;
-        int totalPages = (items.size() + pageSize - 1) / pageSize;
         int currentPage = 0;
         while (true) {
-            int start = currentPage * pageSize;
-            int end = Math.min(start + pageSize, items.size());
-            System.out.println(ConsoleColor.BOLD + "--- Page " + (currentPage + 1) + "/" + totalPages
-                    + " (" + items.size() + " items) ---" + ConsoleColor.RESET);
-            for (int i = start; i < end; i++) {
-                printItemLine(items.get(i), i + 1, showSupplier);
+            PagedList<LibraryItem> paged = new PagedList<>(items, currentPage, PAGE_SIZE);
+            System.out.println(ConsoleColor.BOLD + "--- Page " + (currentPage + 1) + "/" + paged.getTotalPages()
+                    + " (" + paged.getTotalItems() + " items) ---" + ConsoleColor.RESET);
+            int index = currentPage * PAGE_SIZE + 1;
+            for (LibraryItem item : paged.getItems()) {
+                printItemLine(item, index, showSupplier);
+                index++;
             }
-            if (totalPages <= 1) {
+            if (paged.getTotalPages() <= 1) {
                 break;
             }
-            int next = navigatePage(scanner, currentPage, totalPages);
+            int next = navigatePage(scanner, currentPage, paged.getTotalPages());
             if (next == QUIT) {
                 break;
             }

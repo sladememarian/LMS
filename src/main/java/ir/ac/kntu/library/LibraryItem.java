@@ -92,11 +92,22 @@ public abstract class LibraryItem implements Borrowable, Searchable {
     /** Whether a search keyword matches this item's title or category. */
     @Override
     public boolean matchesQuery(String query) {
+        return matchedField(query) != null;
+    }
+
+    /** Which field a search keyword matched ("title"/"category"), or null if none. */
+    public String matchedField(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return false;
+            return null;
         }
         String cleanQuery = query.toLowerCase().trim();
-        return title.toLowerCase().contains(cleanQuery) || category.toLowerCase().contains(cleanQuery);
+        if (title.toLowerCase().contains(cleanQuery)) {
+            return "title";
+        }
+        if (category.toLowerCase().contains(cleanQuery)) {
+            return "category";
+        }
+        return null;
     }
 
     /** Whether this item type supports being placed on a reservation queue. */

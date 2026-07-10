@@ -3,6 +3,8 @@ package ir.ac.kntu.library;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.generic.SearchEngine;
+import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.util.DatabaseAccess;
 
 public class LibraryService {
@@ -195,14 +197,21 @@ public class LibraryService {
     public static List<LibraryItem> searchItems(String keyword) {
         INVENTORY.clear();
         INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
-        List<LibraryItem> results = new ArrayList<>();
         if (keyword == null || keyword.trim().isEmpty()) {
-            return results;
+            return new ArrayList<>();
         }
-        for (LibraryItem item : INVENTORY) {
-            if (item.matchesQuery(keyword)) {
-                results.add(item);
-            }
+        return SearchEngine.search(INVENTORY, keyword);
+    }
+
+    /**
+     * Same search as searchItems(), but also reports which field (title or
+     * category) each result matched on. Demonstrates SearchResult<T> without
+     * changing the behavior/signature of the original searchItems() callers.
+     */
+    public static List<SearchResult<LibraryItem>> searchItemsDetailed(String keyword) {
+        List<SearchResult<LibraryItem>> results = new ArrayList<>();
+        for (LibraryItem item : searchItems(keyword)) {
+            results.add(new SearchResult<>(item, item.matchedField(keyword)));
         }
         return results;
     }

@@ -1,8 +1,11 @@
 package ir.ac.kntu.library;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.generic.Menu;
+import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.report.ReportService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
@@ -40,8 +43,7 @@ public class LibraryAdminConsole {
     private static boolean handle(String choice, Scanner scanner) {
         switch (choice) {
             case "1":
-                LibraryPrinter.printListPaginated(LibraryService.searchItems(
-                        ConsoleMenu.readLine(scanner, "Keyword: ")), true, scanner);
+                doSearch(scanner);
                 return true;
             case "2":
                 doAdd(scanner);
@@ -80,12 +82,33 @@ public class LibraryAdminConsole {
                 printDebug();
                 return true;
             case "11":
-                ConsoleMenu.printAll(ReportService.computeSupplierFinancials());
+                new Menu<>("Supplier Financials", ReportService.computeSupplierFinancials()).render();
                 return true;
             default:
                 ConsoleColor.printError("Invalid entry.");
                 return true;
         }
+    }
+
+    private static void doSearch(Scanner scanner) {
+        String keyword = ConsoleMenu.readLine(scanner, "Keyword: ");
+        List<SearchResult<LibraryItem>> detailed = LibraryService.searchItemsDetailed(keyword);
+        int byTitle = 0;
+        int byCategory = 0;
+        for (SearchResult<LibraryItem> result : detailed) {
+            if ("title".equals(result.getMatchedField())) {
+                byTitle++;
+            } else if ("category".equals(result.getMatchedField())) {
+                byCategory++;
+            }
+        }
+        System.out.println(ConsoleColor.gray("  Found " + detailed.size() + " item(s) - "
+                + byTitle + " matched by title, " + byCategory + " matched by category"));
+        List<LibraryItem> items = new ArrayList<>();
+        for (SearchResult<LibraryItem> result : detailed) {
+            items.add(result.getItem());
+        }
+        LibraryPrinter.printListPaginated(items, true, scanner);
     }
 
     private static void doAdd(Scanner scanner) {
