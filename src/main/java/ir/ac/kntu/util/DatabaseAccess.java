@@ -335,12 +335,12 @@ public class DatabaseAccess {
     }
 
     public static void insertSupportTicket(SupportTicket ticket) {
-        Database.withPs("MERGE INTO support_tickets USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?)) AS s(ticket_id, user_id, title, description, category, priority, status, response) ON support_tickets.ticket_id = s.ticket_id WHEN MATCHED THEN UPDATE SET user_id = s.user_id, title = s.title, description = s.description, category = s.category, priority = s.priority, status = s.status, response = s.response WHEN NOT MATCHED THEN INSERT (ticket_id, user_id, title, description, category, priority, status, response) VALUES (s.ticket_id, s.user_id, s.title, s.description, s.category, s.priority, s.status, s.response)", ps -> {
+        Database.withPs("MERGE INTO support_tickets USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?)) AS s(ticket_id, user_id, title, description, section, priority, status, response) ON support_tickets.ticket_id = s.ticket_id WHEN MATCHED THEN UPDATE SET user_id = s.user_id, title = s.title, description = s.description, section = s.section, priority = s.priority, status = s.status, response = s.response WHEN NOT MATCHED THEN INSERT (ticket_id, user_id, title, description, section, priority, status, response) VALUES (s.ticket_id, s.user_id, s.title, s.description, s.section, s.priority, s.status, s.response)", ps -> {
             ps.setString(1, ticket.getTicketId());
             ps.setString(2, ticket.getUserId());
             ps.setString(3, ticket.getTitle());
             ps.setString(4, ticket.getDescription());
-            ps.setString(5, ticket.getCategory());
+            ps.setString(5, ticket.getSection().name());
             ps.setString(6, ticket.getPriority());
             ps.setString(7, ticket.getStatus());
             ps.setString(8, ticket.getResponse());
@@ -351,8 +351,7 @@ public class DatabaseAccess {
     public static List<SupportTicket> getAllSupportTickets() {
         return Database.queryAll("SELECT * FROM support_tickets", rs -> {
             SupportTicket ticket = new SupportTicket(rs.getString("ticket_id"), rs.getString("user_id"),
-                    rs.getString("title"), rs.getString("description"));
-            ticket.setCategory(rs.getString("category"));
+                    rs.getString("title"), rs.getString("description"), ir.ac.kntu.support.SupportSection.valueOf(rs.getString("section")));
             ticket.setPriority(rs.getString("priority"));
             ticket.setStatus(rs.getString("status"));
             ticket.setResponse(rs.getString("response"));

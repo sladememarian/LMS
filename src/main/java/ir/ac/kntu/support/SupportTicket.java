@@ -9,17 +9,17 @@ public class SupportTicket implements Comparable<SupportTicket>, Displayable {
     private final String userId;
     private String title;
     private String description;
-    private String category;
+    private SupportSection section;
     private String priority;
     private String status;
     private String response;
 
-    public SupportTicket(String ticketId, String userId, String title, String description) {
+    public SupportTicket(String ticketId, String userId, String title, String description, SupportSection section) {
         this.ticketId = ticketId;
         this.userId = userId;
         this.title = title;
         this.description = description;
-        this.category = "General";
+        this.section = section;
         this.priority = "LOW";
         this.status = "Open";
         this.response = "";
@@ -37,13 +37,14 @@ public class SupportTicket implements Comparable<SupportTicket>, Displayable {
         return description;
     }
 
-    public String getCategory() {
-        return category;
+    public SupportSection getSection() {
+        return section;
     }
 
-    public String getPriority() {
-        return priority;
+    public void setSection(SupportSection section) {
+        this.section = section;
     }
+
 
     public String getTitle() {
         return title;
@@ -105,7 +106,7 @@ public class SupportTicket implements Comparable<SupportTicket>, Displayable {
     public String toDisplayString() {
         String line = ConsoleColor.CYAN + "  " + ticketId + ConsoleColor.RESET
                 + " | " + title
-                + ConsoleColor.gray(" [" + category + "/" + priority + "] " + status);
+                + ConsoleColor.gray(" [" + section + "/" + priority + "] " + status);
         if (response != null && !response.isEmpty()) {
             line += "\n" + ConsoleColor.gray("      Support reply: " + response);
         }

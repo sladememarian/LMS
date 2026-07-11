@@ -32,11 +32,11 @@ public class SupportService {
         return false;
     }
 
-    public static void createTicket(String userId, String category, String title, String description) {
+    public static void createTicket(String userId, SupportSection section, String title, String description) {
         TICKETS.clear();
         TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
         String priority = "LOW";
-        if ("Technical".equalsIgnoreCase(category)) {
+        if (SupportSection.TECHNICAL == section) {
             priority = "HIGH";
         }
         String upperTitle = title.toUpperCase();
@@ -45,8 +45,7 @@ public class SupportService {
         }
 
         String id = "TCK-" + ((int) (Math.random() * 900_000) + 100_000);
-        SupportTicket ticket = new SupportTicket(id, userId, title, description);
-        ticket.setCategory(category);
+        SupportTicket ticket = new SupportTicket(id, userId, title, description, section);
         ticket.setPriority(priority);
         ticket.setStatus("OPEN");
         TICKETS.add(ticket);
@@ -94,10 +93,19 @@ public class SupportService {
         }
     }
 
-    public static List<SupportTicket> getAllTickets() {
-        TICKETS.clear();
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
-        return new ArrayList<>(TICKETS);
+    public static List<SupportTicket> getTicketsForAgent(Persona agent) {
+        if (agent.getRole() != UserRole.CALLCENTER) {
+            return getAllTickets();
+        }
+        
+        java.util.Set<SupportSection> allowedSections = ((ir.ac.kntu.persona.CallCenterProfile) agent.getUserProfile()).getAssignedSections();
+        List<SupportTicket> filtered = new ArrayList<>();
+        for (SupportTicket ticket : getAllTickets()) {
+            if (allowedSections.contains(ticket.getSection())) {
+                filtered.add(ticket);
+            }
+        }
+        return filtered;
     }
 
     public static boolean submitLibraryItemPlaceholder(String type, String title, String author) {
