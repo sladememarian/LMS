@@ -1,3 +1,29 @@
+# Connecting pgAdmin to the LMS Database
+
+To connect `pgAdmin` (which is part of the Docker composition) to the PostgreSQL database (`db` service) running in the same Docker network, follow these steps:
+
+1.  **Access pgAdmin:** Open your browser and navigate to `http://localhost:5050`.
+2.  **Login:**
+    *   **Email:** `admin@admin.com`
+    *   **Password:** `admin`
+3.  **Add New Server:**
+    *   Right-click on **Servers** in the left sidebar.
+    *   Select **Register** -> **Server...**
+4.  **Connection Details:**
+    *   **General Tab:**
+        *   **Name:** `LMS-Database` (or any descriptive name)
+    *   **Connection Tab:**
+        *   **Host name/address:** `db` (This is the container name defined in `docker-compose.yml`)
+        *   **Port:** `5432` (This is the internal port of the PostgreSQL container, **not** the port mapped to your host)
+        *   **Maintenance database:** `lms`
+        *   **Username:** `lms`
+        *   **Password:** `lms`
+    *   Click **Save**.
+
+You should now be able to browse the database tables and run queries.
+
+---
+
 # pgAdmin Query Reference
 
 Useful SQL queries to run in pgAdmin's Query Tool (`Tools → Query Tool`) against the `lms` database.
