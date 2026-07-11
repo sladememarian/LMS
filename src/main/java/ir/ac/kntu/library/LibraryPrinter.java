@@ -26,7 +26,7 @@ public class LibraryPrinter {
                     + item.getTitle() + ConsoleColor.gray(" [" + item.getItemType() + "]"));
             System.out.println(INDENT + "ID: " + item.getItemId());
             printDisplayInfo(item);
-            System.out.println(INDENT + LABEL_AVAILABLE + availability(item));
+            System.out.println(INDENT + LABEL_AVAILABLE + availability(item) + " (" + item.getAvailableCopies() + "/" + item.getTotalCopies() + ")");
             if (showSupplier) {
                 System.out.println(ConsoleColor.gray(INDENT + "Supplier: "
                         + LibraryService.getSupplierName(item.getSupplierId())));
@@ -57,7 +57,10 @@ public class LibraryPrinter {
     }
 
     private static void printDisplayInfo(LibraryItem item) {
-        System.out.println(ConsoleColor.gray(INDENT + item.displayInfo()));
+        String info = item.displayInfo();
+        if (info != null && !info.contains("null") && !info.endsWith("()")) {
+            System.out.println(ConsoleColor.gray(INDENT + info));
+        }
     }
 
     private static void printItemLine(LibraryItem item, int index, boolean showSupplier) {
@@ -65,9 +68,9 @@ public class LibraryPrinter {
                 + item.getTitle() + ConsoleColor.gray(" [" + item.getItemType() + "]"));
         System.out.println(INDENT + "ID: " + item.getItemId());
         printDisplayInfo(item);
-        System.out.println("     " + LABEL_AVAILABLE + availability(item));
+        System.out.println(INDENT + LABEL_AVAILABLE + availability(item) + " (" + item.getAvailableCopies() + "/" + item.getTotalCopies() + ")");
         if (showSupplier) {
-            System.out.println(ConsoleColor.gray("     Supplier: "
+            System.out.println(ConsoleColor.gray(INDENT + "Supplier: "
                     + LibraryService.getSupplierName(item.getSupplierId())));
         }
     }

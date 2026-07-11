@@ -91,7 +91,11 @@ public class LibraryAdminConsole {
     }
 
     private static void doSearch(Scanner scanner) {
-        String keyword = ConsoleMenu.readLine(scanner, "Keyword: ");
+        String keyword = ConsoleMenu.readLine(scanner, "Keyword (blank = all): ");
+        if (keyword == null || keyword.trim().isEmpty()) {
+            LibraryPrinter.printListPaginated(LibraryService.getAllItems(), true, scanner);
+            return;
+        }
         List<SearchResult<LibraryItem>> detailed = LibraryService.searchItemsDetailed(keyword);
         int byTitle = 0;
         int byCategory = 0;
