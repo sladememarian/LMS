@@ -26,7 +26,7 @@ class DomainModelsTest {
     @Test
     void supportTicketStoresResponse() {
         // "We are on it" - famous last words
-        SupportTicket ticket = new SupportTicket("T1", "U1", "title", "desc");
+        SupportTicket ticket = new SupportTicket("T1", "U1", "title", "desc", ir.ac.kntu.support.SupportSection.TECHNICAL);
         assertEquals("", ticket.getResponse());
         ticket.setResponse("We are on it");
         assertEquals("We are on it", ticket.getResponse());

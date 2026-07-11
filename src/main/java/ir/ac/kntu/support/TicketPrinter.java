@@ -24,8 +24,8 @@ public class TicketPrinter {
     public static List<SupportTicket> byCategoryContains(String keyword) {
         List<SupportTicket> result = new ArrayList<>();
         for (SupportTicket ticket : SupportService.getAllTickets()) {
-            String category = ticket.getCategory() == null ? "" : ticket.getCategory().toLowerCase();
-            if (category.contains(keyword.toLowerCase())) {
+            String section = ticket.getSection() == null ? "" : ticket.getSection().name();
+            if (section.toLowerCase().contains(keyword.toLowerCase())) {
                 result.add(ticket);
             }
         }

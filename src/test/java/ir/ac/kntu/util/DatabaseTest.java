@@ -253,8 +253,7 @@ class DatabaseTest {
 
     @Test
     void insertAndRetrieveSupportTicket() {
-        SupportTicket ticket = new SupportTicket("TCK-001", "USER-001", "Help!", "I need assistance");
-        ticket.setCategory("Technical");
+        SupportTicket ticket = new SupportTicket("TCK-001", "USER-001", "Help!", "I need assistance", ir.ac.kntu.support.SupportSection.TECHNICAL);
         ticket.setPriority("HIGH");
         ticket.setStatus("OPEN");
         DatabaseAccess.insertSupportTicket(ticket);
@@ -267,7 +266,7 @@ class DatabaseTest {
 
     @Test
     void updateSupportTicket() {
-        SupportTicket ticket = new SupportTicket("TCK-002", "USER-002", "Bug", "Something broke");
+        SupportTicket ticket = new SupportTicket("TCK-002", "USER-002", "Bug", "Something broke", ir.ac.kntu.support.SupportSection.TECHNICAL);
         DatabaseAccess.insertSupportTicket(ticket);
 
         DatabaseAccess.updateSupportTicketStatus("TCK-002", "CLOSED");
@@ -310,7 +309,7 @@ class DatabaseTest {
         DatabaseAccess.insertLoan(new Loan("M1", "I1", 1, 4));
         DatabaseAccess.insertSupplier(new SupplierCompany("S1", "S"));
         DatabaseAccess.insertLibraryItem(new Book("I1", "B", "C", 2020));
-        DatabaseAccess.insertSupportTicket(new SupportTicket("T1", "U1", "T", "D"));
+        DatabaseAccess.insertSupportTicket(new SupportTicket("T1", "U1", "T", "D", ir.ac.kntu.support.SupportSection.TECHNICAL));
         DatabaseAccess.insertRoleRequest(new RoleRequest("R1", "e@t.com", "STUDENT", "m"));
 
         DatabaseAccess.clearPersonas();

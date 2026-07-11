@@ -21,7 +21,7 @@ class SupportOperationsTest {
     void updateTicketStatusFindsAndUpdates() {
         // From OPEN to CLOSED in 6-8 business weeks
         String title = "Status case " + System.nanoTime();
-        SupportService.createTicket("STU-100000", "Technical", title, "desc");
+        SupportService.createTicket("STU-100000", ir.ac.kntu.support.SupportSection.TECHNICAL, title, "desc");
         String id = findId(title);
         assertTrue(SupportService.updateTicketStatus(id, "CLOSED"));
         assertFalse(SupportService.updateTicketStatus("TCK-000000", "CLOSED"));

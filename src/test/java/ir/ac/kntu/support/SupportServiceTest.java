@@ -22,7 +22,7 @@ class SupportServiceTest {
     void technicalTicketIsHighPriority() {
         // Printer is on fire? That's HIGH priority
         String title = "Printer issue " + System.nanoTime();
-        SupportService.createTicket("STU-100000", "Technical", title, "desc");
+        SupportService.createTicket("STU-100000", ir.ac.kntu.support.SupportSection.TECHNICAL, title, "desc");
         assertEquals("HIGH", findByTitle(title).getPriority());
     }
 
@@ -30,7 +30,7 @@ class SupportServiceTest {
     void urgentKeywordEscalatesToCritical() {
         // URGENT in the title? CRITICAL it is
         String title = "URGENT outage " + System.nanoTime();
-        SupportService.createTicket("STU-100000", "General", title, "desc");
+        SupportService.createTicket("STU-100000", ir.ac.kntu.support.SupportSection.BOOK_REQUEST, title, "desc");
         assertEquals("CRITICAL", findByTitle(title).getPriority());
     }
 
@@ -38,7 +38,7 @@ class SupportServiceTest {
     void respondStoresMessageAndMarksInProgress() {
         // "We are looking into it" - TM for generic response
         String title = "Need help " + System.nanoTime();
-        SupportService.createTicket("STU-100000", "General", title, "desc");
+        SupportService.createTicket("STU-100000", ir.ac.kntu.support.SupportSection.BOOK_REQUEST, title, "desc");
         String ticketId = findByTitle(title).getTicketId();
         assertTrue(SupportService.respondToTicket(ticketId, "We are looking into it."));
         SupportTicket updated = findByTitle(title);

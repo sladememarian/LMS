@@ -81,7 +81,7 @@ public class SupportMemberConsole {
     private static void createTicket(Scanner scanner, Persona user, String category) {
         String title = ConsoleMenu.readLine(scanner, PROMPT_TITLE);
         String description = ConsoleMenu.readLine(scanner, "Description: ");
-        SupportService.createTicket(user.getMemberId(), category, title, description);
+        SupportService.createTicket(user.getMemberId(), SupportSection.valueOf(category.toUpperCase()), title, description);
         ConsoleColor.printSuccess("Ticket created.");
     }
 }
