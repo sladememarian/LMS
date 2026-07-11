@@ -21,6 +21,10 @@ public class ReservationService {
         loadFromDatabase();
     }
 
+    public static void reset() {
+        loadFromDatabase();
+    }
+
     private static void loadFromDatabase() {
         ALL_RESERVATIONS.clear();
         QUEUES.clear();

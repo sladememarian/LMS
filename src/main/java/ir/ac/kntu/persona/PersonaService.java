@@ -12,8 +12,13 @@ public class PersonaService {
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
 
     static {
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        loadPersonas();
+    }
 
+    private static void loadPersonas() {
+        PERSONA_DATABASE.clear();
+        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        // ... admin/cc logic ...
         String defaultAdminPass = EnvConfig.get(
             "DEFAULT_ADMIN_PASSWORD",
             "adminpass"
@@ -45,6 +50,10 @@ public class PersonaService {
             PERSONA_DATABASE.add(cc);
             DatabaseAccess.insertPersona(cc);
         }
+    }
+
+    public static void reset() {
+        loadPersonas();
     }
 
     public static Persona registerPersona(String email, String password) {
