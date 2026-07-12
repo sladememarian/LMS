@@ -93,6 +93,12 @@ public class SupportService {
         }
     }
 
+    public static List<SupportTicket> getAllTickets() {
+        TICKETS.clear();
+        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        return new ArrayList<>(TICKETS);
+    }
+
     public static List<SupportTicket> getTicketsForAgent(Persona agent) {
         if (agent.getRole() != UserRole.CALLCENTER) {
             return getAllTickets();

@@ -58,8 +58,8 @@ public class SupportTicket implements Comparable<SupportTicket>, Displayable {
         this.description = description;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public String getPriority() {
+        return priority;
     }
 
     public void setPriority(String priority) {
