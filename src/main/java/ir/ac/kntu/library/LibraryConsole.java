@@ -15,16 +15,6 @@ public class LibraryConsole {
             ConsoleColor.printError("Log in first to open the Library.");
             return;
         }
-        switch (user.getRole()) {
-            case ADMIN:
-                LibraryAdminConsole.open(scanner);
-                break;
-            case CALLCENTER:
-                LibraryOperatorConsole.open(scanner);
-                break;
-            default:
-                LibraryMemberConsole.open(scanner, user);
-                break;
-        }
+        user.getUserProfile().openLibraryConsole(scanner, user);
     }
 }

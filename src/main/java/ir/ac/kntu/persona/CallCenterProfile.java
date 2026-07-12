@@ -1,8 +1,13 @@
 package ir.ac.kntu.persona;
 
 import java.util.EnumSet;
+import java.util.Scanner;
 import java.util.Set;
+
+import ir.ac.kntu.finance.FinanceOperatorConsole;
+import ir.ac.kntu.library.LibraryOperatorConsole;
 import ir.ac.kntu.support.SupportSection;
+import ir.ac.kntu.support.inbox.CallCenterInbox;
 
 /**
  * CallCenter behaviour profile. Assigned sections are NOT stored on this
@@ -39,6 +44,21 @@ public class CallCenterProfile extends UserProfile {
         if (owningPersona != null) {
             owningPersona.removeAssignedSupportSection(section);
         }
+    }
+
+    @Override
+    public void openLibraryConsole(Scanner scanner, Persona user) {
+        LibraryOperatorConsole.open(scanner);
+    }
+
+    @Override
+    public void openFinanceConsole(Scanner scanner, Persona user) {
+        FinanceOperatorConsole.open(scanner);
+    }
+
+    @Override
+    public void openSupportConsole(Scanner scanner, Persona user) {
+        CallCenterInbox.open(scanner, user);
     }
 
     @Override

@@ -1,5 +1,11 @@
 package ir.ac.kntu.persona;
 
+import java.util.Scanner;
+
+import ir.ac.kntu.finance.FinanceMemberConsole;
+import ir.ac.kntu.library.LibraryMemberConsole;
+import ir.ac.kntu.support.SupportMemberConsole;
+
 /**
  * Abstract role profile: replaces scattered if(role==X) BEHAVIOR checks with polymorphism.
  *
@@ -70,6 +76,35 @@ public abstract class UserProfile {
      * Maximum number of active (WAITING + ACTIVE) reservations this role may hold.
      */
     public abstract int reservationLimit();
+
+    // -----------------------------------------------------------------------
+    // Console routing
+    // -----------------------------------------------------------------------
+
+    /**
+     * Opens the Library console appropriate for this role. Replaces the
+     * former switch(user.getRole()) routing in LibraryConsole. Defaults to
+     * the member console; staff profiles (Admin/CallCenter) override it.
+     */
+    public void openLibraryConsole(Scanner scanner, Persona user) {
+        LibraryMemberConsole.open(scanner, user);
+    }
+
+    /**
+     * Opens the Finance console appropriate for this role. Replaces the
+     * former switch(user.getRole()) routing in FinanceConsole.
+     */
+    public void openFinanceConsole(Scanner scanner, Persona user) {
+        FinanceMemberConsole.open(scanner, user);
+    }
+
+    /**
+     * Opens the Support console appropriate for this role. Replaces the
+     * former switch(user.getRole()) routing in SupportConsole.
+     */
+    public void openSupportConsole(Scanner scanner, Persona user) {
+        SupportMemberConsole.open(scanner, user);
+    }
 
     // -----------------------------------------------------------------------
     // Factory

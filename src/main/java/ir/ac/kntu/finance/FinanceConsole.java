@@ -14,16 +14,6 @@ public class FinanceConsole {
             ConsoleColor.printError("Log in first to open Finance.");
             return;
         }
-        switch (user.getRole()) {
-            case ADMIN:
-                FinanceAdminConsole.open(scanner);
-                break;
-            case CALLCENTER:
-                FinanceOperatorConsole.open(scanner);
-                break;
-            default:
-                FinanceMemberConsole.open(scanner, user);
-                break;
-        }
+        user.getUserProfile().openFinanceConsole(scanner, user);
     }
 }
