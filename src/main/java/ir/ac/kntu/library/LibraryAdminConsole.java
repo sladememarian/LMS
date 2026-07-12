@@ -9,7 +9,8 @@ import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.report.ReportService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.LibraryItemRepository;
+import ir.ac.kntu.util.SupplierRepository;
 
 public class LibraryAdminConsole {
     private static final String PROMPT_ITEM_ID = "Item ID: ";
@@ -174,8 +175,8 @@ public class LibraryAdminConsole {
 
     private static void inspectDatabase() {
         System.out.println(ConsoleColor.BOLD + "--- Library Database Records ---" + ConsoleColor.RESET);
-        System.out.println("  Library items: " + DatabaseAccess.getAllLibraryItems().size());
-        System.out.println("  Suppliers: " + DatabaseAccess.getAllSuppliers().size());
+        System.out.println("  Library items: " + LibraryItemRepository.getAllLibraryItems().size());
+        System.out.println("  Suppliers: " + SupplierRepository.getAllSuppliers().size());
     }
 
     private static void printDebug() {

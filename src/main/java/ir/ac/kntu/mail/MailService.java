@@ -3,15 +3,16 @@ package ir.ac.kntu.mail;
 import java.util.ArrayList;
 import java.util.List;
 
-import ir.ac.kntu.util.DatabaseAccess;
 import ir.ac.kntu.util.EnvConfig;
+import ir.ac.kntu.util.MailRepository;
+import ir.ac.kntu.util.TwoFactorRepository;
 
 public class MailService {
     private static final List<MailMessage> ALL_MESSAGES = new ArrayList<>();
     private static final long MILLIS_PER_MINUTE = 60_000L;
 
     static {
-        ALL_MESSAGES.addAll(DatabaseAccess.getAllMailMessages());
+        ALL_MESSAGES.addAll(MailRepository.getAllMailMessages());
     }
 
     public static String getSystemName() {
@@ -28,14 +29,14 @@ public class MailService {
 
     private static void ensureLoaded() {
         ALL_MESSAGES.clear();
-        ALL_MESSAGES.addAll(DatabaseAccess.getAllMailMessages());
+        ALL_MESSAGES.addAll(MailRepository.getAllMailMessages());
     }
 
     public static MailMessage deliverMessage(String recipient, String subject, String body, MessageType type) {
         ensureLoaded();
         MailMessage message = new MailMessage(recipient, subject, body, type);
         ALL_MESSAGES.add(message);
-        DatabaseAccess.insertMailMessage(message);
+        MailRepository.insertMailMessage(message);
         enforceMailboxCap(recipient);
         return message;
     }
@@ -53,10 +54,10 @@ public class MailService {
             for (int i = 0; i < removeCount; i++) {
                 ALL_MESSAGES.remove(owned.get(i));
             }
-            DatabaseAccess.deleteMailMessagesForRecipient(recipient);
+            MailRepository.deleteMailMessagesForRecipient(recipient);
             for (MailMessage msg : ALL_MESSAGES) {
                 if (msg.getRecipientEmail().equalsIgnoreCase(recipient)) {
-                    DatabaseAccess.insertMailMessage(msg);
+                    MailRepository.insertMailMessage(msg);
                 }
             }
         }
@@ -64,7 +65,7 @@ public class MailService {
 
     public static String deliver2FACode(String recipient) {
         String code = String.valueOf((int) (Math.random() * 900_000) + 100_000);
-        DatabaseAccess.saveTwoFactorCode(recipient.toLowerCase(), code, System.currentTimeMillis());
+        TwoFactorRepository.saveTwoFactorCode(recipient.toLowerCase(), code, System.currentTimeMillis());
         String body = "Your " + getSystemName() + " verification code is " + code
                 + ". It expires in " + getExpireMinutes() + " minutes.";
         deliverMessage(recipient, "Your 2FA Verification Code", body, MessageType.TWO_FA);
@@ -73,15 +74,15 @@ public class MailService {
 
     public static boolean verifyCode(String recipient, String code) {
         String key = recipient.toLowerCase();
-        String stored = DatabaseAccess.getTwoFactorCode(key);
-        Long issuedAt = DatabaseAccess.getTwoFactorCodeIssuedAt(key);
+        String stored = TwoFactorRepository.getTwoFactorCode(key);
+        Long issuedAt = TwoFactorRepository.getTwoFactorCodeIssuedAt(key);
         if (stored == null || issuedAt == null || !stored.equals(code)) {
             return false;
         }
         long ageMillis = System.currentTimeMillis() - issuedAt;
         boolean valid = ageMillis <= (long) getExpireMinutes() * MILLIS_PER_MINUTE;
         if (valid) {
-            DatabaseAccess.removeTwoFactorCode(key);
+            TwoFactorRepository.removeTwoFactorCode(key);
         }
         return valid;
     }
@@ -124,7 +125,7 @@ public class MailService {
                 message.setRead(true);
             }
         }
-        DatabaseAccess.markMailRead(recipient);
+        MailRepository.markMailRead(recipient);
     }
 
     public static int deleteInbox(String recipient) {
@@ -140,7 +141,7 @@ public class MailService {
         }
         ALL_MESSAGES.clear();
         ALL_MESSAGES.addAll(remaining);
-        DatabaseAccess.deleteMailMessagesForRecipient(recipient);
+        MailRepository.deleteMailMessagesForRecipient(recipient);
         return removed;
     }
 }

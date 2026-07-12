@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.ReservationRepository;
 import ir.ac.kntu.util.SystemSettingsService;
 
 public class ReservationService {
@@ -27,7 +27,7 @@ public class ReservationService {
     private static void loadFromDatabase() {
         ALL_RESERVATIONS.clear();
         QUEUES.clear();
-        ALL_RESERVATIONS.addAll(DatabaseAccess.getAllReservations());
+        ALL_RESERVATIONS.addAll(ReservationRepository.getAllReservations());
         for (Reservation reservation : ALL_RESERVATIONS) {
             QUEUES.computeIfAbsent(reservation.getItemId(),
                     ReservationQueue::new).enqueue(reservation);
@@ -35,7 +35,7 @@ public class ReservationService {
     }
 
     private static void syncReservation(Reservation reservation) {
-        DatabaseAccess.insertReservation(reservation);
+        ReservationRepository.insertReservation(reservation);
     }
 
     public static String reserve(String memberId, String itemId, int currentDay) {

@@ -10,13 +10,13 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.support.notification.NotificationService;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.SupportTicketRepository;
 
 public class SupportService {
     private static final List<SupportTicket> TICKETS = new ArrayList<>();
 
     static {
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         Collections.sort(TICKETS);
     }
 
@@ -34,7 +34,7 @@ public class SupportService {
 
     public static void createTicket(String userId, SupportSection section, String title, String description) {
         TICKETS.clear();
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         String priority = "LOW";
         if (SupportSection.TECHNICAL == section) {
             priority = "HIGH";
@@ -50,18 +50,18 @@ public class SupportService {
         ticket.setStatus("OPEN");
         TICKETS.add(ticket);
         Collections.sort(TICKETS);
-        DatabaseAccess.insertSupportTicket(ticket);
+        SupportTicketRepository.insertSupportTicket(ticket);
     }
 
     public static boolean updateTicketStatus(String ticketId, String status) {
         TICKETS.clear();
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         for (SupportTicket ticket : TICKETS) {
             if (ticket.getTicketId().equals(ticketId)) {
                 ticket.setStatus(status);
-                DatabaseAccess.updateSupportTicketStatus(ticketId, status);
+                SupportTicketRepository.updateSupportTicketStatus(ticketId, status);
                 TICKETS.clear();
-                TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+                TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
                 return true;
             }
         }
@@ -70,12 +70,12 @@ public class SupportService {
 
     public static boolean respondToTicket(String ticketId, String message) {
         TICKETS.clear();
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         for (SupportTicket ticket : TICKETS) {
             if (ticket.getTicketId().equals(ticketId)) {
                 ticket.setResponse(message);
                 ticket.setStatus("IN_PROGRESS");
-                DatabaseAccess.updateSupportTicketResponse(ticketId, message, "IN_PROGRESS");
+                SupportTicketRepository.updateSupportTicketResponse(ticketId, message, "IN_PROGRESS");
                 notifyCreator(ticket, message);
                 return true;
             }
@@ -95,7 +95,7 @@ public class SupportService {
 
     public static List<SupportTicket> getAllTickets() {
         TICKETS.clear();
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         return new ArrayList<>(TICKETS);
     }
 
@@ -105,7 +105,7 @@ public class SupportService {
         }
 
         TICKETS.clear();
-        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
 
         java.util.Set<SupportSection> allowedSections = agent.getAssignedSupportSections();
         List<SupportTicket> filtered = new ArrayList<>();

@@ -5,7 +5,7 @@ import java.util.List;
 
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.TransactionRepository;
 
 public class FinanceService {
     private static final List<Transaction> TX_LOGS = new ArrayList<>();
@@ -16,7 +16,7 @@ public class FinanceService {
 
     private static void ensureLoaded() {
         TX_LOGS.clear();
-        TX_LOGS.addAll(DatabaseAccess.getAllTransactions());
+        TX_LOGS.addAll(TransactionRepository.getAllTransactions());
     }
 
     public static boolean checkBorrowingPermission(String memberId) {
@@ -51,7 +51,7 @@ public class FinanceService {
         String txId = "TX-" + ((int) (Math.random() * 900_000) + 100_000);
         Transaction tx = new Transaction(txId, memberId, amount, type, description);
         TX_LOGS.add(tx);
-        DatabaseAccess.insertTransaction(tx);
+        TransactionRepository.insertTransaction(tx);
     }
 
     public static boolean proccessExtentionPayment(Persona persona, int amount) {

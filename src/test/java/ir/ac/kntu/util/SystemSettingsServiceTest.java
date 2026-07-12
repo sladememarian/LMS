@@ -25,9 +25,9 @@ class SystemSettingsServiceTest {
     void setUp() {
         SystemSettingsRepository.clear();
         SystemSettingsService.reset();
-        DatabaseAccess.clearPersonas();
+        PersonaRepository.clearPersonas();
         PersonaService.reset();
-        DatabaseAccess.clearReservations();
+        ReservationRepository.clearReservations();
         ReservationService.reset();
         owner = PersonaService.getProfile("admin@system.local");
         guest = PersonaService.registerPersona("guest@test.com", "pass");
@@ -74,7 +74,7 @@ class SystemSettingsServiceTest {
     void maxReservationsActsAsACeilingOverTheRolesNaturalLimit() {
         Persona teacher = PersonaService.registerPersona("teacher@test.com", "pass");
         teacher.updateRole(UserRole.TEACHER);
-        DatabaseAccess.insertPersona(teacher);
+        PersonaRepository.insertPersona(teacher);
         ReservationService.reset();
 
         SystemSettingsService.updateMaxReservations(owner, 1);

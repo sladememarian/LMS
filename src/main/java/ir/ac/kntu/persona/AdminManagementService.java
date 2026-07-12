@@ -3,7 +3,7 @@ package ir.ac.kntu.persona;
 import ir.ac.kntu.exception.AuthorizationException;
 import ir.ac.kntu.exception.UserNotFoundException;
 import ir.ac.kntu.support.SupportSection;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.PersonaRepository;
 import java.util.Set;
 
 /**
@@ -25,7 +25,7 @@ public final class AdminManagementService {
         admin.updateRole(UserRole.ADMIN);
         admin.setCreatedBy(creator.getEmail());
         PersonaService.addPersona(admin);
-        DatabaseAccess.insertPersona(admin);
+        PersonaRepository.insertPersona(admin);
     }
 
     /**
@@ -52,7 +52,7 @@ public final class AdminManagementService {
         }
         requireCanManageAdmin(deleter, toDelete);
         PersonaService.removePersona(toDelete);
-        DatabaseAccess.deletePersona(emailToDelete);
+        PersonaRepository.deletePersona(emailToDelete);
     }
 
     public static void promoteAdmin(Persona actor, String email, UserRole newRole) {
@@ -66,7 +66,7 @@ public final class AdminManagementService {
             throw new AuthorizationException("Only Admins can change roles.");
         }
         target.updateRole(newRole);
-        DatabaseAccess.insertPersona(target);
+        PersonaRepository.insertPersona(target);
     }
 
     public static void demoteAdmin(Persona actor, String email, UserRole newRole) {
@@ -76,7 +76,7 @@ public final class AdminManagementService {
         }
         requireCanManageAdmin(actor, target);
         target.updateRole(newRole);
-        DatabaseAccess.insertPersona(target);
+        PersonaRepository.insertPersona(target);
     }
 
     public static void resetPassword(Persona actor, String email, String newPassword) {
@@ -90,7 +90,7 @@ public final class AdminManagementService {
             throw new AuthorizationException("Only Admins can reset passwords.");
         }
         target.setPassword(newPassword);
-        DatabaseAccess.insertPersona(target);
+        PersonaRepository.insertPersona(target);
     }
 
     /**
@@ -105,6 +105,6 @@ public final class AdminManagementService {
             throw new UserNotFoundException("CallCenter agent not found: " + agentEmail);
         }
         agent.setAssignedSupportSections(sections);
-        DatabaseAccess.insertPersona(agent);
+        PersonaRepository.insertPersona(agent);
     }
 }

@@ -14,7 +14,7 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.SupportConsole;
 import ir.ac.kntu.util.Database;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.PersonaRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,15 +34,15 @@ class StaffLoginE2eTest {
 
     @BeforeEach
     void seedStaff() {
-        DatabaseAccess.clearPersonas();
+        PersonaRepository.clearPersonas();
 
         Persona admin = new Persona("admin@system.local", "adminpass");
         admin.updateRole(UserRole.ADMIN);
-        DatabaseAccess.insertPersona(admin);
+        PersonaRepository.insertPersona(admin);
 
         Persona cc = new Persona("callcenter@system.local", "ccpass");
         cc.updateRole(UserRole.CALLCENTER);
-        DatabaseAccess.insertPersona(cc);
+        PersonaRepository.insertPersona(cc);
 
         Persona.setCurrentUser(null);
     }
@@ -163,7 +163,7 @@ class StaffLoginE2eTest {
     @Test
     void supportConsoleMemberSeesUserInbox() {
         Persona member = new Persona("member@test.com", "pass123");
-        DatabaseAccess.insertPersona(member);
+        PersonaRepository.insertPersona(member);
         PersonaService.validateCredentials("member@test.com", "pass123");
         Persona loaded = PersonaService.getProfile("member@test.com");
         Persona.setCurrentUser(loaded);
@@ -189,7 +189,7 @@ class StaffLoginE2eTest {
     @Test
     void regularUserCanStillLoginByEmail() {
         Persona user = new Persona("student@test.com", "pass123");
-        DatabaseAccess.insertPersona(user);
+        PersonaRepository.insertPersona(user);
 
         assertTrue(PersonaService.validateCredentials("student@test.com", "pass123"));
 
@@ -203,7 +203,7 @@ class StaffLoginE2eTest {
     @Test
     void regularUserCredentialsDoNotGrantStaffAccess() {
         Persona user = new Persona("hacker@test.com", "adminpass");
-        DatabaseAccess.insertPersona(user);
+        PersonaRepository.insertPersona(user);
 
         PersonaService.validateCredentials("hacker@test.com", "adminpass");
         Persona loaded = PersonaService.getProfile("hacker@test.com");

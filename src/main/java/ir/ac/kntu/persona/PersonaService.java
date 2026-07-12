@@ -2,8 +2,8 @@ package ir.ac.kntu.persona;
 
 import ir.ac.kntu.exception.DuplicateEmailException;
 import ir.ac.kntu.exception.UserNotFoundException;
-import ir.ac.kntu.util.DatabaseAccess;
 import ir.ac.kntu.util.EnvConfig;
+import ir.ac.kntu.util.PersonaRepository;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class PersonaService {
 
     private static void loadPersonas() {
         PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
 
         boolean hasAdmin = anyPersonaHasRole(UserRole.ADMIN);
         boolean hasCallcenter = anyPersonaHasRole(UserRole.CALLCENTER);
@@ -56,7 +56,7 @@ public class PersonaService {
         admin.updateRole(UserRole.ADMIN);
         admin.setOwner(true);
         PERSONA_DATABASE.add(admin);
-        DatabaseAccess.insertPersona(admin);
+        PersonaRepository.insertPersona(admin);
     }
 
     /**
@@ -67,7 +67,7 @@ public class PersonaService {
         for (Persona p : PERSONA_DATABASE) {
             if (p.getRole() == UserRole.ADMIN && p.getCreatedBy() == null) {
                 p.setOwner(true);
-                DatabaseAccess.insertPersona(p);
+                PersonaRepository.insertPersona(p);
                 break;
             }
         }
@@ -78,7 +78,7 @@ public class PersonaService {
         Persona cc = new Persona("callcenter@system.local", defaultCcPass);
         cc.updateRole(UserRole.CALLCENTER);
         PERSONA_DATABASE.add(cc);
-        DatabaseAccess.insertPersona(cc);
+        PersonaRepository.insertPersona(cc);
     }
 
     public static void reset() {
@@ -93,13 +93,13 @@ public class PersonaService {
         }
         Persona persona = new Persona(email, password);
         PERSONA_DATABASE.add(persona);
-        DatabaseAccess.insertPersona(persona);
+        PersonaRepository.insertPersona(persona);
         return persona;
     }
 
     public static boolean validateCredentials(String email, String password) {
         PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
         for (Persona persona : PERSONA_DATABASE) {
             if (
                 persona.getEmail() != null &&
@@ -135,7 +135,7 @@ public class PersonaService {
             persona.setFirstName(firstName);
             persona.setLastName(lastName);
             persona.setPhoneNumber(phoneNumber);
-            DatabaseAccess.insertPersona(persona);
+            PersonaRepository.insertPersona(persona);
         }
     }
 
@@ -145,7 +145,7 @@ public class PersonaService {
             return false;
         }
         persona.setPassword(newPassword);
-        DatabaseAccess.insertPersona(persona);
+        PersonaRepository.insertPersona(persona);
         return true;
     }
 
@@ -153,7 +153,7 @@ public class PersonaService {
         Persona persona = getProfile(email);
         if (persona != null) {
             persona.setTheme(theme);
-            DatabaseAccess.insertPersona(persona);
+            PersonaRepository.insertPersona(persona);
         }
     }
 
@@ -171,7 +171,7 @@ public class PersonaService {
         Persona persona = getProfile(email);
         if (persona != null) {
             persona.setWalletBalance(persona.getWalletBalance() + amount);
-            DatabaseAccess.insertPersona(persona);
+            PersonaRepository.insertPersona(persona);
             syncCurrentUserWallet(email, persona.getWalletBalance());
         }
     }
@@ -196,7 +196,7 @@ public class PersonaService {
                     persona.getEmail(),
                     persona.getWalletBalance()
                 );
-                DatabaseAccess.insertPersona(persona);
+                PersonaRepository.insertPersona(persona);
                 break;
             }
         }
@@ -206,8 +206,8 @@ public class PersonaService {
         Persona persona = getProfile(email);
         if (persona != null) {
             persona.addBorrowedItem(itemId);
-            DatabaseAccess.saveBorrowedItems(persona);
-            DatabaseAccess.insertPersona(persona);
+            PersonaRepository.saveBorrowedItems(persona);
+            PersonaRepository.insertPersona(persona);
             Persona current = Persona.getCurrentUser();
             if (current != null && email.equalsIgnoreCase(current.getEmail())) {
                 current.addBorrowedItem(itemId);
@@ -234,8 +234,8 @@ public class PersonaService {
         }
         boolean removed = persona.removeBorrowedItem(itemId);
         if (removed) {
-            DatabaseAccess.saveBorrowedItems(persona);
-            DatabaseAccess.insertPersona(persona);
+            PersonaRepository.saveBorrowedItems(persona);
+            PersonaRepository.insertPersona(persona);
             Persona current = Persona.getCurrentUser();
             if (current != null && email.equalsIgnoreCase(current.getEmail())) {
                 current.removeBorrowedItem(itemId);
@@ -249,7 +249,7 @@ public class PersonaService {
             return null;
         }
         PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
         for (Persona profile : PERSONA_DATABASE) {
             if (memberId.equals(profile.getMemberId())) {
                 return profile;
@@ -263,7 +263,7 @@ public class PersonaService {
             return null;
         }
         PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
         for (Persona profile : PERSONA_DATABASE) {
             if (username.equalsIgnoreCase(profile.getUsername())) {
                 return profile;
@@ -274,13 +274,13 @@ public class PersonaService {
 
     public static boolean promoteRole(String email, UserRole newRole) {
         PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
         Persona persona = getProfile(email);
         if (persona == null) {
             return false;
         }
         persona.updateRole(newRole);
-        DatabaseAccess.insertPersona(persona);
+        PersonaRepository.insertPersona(persona);
         return true;
     }
 }

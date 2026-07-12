@@ -5,26 +5,26 @@ import java.util.List;
 
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.LoanRepository;
 import ir.ac.kntu.util.SystemSettingsService;
 
 public class LoanService {
     private static final List<Loan> LOANS = new ArrayList<>();
 
     static {
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        LOANS.addAll(LoanRepository.getAllLoans());
     }
 
     private static void reload() {
         LOANS.clear();
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        LOANS.addAll(LoanRepository.getAllLoans());
     }
 
     public static void recordLoan(String memberId, String itemId, int currentDay, int loanPeriodDays) {
         reload();
         int dueDay = currentDay + loanPeriodDays;
         LOANS.add(new Loan(memberId, itemId, currentDay, dueDay));
-        DatabaseAccess.insertLoan(new Loan(memberId, itemId, currentDay, dueDay));
+        LoanRepository.insertLoan(new Loan(memberId, itemId, currentDay, dueDay));
     }
 
     public static boolean clearLoan(String memberId, String itemId) {
@@ -32,7 +32,7 @@ public class LoanService {
         boolean removed = LOANS.removeIf(loan -> loan.getMemberId().equals(memberId)
                 && loan.getItemId().equals(itemId));
         if (removed) {
-            DatabaseAccess.deleteLoan(memberId, itemId);
+            LoanRepository.deleteLoan(memberId, itemId);
         }
         return removed;
     }
@@ -43,7 +43,7 @@ public class LoanService {
             if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
                 loan.setDueDay(loan.getDueDay() + extraDays);
                 loan.setLastChargedDay(loan.getDueDay());
-                DatabaseAccess.insertLoan(loan);
+                LoanRepository.insertLoan(loan);
                 return true;
             }
         }
@@ -112,7 +112,7 @@ public class LoanService {
             }
         }
         for (Loan loan : LOANS) {
-            DatabaseAccess.insertLoan(loan);
+            LoanRepository.insertLoan(loan);
         }
         return charges;
     }

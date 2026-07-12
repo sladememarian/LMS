@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.ClockRepository;
 
 public class SimulationClock {
     private static final int FIRST_DAY = 1;
@@ -31,19 +31,19 @@ public class SimulationClock {
 
     public static int advanceDay() {
         currentDay++;
-        DatabaseAccess.saveClock(currentDay, startDate);
+        ClockRepository.saveClock(currentDay, startDate);
         return currentDay;
     }
 
     private static void loadFromDatabase() {
-        Map<String, Object> data = DatabaseAccess.loadClock();
+        Map<String, Object> data = ClockRepository.loadClock();
         if (data != null) {
             currentDay = (int) data.get("currentDay");
             startDate = (LocalDate) data.get("startDate");
         } else {
             currentDay = FIRST_DAY;
             startDate = LocalDate.now();
-            DatabaseAccess.saveClock(currentDay, startDate);
+            ClockRepository.saveClock(currentDay, startDate);
         }
     }
 }

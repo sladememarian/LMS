@@ -5,7 +5,8 @@ import java.util.List;
 
 import ir.ac.kntu.generic.SearchEngine;
 import ir.ac.kntu.generic.SearchResult;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.LibraryItemRepository;
+import ir.ac.kntu.util.SupplierRepository;
 
 public class LibraryService {
     private static final List<LibraryItem> INVENTORY = new ArrayList<>();
@@ -20,24 +21,24 @@ public class LibraryService {
     private static final String STREAM_URL = "https://kntu.ac/stream";
 
     static {
-        List<SupplierCompany> dbSuppliers = DatabaseAccess.getAllSuppliers();
+        List<SupplierCompany> dbSuppliers = SupplierRepository.getAllSuppliers();
         if (dbSuppliers.isEmpty()) {
             SUPPLIERS.add(new SupplierCompany(SUP_GLOBAL, "Global Books Inc."));
             SUPPLIERS.add(new SupplierCompany(SUP_DIGITAL, "Digital Reads Ltd."));
             SUPPLIERS.add(new SupplierCompany(SUP_ACADEMIC, "KNTU Academic Press"));
             SUPPLIERS.add(new SupplierCompany(SUP_MAGAZINE, "Magazine World"));
             for (SupplierCompany s : SUPPLIERS) {
-                DatabaseAccess.insertSupplier(s);
+                SupplierRepository.insertSupplier(s);
             }
         } else {
             SUPPLIERS.addAll(dbSuppliers);
         }
 
-        List<LibraryItem> dbItems = DatabaseAccess.getAllLibraryItems();
+        List<LibraryItem> dbItems = LibraryItemRepository.getAllLibraryItems();
         if (dbItems.isEmpty()) {
             seedInventory();
             for (LibraryItem item : INVENTORY) {
-                DatabaseAccess.insertLibraryItem(item);
+                LibraryItemRepository.insertLibraryItem(item);
             }
         } else {
             INVENTORY.addAll(dbItems);
@@ -159,13 +160,13 @@ public class LibraryService {
 
     public static boolean executeBorrow(String itemId) {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() > 0) {
                     item.setAvailableCopies(item.getAvailableCopies() - 1);
                     System.out.println("[Library Module]: Inventory decremented for Item: " + itemId);
-                    DatabaseAccess.insertLibraryItem(item);
+                    LibraryItemRepository.insertLibraryItem(item);
                     return true;
                 }
                 System.out.println("[Library Module]: Borrow failed. Zero copies available for Item: " + itemId);
@@ -178,13 +179,13 @@ public class LibraryService {
 
     public static void executeReturn(String itemId) {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() < item.getTotalCopies()) {
                     item.setAvailableCopies(item.getAvailableCopies() + 1);
                     System.out.println("[Library Module]: Inventory incremented for Item: " + itemId);
-                    DatabaseAccess.insertLibraryItem(item);
+                    LibraryItemRepository.insertLibraryItem(item);
                 } else {
                     System.out.println("[Library Module]: Return failed. Copies already at maximum for: " + itemId);
                 }
@@ -196,7 +197,7 @@ public class LibraryService {
 
     public static List<LibraryItem> searchItems(String keyword) {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         if (keyword == null || keyword.trim().isEmpty()) {
             return new ArrayList<>();
         }
@@ -218,14 +219,14 @@ public class LibraryService {
 
     public static void updateItemQuantityFromCallCenter(String itemId, int newTotalCopies) {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 item.setTotalCopies(item.getTotalCopies() + newTotalCopies);
                 item.setAvailableCopies(item.getAvailableCopies() + newTotalCopies);
                 System.out.println("[Library Module]: Updated total copies for Item: " + itemId
                         + " to " + item.getTotalCopies());
-                DatabaseAccess.insertLibraryItem(item);
+                LibraryItemRepository.insertLibraryItem(item);
                 return;
             }
         }
@@ -234,12 +235,12 @@ public class LibraryService {
 
     public static boolean addItem(LibraryItem item) {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         if (item == null || getItemById(item.getItemId()) != null) {
             return false;
         }
         INVENTORY.add(item);
-        DatabaseAccess.insertLibraryItem(item);
+        LibraryItemRepository.insertLibraryItem(item);
         return true;
     }
 
@@ -250,7 +251,7 @@ public class LibraryService {
             return false;
         }
         INVENTORY.remove(target);
-        DatabaseAccess.deleteLibraryItem(itemId);
+        LibraryItemRepository.deleteLibraryItem(itemId);
         return true;
     }
 
@@ -260,13 +261,13 @@ public class LibraryService {
             return false;
         }
         target.setUnitPrice(newPrice);
-        DatabaseAccess.insertLibraryItem(target);
+        LibraryItemRepository.insertLibraryItem(target);
         return true;
     }
 
     public static List<LibraryItem> getAllItems() {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         return new ArrayList<>(INVENTORY);
     }
 
@@ -297,6 +298,6 @@ public class LibraryService {
 
     public static void initCatalog() {
         INVENTORY.clear();
-        INVENTORY.addAll(DatabaseAccess.getAllLibraryItems());
+        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
     }
 }

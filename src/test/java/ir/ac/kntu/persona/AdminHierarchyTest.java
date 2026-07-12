@@ -18,7 +18,7 @@ class AdminHierarchyTest {
 
     @BeforeEach
     void setUp() {
-        ir.ac.kntu.util.DatabaseAccess.clearPersonas();
+        ir.ac.kntu.util.PersonaRepository.clearPersonas();
         PersonaService.reset();
         owner = PersonaService.getProfile("admin@system.local");
     }

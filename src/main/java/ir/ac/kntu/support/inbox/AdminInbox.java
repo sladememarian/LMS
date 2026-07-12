@@ -18,8 +18,15 @@ import ir.ac.kntu.support.rolerequest.RoleRequest;
 import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.LibraryItemRepository;
+import ir.ac.kntu.util.LoanRepository;
+import ir.ac.kntu.util.MailRepository;
+import ir.ac.kntu.util.PersonaRepository;
+import ir.ac.kntu.util.RoleRequestRepository;
+import ir.ac.kntu.util.SupplierRepository;
+import ir.ac.kntu.util.SupportTicketRepository;
 import ir.ac.kntu.util.SystemSettingsService;
+import ir.ac.kntu.util.TransactionRepository;
 
 public class AdminInbox {
     private static final String PROMPT_REQUEST = "Request ID: ";
@@ -294,14 +301,14 @@ public class AdminInbox {
 
     private static void inspectDatabase() {
         System.out.println(ConsoleColor.BOLD + "--- Database Records ---" + ConsoleColor.RESET);
-        System.out.println("  Personas: " + DatabaseAccess.getAllPersonas().size());
-        System.out.println("  Mail messages: " + DatabaseAccess.getAllMailMessages().size());
-        System.out.println("  Transactions: " + DatabaseAccess.getAllTransactions().size());
-        System.out.println("  Loans: " + DatabaseAccess.getAllLoans().size());
-        System.out.println("  Library items: " + DatabaseAccess.getAllLibraryItems().size());
-        System.out.println("  Suppliers: " + DatabaseAccess.getAllSuppliers().size());
-        System.out.println("  Support tickets: " + DatabaseAccess.getAllSupportTickets().size());
-        System.out.println("  Role requests: " + DatabaseAccess.getAllRoleRequests().size());
+        System.out.println("  Personas: " + PersonaRepository.getAllPersonas().size());
+        System.out.println("  Mail messages: " + MailRepository.getAllMailMessages().size());
+        System.out.println("  Transactions: " + TransactionRepository.getAllTransactions().size());
+        System.out.println("  Loans: " + LoanRepository.getAllLoans().size());
+        System.out.println("  Library items: " + LibraryItemRepository.getAllLibraryItems().size());
+        System.out.println("  Suppliers: " + SupplierRepository.getAllSuppliers().size());
+        System.out.println("  Support tickets: " + SupportTicketRepository.getAllSupportTickets().size());
+        System.out.println("  Role requests: " + RoleRequestRepository.getAllRoleRequests().size());
         System.out.println("  Simulated day: " + SimulationClock.getCurrentDay());
     }
 }

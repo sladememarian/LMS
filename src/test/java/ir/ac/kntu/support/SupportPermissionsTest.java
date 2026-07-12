@@ -4,7 +4,8 @@ import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserRole;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.PersonaRepository;
+import ir.ac.kntu.util.SupportTicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,16 +21,16 @@ class SupportPermissionsTest {
 
     @BeforeEach
     void setUp() {
-        DatabaseAccess.clearPersonas();
+        PersonaRepository.clearPersonas();
         PersonaService.reset();
-        DatabaseAccess.clearSupportTickets();
+        SupportTicketRepository.clearSupportTickets();
         owner = PersonaService.getProfile("admin@system.local");
     }
 
     private Persona registerCallCenterAgent(String email) {
         Persona agent = PersonaService.registerPersona(email, "pass");
         agent.updateRole(UserRole.CALLCENTER);
-        DatabaseAccess.insertPersona(agent);
+        PersonaRepository.insertPersona(agent);
         return agent;
     }
 

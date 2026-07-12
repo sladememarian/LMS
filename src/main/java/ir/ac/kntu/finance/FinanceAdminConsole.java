@@ -9,7 +9,7 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.report.ReportService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.TransactionRepository;
 
 public class FinanceAdminConsole {
     private static final String REPORT_PATH = "library_financial_report.html";
@@ -123,6 +123,6 @@ public class FinanceAdminConsole {
 
     private static void inspectDatabase() {
         System.out.println(ConsoleColor.BOLD + "--- Finance Database Records ---" + ConsoleColor.RESET);
-        System.out.println("  Transactions: " + DatabaseAccess.getAllTransactions().size());
+        System.out.println("  Transactions: " + TransactionRepository.getAllTransactions().size());
     }
 }

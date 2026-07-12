@@ -2,7 +2,8 @@ package ir.ac.kntu.reservation;
 
 import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.library.LibraryService;
-import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.PersonaRepository;
+import ir.ac.kntu.util.ReservationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,8 +13,8 @@ class ReservationServiceTest {
 
     @BeforeEach
     void setUp() {
-        DatabaseAccess.clearReservations();
-        DatabaseAccess.clearPersonas();
+        ReservationRepository.clearReservations();
+        PersonaRepository.clearPersonas();
         LibraryService.initCatalog();
         ReservationService.reset();
         ir.ac.kntu.persona.PersonaService.reset();
