@@ -41,7 +41,7 @@ public class DatabaseAccess {
 
     public static void insertPersona(Persona persona) {
         String email = resolveEmail(persona);
-        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme, created_by = s.created_by WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme, s.created_by)", ps -> {
+        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by, is_owner, support_sections) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme, created_by = s.created_by, is_owner = s.is_owner, support_sections = s.support_sections WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by, is_owner, support_sections) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme, s.created_by, s.is_owner, s.support_sections)", ps -> {
             ps.setString(1, email);
             ps.setString(2, persona.getUsername());
             ps.setString(3, persona.getPassword());
@@ -53,8 +53,38 @@ public class DatabaseAccess {
             ps.setString(9, persona.getPhoneNumber());
             ps.setString(10, persona.getTheme());
             ps.setString(11, persona.getCreatedBy());
+            ps.setBoolean(12, persona.isOwner());
+            ps.setString(13, encodeSections(persona.getAssignedSupportSections()));
             ps.executeUpdate();
         });
+    }
+
+    private static String encodeSections(java.util.Set<ir.ac.kntu.support.SupportSection> sections) {
+        if (sections == null || sections.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (ir.ac.kntu.support.SupportSection section : sections) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(section.name());
+        }
+        return sb.toString();
+    }
+
+    private static java.util.Set<ir.ac.kntu.support.SupportSection> decodeSections(String raw) {
+        java.util.Set<ir.ac.kntu.support.SupportSection> result =
+                java.util.EnumSet.noneOf(ir.ac.kntu.support.SupportSection.class);
+        if (raw == null || raw.isEmpty()) {
+            return result;
+        }
+        for (String token : raw.split(",")) {
+            if (!token.isEmpty()) {
+                result.add(ir.ac.kntu.support.SupportSection.valueOf(token));
+            }
+        }
+        return result;
     }
 
     private static String resolveEmail(Persona persona) {
@@ -85,6 +115,8 @@ public class DatabaseAccess {
         persona.setPhoneNumber(rs.getString("phone"));
         persona.setTheme(rs.getString("theme"));
         persona.setCreatedBy(rs.getString("created_by"));
+        persona.setOwner(rs.getBoolean("is_owner"));
+        persona.setAssignedSupportSections(decodeSections(rs.getString("support_sections")));
         if (!isSystemEmail(email)) {
             Database.withPs("SELECT item_id FROM borrowed_items WHERE email=?", ps -> {
                 ps.setString(1, email);
@@ -449,4 +481,5 @@ public class DatabaseAccess {
             ps.executeUpdate();
         });
     }
+
 }

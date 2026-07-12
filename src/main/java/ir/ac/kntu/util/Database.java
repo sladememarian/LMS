@@ -64,7 +64,8 @@ public class Database {
     }
 
     private static final String[] TABLES_SQL = {
-        "CREATE TABLE IF NOT EXISTS personas (email VARCHAR(255) PRIMARY KEY, username VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(50) NOT NULL DEFAULT 'GUEST', member_id VARCHAR(50), wallet_balance INTEGER DEFAULT 0, first_name VARCHAR(255), last_name VARCHAR(255), phone VARCHAR(50), theme VARCHAR(50) DEFAULT 'LIGHT', created_by VARCHAR(255))",
+        "CREATE TABLE IF NOT EXISTS personas (email VARCHAR(255) PRIMARY KEY, username VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(50) NOT NULL DEFAULT 'GUEST', member_id VARCHAR(50), wallet_balance INTEGER DEFAULT 0, first_name VARCHAR(255), last_name VARCHAR(255), phone VARCHAR(50), theme VARCHAR(50) DEFAULT 'LIGHT', created_by VARCHAR(255), is_owner BOOLEAN DEFAULT FALSE, support_sections VARCHAR(255))",
+        "CREATE TABLE IF NOT EXISTS system_settings (setting_key VARCHAR(100) PRIMARY KEY, setting_value VARCHAR(255) NOT NULL)",
         "CREATE TABLE IF NOT EXISTS borrowed_items (email VARCHAR(255) NOT NULL, item_id VARCHAR(50) NOT NULL, PRIMARY KEY (email, item_id))",
         "CREATE TABLE IF NOT EXISTS mail_messages (message_id VARCHAR(50) PRIMARY KEY, recipient_email VARCHAR(255) NOT NULL, subject VARCHAR(500), body TEXT, type VARCHAR(50), sent_date VARCHAR(100), is_read BOOLEAN DEFAULT FALSE)",
         "CREATE TABLE IF NOT EXISTS two_factor_codes (email VARCHAR(255) PRIMARY KEY, code VARCHAR(10) NOT NULL, issued_at BIGINT NOT NULL)",

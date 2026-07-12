@@ -2,7 +2,6 @@ package ir.ac.kntu.persona;
 
 import ir.ac.kntu.exception.DuplicateEmailException;
 import ir.ac.kntu.exception.UserNotFoundException;
-import ir.ac.kntu.exception.AuthorizationException;
 import ir.ac.kntu.util.DatabaseAccess;
 import ir.ac.kntu.util.EnvConfig;
 import java.util.ArrayList;
@@ -19,38 +18,67 @@ public class PersonaService {
     private static void loadPersonas() {
         PERSONA_DATABASE.clear();
         PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
-        // ... admin/cc logic ...
-        String defaultAdminPass = EnvConfig.get(
-            "DEFAULT_ADMIN_PASSWORD",
-            "adminpass"
-        );
-        String defaultCcPass = EnvConfig.get(
-            "DEFAULT_CALLCENTER_PASSWORD",
-            "ccpass"
-        );
 
-        boolean hasAdmin = false;
-        boolean hasCallcenter = false;
-        for (Persona p : PERSONA_DATABASE) {
-            if (p.getRole() == UserRole.ADMIN) {
-                hasAdmin = true;
-            }
-            if (p.getRole() == UserRole.CALLCENTER) {
-                hasCallcenter = true;
-            }
-        }
+        boolean hasAdmin = anyPersonaHasRole(UserRole.ADMIN);
+        boolean hasCallcenter = anyPersonaHasRole(UserRole.CALLCENTER);
+
         if (!hasAdmin) {
-            Persona admin = new Persona("admin@system.local", defaultAdminPass);
-            admin.updateRole(UserRole.ADMIN);
-            PERSONA_DATABASE.add(admin);
-            DatabaseAccess.insertPersona(admin);
+            bootstrapDefaultAdmin();
+        } else if (!anyAdminIsOwner()) {
+            promoteOldestAdminToOwner();
         }
         if (!hasCallcenter) {
-            Persona cc = new Persona("callcenter@system.local", defaultCcPass);
-            cc.updateRole(UserRole.CALLCENTER);
-            PERSONA_DATABASE.add(cc);
-            DatabaseAccess.insertPersona(cc);
+            bootstrapDefaultCallcenter();
         }
+    }
+
+    private static boolean anyPersonaHasRole(UserRole role) {
+        for (Persona p : PERSONA_DATABASE) {
+            if (p.getRole() == role) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean anyAdminIsOwner() {
+        for (Persona p : PERSONA_DATABASE) {
+            if (p.getRole() == UserRole.ADMIN && p.isOwner()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void bootstrapDefaultAdmin() {
+        String defaultAdminPass = EnvConfig.get("DEFAULT_ADMIN_PASSWORD", "adminpass");
+        Persona admin = new Persona("admin@system.local", defaultAdminPass);
+        admin.updateRole(UserRole.ADMIN);
+        admin.setOwner(true);
+        PERSONA_DATABASE.add(admin);
+        DatabaseAccess.insertPersona(admin);
+    }
+
+    /**
+     * Data created before the Owner/Admin hierarchy existed: the first Admin
+     * on record (the one nobody "created") becomes the Owner.
+     */
+    private static void promoteOldestAdminToOwner() {
+        for (Persona p : PERSONA_DATABASE) {
+            if (p.getRole() == UserRole.ADMIN && p.getCreatedBy() == null) {
+                p.setOwner(true);
+                DatabaseAccess.insertPersona(p);
+                break;
+            }
+        }
+    }
+
+    private static void bootstrapDefaultCallcenter() {
+        String defaultCcPass = EnvConfig.get("DEFAULT_CALLCENTER_PASSWORD", "ccpass");
+        Persona cc = new Persona("callcenter@system.local", defaultCcPass);
+        cc.updateRole(UserRole.CALLCENTER);
+        PERSONA_DATABASE.add(cc);
+        DatabaseAccess.insertPersona(cc);
     }
 
     public static void reset() {
@@ -187,27 +215,16 @@ public class PersonaService {
         }
     }
 
-    public static void createAdmin(Persona creator, String email, String password) {
-        if (creator.getRole() != UserRole.ADMIN) {
-            throw new AuthorizationException("Only Admins can create new Admins.");
-        }
-        Persona admin = new Persona(email, password);
-        admin.updateRole(UserRole.ADMIN);
-        admin.setCreatedBy(creator.getEmail());
-        PERSONA_DATABASE.add(admin);
-        DatabaseAccess.insertPersona(admin);
+    /**
+     * Hooks so {@link AdminManagementService} can mutate the shared in-memory
+     * list without duplicating it.
+     */
+    public static void addPersona(Persona persona) {
+        PERSONA_DATABASE.add(persona);
     }
 
-    public static void deleteAdmin(Persona deleter, String emailToDelete) {
-        Persona toDelete = getProfile(emailToDelete);
-        if (toDelete == null || toDelete.getRole() != UserRole.ADMIN) {
-            throw new UserNotFoundException("Admin not found: " + emailToDelete);
-        }
-        if (!emailToDelete.equalsIgnoreCase(deleter.getEmail()) && !emailToDelete.equalsIgnoreCase(toDelete.getCreatedBy())) {
-            throw new AuthorizationException("You are not authorized to delete this admin.", null);
-        }
-        PERSONA_DATABASE.remove(toDelete);
-        DatabaseAccess.deletePersona(emailToDelete);
+    public static void removePersona(Persona persona) {
+        PERSONA_DATABASE.remove(persona);
     }
 
     public static boolean recordReturn(String email, String itemId) {
