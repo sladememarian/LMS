@@ -9,10 +9,9 @@ import java.util.UUID;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.SystemSettingsService;
 
 public class ReservationService {
-
-    private static final int ACTIVATION_PERIOD_DAYS = 7;
 
     private static final List<Reservation> ALL_RESERVATIONS = new ArrayList<>();
     private static final Map<String, ReservationQueue> QUEUES = new HashMap<>();
@@ -61,7 +60,7 @@ public class ReservationService {
         if (item.getAvailableCopies() > 0) {
             Reservation reservation = new Reservation(
                     generateId(), memberId, itemId,
-                    currentDay, currentDay + ACTIVATION_PERIOD_DAYS,
+                    currentDay, currentDay + SystemSettingsService.getReservationDays(),
                     ReservationStatus.ACTIVE);
             ALL_RESERVATIONS.add(reservation);
             queue.enqueue(reservation);
@@ -175,7 +174,8 @@ public class ReservationService {
         if (persona == null) {
             return 0;
         }
-        return persona.getUserProfile().reservationLimit();
+        int roleLimit = persona.getUserProfile().reservationLimit();
+        return Math.min(roleLimit, SystemSettingsService.getMaxReservations());
     }
 
     private static String generateId() {

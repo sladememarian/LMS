@@ -6,10 +6,10 @@ import java.util.List;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.SystemSettingsService;
 
 public class LoanService {
     private static final List<Loan> LOANS = new ArrayList<>();
-    private static final int OVERDUE_DAILY_FINE = 10_000;
 
     static {
         LOANS.addAll(DatabaseAccess.getAllLoans());
@@ -75,9 +75,10 @@ public class LoanService {
         if (borrower == null) {
             return null;
         }
-        FinanceService.recordDebt(borrower, OVERDUE_DAILY_FINE,
+        int fineRate = SystemSettingsService.getFineRate();
+        FinanceService.recordDebt(borrower, fineRate,
                 "Overdue fine for " + loan.getItemId() + " (day " + currentDay + ")");
-        return loan.getMemberId() + " +" + OVERDUE_DAILY_FINE + " (" + loan.getItemId() + ")";
+        return loan.getMemberId() + " +" + fineRate + " (" + loan.getItemId() + ")";
     }
 
     public static List<String> accrueOverdueDebts(int currentDay) {

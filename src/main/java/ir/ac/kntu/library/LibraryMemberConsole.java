@@ -131,8 +131,10 @@ public class LibraryMemberConsole {
         LibraryItem item = LibraryService.getItemById(itemId);
         if (LibraryService.executeBorrow(itemId)) {
             PersonaService.recordBorrow(user.getEmail(), itemId);
+            int loanPeriodDays = Math.min(item.borrowPeriod(),
+                    ir.ac.kntu.util.SystemSettingsService.getBorrowDays());
             LoanService.recordLoan(user.getMemberId(), itemId,
-                    SimulationClock.getCurrentDay(), item.borrowPeriod());
+                    SimulationClock.getCurrentDay(), loanPeriodDays);
             ReservationService.completeReservation(
                     user.getMemberId(), itemId);
             ConsoleColor.printSuccess("Borrowed " + itemId + ".");
