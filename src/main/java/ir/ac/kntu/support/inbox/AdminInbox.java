@@ -5,8 +5,11 @@ import java.util.Scanner;
 
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
+import ir.ac.kntu.exception.BaseException;
+import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.reservation.ReservationService;
+import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.support.SupportService;
 import ir.ac.kntu.support.SupportTicket;
 import ir.ac.kntu.support.TicketPrinter;
@@ -16,17 +19,25 @@ import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 import ir.ac.kntu.util.DatabaseAccess;
+import ir.ac.kntu.util.SystemSettingsService;
 
 public class AdminInbox {
     private static final String PROMPT_REQUEST = "Request ID: ";
+    private static final String PROMPT_EMAIL = "Email: ";
+    private static final String PROMPT_CHOOSE = "Choose: ";
+    private static final String INVALID_ENTRY = "Invalid entry.";
 
     public static void open(Scanner scanner, Persona admin) {
         boolean active = true;
         while (active) {
             printMenu();
-            String choice = ConsoleMenu.readLine(scanner, ConsoleColor.YELLOW + "Choose: " + ConsoleColor.RESET);
+            String choice = promptChoice(scanner);
             active = handle(choice, scanner, admin);
         }
+    }
+
+    private static String promptChoice(Scanner scanner) {
+        return ConsoleMenu.readLine(scanner, ConsoleColor.YELLOW + PROMPT_CHOOSE + ConsoleColor.RESET);
     }
 
     private static void printMenu() {
@@ -40,6 +51,9 @@ public class AdminInbox {
         ConsoleMenu.option("7", "View Database Records");
         ConsoleMenu.option("8", "Debug Tools");
         ConsoleMenu.option("9", "Advance Simulated Day (Time God)");
+        ConsoleMenu.option("10", "Manage Admins");
+        ConsoleMenu.option("11", "Assign CallCenter Support Sections");
+        ConsoleMenu.option("12", "System Settings");
         ConsoleMenu.back();
     }
 
@@ -81,9 +95,149 @@ public class AdminInbox {
             case "9":
                 advanceSimulatedDay();
                 return true;
-            default:
-                ConsoleColor.printError("Invalid entry.");
+            case "10":
+                manageAdmins(scanner, admin);
                 return true;
+            case "11":
+                assignSupportSections(scanner, admin);
+                return true;
+            case "12":
+                manageSystemSettings(scanner, admin);
+                return true;
+            default:
+                ConsoleColor.printError(INVALID_ENTRY);
+                return true;
+        }
+    }
+
+    private static void manageAdmins(Scanner scanner, Persona actor) {
+        ConsoleMenu.banner("MANAGE ADMINS");
+        ConsoleMenu.option("1", "Create Admin");
+        ConsoleMenu.option("2", "Delete Admin");
+        ConsoleMenu.option("3", "Reset Admin Password");
+        ConsoleMenu.back();
+        String choice = promptChoice(scanner);
+        try {
+            runAdminAction(choice, scanner, actor);
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
+        }
+    }
+
+    private static void runAdminAction(String choice, Scanner scanner, Persona actor) {
+        switch (choice) {
+            case "1":
+                createAdminAction(scanner, actor);
+                break;
+            case "2":
+                deleteAdminAction(scanner, actor);
+                break;
+            case "3":
+                resetPasswordAction(scanner, actor);
+                break;
+            default:
+                ConsoleColor.printError(INVALID_ENTRY);
+                break;
+        }
+    }
+
+    private static void createAdminAction(Scanner scanner, Persona actor) {
+        String newEmail = ConsoleMenu.readLine(scanner, PROMPT_EMAIL);
+        String newPassword = ConsoleMenu.readLine(scanner, "Password: ");
+        AdminManagementService.createAdmin(actor, newEmail, newPassword);
+        ConsoleColor.printSuccess("Admin created: " + newEmail);
+    }
+
+    private static void deleteAdminAction(Scanner scanner, Persona actor) {
+        String deleteEmail = ConsoleMenu.readLine(scanner, PROMPT_EMAIL);
+        AdminManagementService.deleteAdmin(actor, deleteEmail);
+        ConsoleColor.printSuccess("Admin deleted: " + deleteEmail);
+    }
+
+    private static void resetPasswordAction(Scanner scanner, Persona actor) {
+        String targetEmail = ConsoleMenu.readLine(scanner, PROMPT_EMAIL);
+        String newPass = ConsoleMenu.readLine(scanner, "New password: ");
+        AdminManagementService.resetPassword(actor, targetEmail, newPass);
+        ConsoleColor.printSuccess("Password reset for: " + targetEmail);
+    }
+
+    private static void assignSupportSections(Scanner scanner, Persona actor) {
+        String agentEmail = ConsoleMenu.readLine(scanner, "CallCenter agent email: ");
+        System.out.println("Available sections: " + java.util.Arrays.toString(SupportSection.values()));
+        String raw = ConsoleMenu.readLine(scanner, "Sections (comma-separated): ");
+        java.util.Set<SupportSection> sections = java.util.EnumSet.noneOf(SupportSection.class);
+        if (!parseSections(raw, sections)) {
+            return;
+        }
+        try {
+            AdminManagementService.assignSupportSections(actor, agentEmail, sections);
+            ConsoleColor.printSuccess("Sections assigned to " + agentEmail + ": " + sections);
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
+        }
+    }
+
+    private static boolean parseSections(String raw, java.util.Set<SupportSection> sections) {
+        for (String token : raw.split(",")) {
+            String trimmed = token.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            try {
+                sections.add(SupportSection.valueOf(trimmed.toUpperCase()));
+            } catch (IllegalArgumentException ex) {
+                ConsoleColor.printError("Unknown section: " + trimmed);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void manageSystemSettings(Scanner scanner, Persona actor) {
+        ConsoleMenu.banner("SYSTEM SETTINGS");
+        System.out.println("  Borrow Days: " + SystemSettingsService.getBorrowDays());
+        System.out.println("  Fine Rate: " + SystemSettingsService.getFineRate());
+        System.out.println("  Reservation Days: " + SystemSettingsService.getReservationDays());
+        System.out.println("  Max Reservations: " + SystemSettingsService.getMaxReservations());
+        ConsoleMenu.option("1", "Edit Borrow Days");
+        ConsoleMenu.option("2", "Edit Fine Rate");
+        ConsoleMenu.option("3", "Edit Reservation Days");
+        ConsoleMenu.option("4", "Edit Max Reservations");
+        ConsoleMenu.back();
+        String choice = promptChoice(scanner);
+        if ("0".equals(choice)) {
+            return;
+        }
+        applySettingChoice(choice, scanner, actor);
+    }
+
+    private static void applySettingChoice(String choice, Scanner scanner, Persona actor) {
+        int value = ConsoleMenu.readInt(scanner, "New value: ");
+        try {
+            runSettingAction(choice, actor, value);
+            ConsoleColor.printSuccess("Setting updated.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
+        }
+    }
+
+    private static void runSettingAction(String choice, Persona actor, int value) {
+        switch (choice) {
+            case "1":
+                SystemSettingsService.updateBorrowDays(actor, value);
+                break;
+            case "2":
+                SystemSettingsService.updateFineRate(actor, value);
+                break;
+            case "3":
+                SystemSettingsService.updateReservationDays(actor, value);
+                break;
+            case "4":
+                SystemSettingsService.updateMaxReservations(actor, value);
+                break;
+            default:
+                ConsoleColor.printError(INVALID_ENTRY);
+                break;
         }
     }
 
