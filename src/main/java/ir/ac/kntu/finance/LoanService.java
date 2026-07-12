@@ -15,17 +15,20 @@ public class LoanService {
         LOANS.addAll(DatabaseAccess.getAllLoans());
     }
 
-    public static void recordLoan(String memberId, String itemId, int currentDay, int loanPeriodDays) {
+    private static void reload() {
         LOANS.clear();
         LOANS.addAll(DatabaseAccess.getAllLoans());
+    }
+
+    public static void recordLoan(String memberId, String itemId, int currentDay, int loanPeriodDays) {
+        reload();
         int dueDay = currentDay + loanPeriodDays;
         LOANS.add(new Loan(memberId, itemId, currentDay, dueDay));
         DatabaseAccess.insertLoan(new Loan(memberId, itemId, currentDay, dueDay));
     }
 
     public static boolean clearLoan(String memberId, String itemId) {
-        LOANS.clear();
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        reload();
         boolean removed = LOANS.removeIf(loan -> loan.getMemberId().equals(memberId)
                 && loan.getItemId().equals(itemId));
         if (removed) {
@@ -35,8 +38,7 @@ public class LoanService {
     }
 
     public static boolean extendLoan(String memberId, String itemId, int extraDays) {
-        LOANS.clear();
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        reload();
         for (Loan loan : LOANS) {
             if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
                 loan.setDueDay(loan.getDueDay() + extraDays);
@@ -49,8 +51,7 @@ public class LoanService {
     }
 
     public static int getDueDay(String memberId, String itemId) {
-        LOANS.clear();
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        reload();
         for (Loan loan : LOANS) {
             if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
                 return loan.getDueDay();
@@ -59,10 +60,30 @@ public class LoanService {
         return -1;
     }
 
+    public static boolean isOverdue(String memberId, String itemId, int currentDay) {
+        reload();
+        for (Loan loan : LOANS) {
+            if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
+                return loan.isOverdue(currentDay);
+            }
+        }
+        return false;
+    }
+
     public static List<Loan> getLoans() {
-        LOANS.clear();
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        reload();
         return new ArrayList<>(LOANS);
+    }
+
+    public static List<Loan> getOverdueLoans(int currentDay) {
+        reload();
+        List<Loan> overdue = new ArrayList<>();
+        for (Loan loan : LOANS) {
+            if (loan.isOverdue(currentDay)) {
+                overdue.add(loan);
+            }
+        }
+        return overdue;
     }
 
     private static String chargeOverdue(Loan loan, int currentDay) {
@@ -82,8 +103,7 @@ public class LoanService {
     }
 
     public static List<String> accrueOverdueDebts(int currentDay) {
-        LOANS.clear();
-        LOANS.addAll(DatabaseAccess.getAllLoans());
+        reload();
         List<String> charges = new ArrayList<>();
         for (Loan loan : LOANS) {
             String summary = chargeOverdue(loan, currentDay);

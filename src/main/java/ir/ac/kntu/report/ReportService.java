@@ -9,12 +9,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.finance.Loan;
+import ir.ac.kntu.finance.LoanService;
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.library.SupplierCompany;
 import ir.ac.kntu.mail.MailService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
+import ir.ac.kntu.util.SystemSettingsService;
 
 public class ReportService {
     // generating HTML reports that nobody will read
@@ -56,6 +60,18 @@ public class ReportService {
                 }
             }
             rows.add(row);
+        }
+        return rows;
+    }
+
+    public static List<OverdueLoanReport> computeOverdueLoans() {
+        int currentDay = SimulationClock.getCurrentDay();
+        int fineRate = SystemSettingsService.getFineRate();
+        List<OverdueLoanReport> rows = new ArrayList<>();
+        for (Loan loan : LoanService.getOverdueLoans(currentDay)) {
+            int daysOverdue = loan.daysOverdue(currentDay);
+            rows.add(new OverdueLoanReport(loan.getMemberId(), loan.getItemId(),
+                    loan.getDueDay(), daysOverdue, daysOverdue * fineRate));
         }
         return rows;
     }

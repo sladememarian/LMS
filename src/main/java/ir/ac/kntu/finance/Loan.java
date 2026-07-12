@@ -43,4 +43,12 @@ public class Loan {
     public void setLastChargedDay(int lastChargedDay) {
         this.lastChargedDay = lastChargedDay;
     }
+
+    public boolean isOverdue(int currentDay) {
+        return currentDay > dueDay;
+    }
+
+    public int daysOverdue(int currentDay) {
+        return Math.max(0, currentDay - dueDay);
+    }
 }

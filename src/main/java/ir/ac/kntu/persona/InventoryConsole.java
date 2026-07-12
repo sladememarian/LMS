@@ -2,6 +2,8 @@ package ir.ac.kntu.persona;
 
 import java.util.Scanner;
 
+import ir.ac.kntu.finance.LoanService;
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryPrinter;
 import ir.ac.kntu.library.LibraryService;
@@ -27,8 +29,24 @@ public class InventoryConsole {
             } else {
                 LibraryPrinter.printDetails(item, false, false);
             }
+            printDueStatus(user, itemId);
         }
         ConsoleMenu.pause(scanner);
+    }
+
+    private static void printDueStatus(Persona user, String itemId) {
+        int currentDay = SimulationClock.getCurrentDay();
+        int dueDay = LoanService.getDueDay(user.getMemberId(), itemId);
+        if (dueDay < 0) {
+            return;
+        }
+        if (LoanService.isOverdue(user.getMemberId(), itemId, currentDay)) {
+            int daysLate = currentDay - dueDay;
+            System.out.println(ConsoleColor.RED + "    Overdue by " + daysLate
+                    + " day(s), was due on day " + dueDay + ConsoleColor.RESET);
+        } else {
+            System.out.println(ConsoleColor.gray("    Due on day " + dueDay));
+        }
     }
 
     private static String limitLabel(int limit) {

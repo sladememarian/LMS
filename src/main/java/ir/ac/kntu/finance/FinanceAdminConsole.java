@@ -3,6 +3,7 @@ package ir.ac.kntu.finance;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.generic.Menu;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.report.ReportService;
@@ -32,6 +33,7 @@ public class FinanceAdminConsole {
         ConsoleMenu.option("6", "View Financial Reports");
         ConsoleMenu.option("7", "View Database Records");
         ConsoleMenu.option("8", "Debug Tools");
+        ConsoleMenu.option("9", "View Overdue Loans Report");
         ConsoleMenu.back();
     }
 
@@ -70,10 +72,18 @@ public class FinanceAdminConsole {
             case "8":
                 System.out.println("  Total transactions: " + FinanceService.getAllTransactions().size());
                 return true;
+            case "9":
+                printOverdueReport();
+                return true;
             default:
                 ConsoleColor.printError("Invalid entry.");
                 return true;
         }
+    }
+
+    private static void printOverdueReport() {
+        new Menu<>("Overdue Loans (as of day " + SimulationClock.getCurrentDay() + ")",
+                ReportService.computeOverdueLoans()).render();
     }
 
     private static void doSearchWallet(Scanner scanner) {
