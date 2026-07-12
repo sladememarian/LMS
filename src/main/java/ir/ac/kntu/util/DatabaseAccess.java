@@ -32,6 +32,13 @@ public class DatabaseAccess {
         Database.executeUpdate("DELETE FROM personas");
     }
 
+    public static void deletePersona(String email) {
+        Database.withPs("DELETE FROM personas WHERE email=?", ps -> {
+            ps.setString(1, email);
+            ps.executeUpdate();
+        });
+    }
+
     public static void insertPersona(Persona persona) {
         String email = resolveEmail(persona);
         Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme, created_by = s.created_by WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme, s.created_by)", ps -> {

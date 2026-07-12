@@ -2,6 +2,7 @@ package ir.ac.kntu.persona;
 
 import ir.ac.kntu.exception.DuplicateEmailException;
 import ir.ac.kntu.exception.UserNotFoundException;
+import ir.ac.kntu.exception.AuthorizationException;
 import ir.ac.kntu.util.DatabaseAccess;
 import ir.ac.kntu.util.EnvConfig;
 import java.util.ArrayList;
@@ -203,9 +204,7 @@ public class PersonaService {
             throw new UserNotFoundException("Admin not found: " + emailToDelete);
         }
         if (!emailToDelete.equalsIgnoreCase(deleter.getEmail()) && !emailToDelete.equalsIgnoreCase(toDelete.getCreatedBy())) {
-            // Basic check: Admin can only delete admins they created.
-            // OwnerAdmin check is implicit here by who they are allowed to delete.
-            throw new AuthorizationException("You are not authorized to delete this admin.");
+            throw new AuthorizationException("You are not authorized to delete this admin.", null);
         }
         PERSONA_DATABASE.remove(toDelete);
         DatabaseAccess.deletePersona(emailToDelete);
@@ -254,5 +253,17 @@ public class PersonaService {
             }
         }
         return null;
+    }
+
+    public static boolean promoteRole(String email, UserRole newRole) {
+        PERSONA_DATABASE.clear();
+        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
+        Persona persona = getProfile(email);
+        if (persona == null) {
+            return false;
+        }
+        persona.updateRole(newRole);
+        DatabaseAccess.insertPersona(persona);
+        return true;
     }
 }
