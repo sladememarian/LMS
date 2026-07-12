@@ -19,6 +19,7 @@ public class Persona {
     private String lastName;
     private String phoneNumber;
     private String theme;
+    private String createdBy;
     private final List<String> borrowedItemIds = new ArrayList<>();
 
     public Persona(String email, String password) {
@@ -131,6 +132,14 @@ public class Persona {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
     public List<String> getBorrowedItemIds() {

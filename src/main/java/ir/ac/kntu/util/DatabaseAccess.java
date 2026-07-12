@@ -34,7 +34,7 @@ public class DatabaseAccess {
 
     public static void insertPersona(Persona persona) {
         String email = resolveEmail(persona);
-        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme)", ps -> {
+        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme, created_by = s.created_by WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme, s.created_by)", ps -> {
             ps.setString(1, email);
             ps.setString(2, persona.getUsername());
             ps.setString(3, persona.getPassword());
@@ -45,6 +45,7 @@ public class DatabaseAccess {
             ps.setString(8, persona.getLastName());
             ps.setString(9, persona.getPhoneNumber());
             ps.setString(10, persona.getTheme());
+            ps.setString(11, persona.getCreatedBy());
             ps.executeUpdate();
         });
     }
@@ -76,6 +77,7 @@ public class DatabaseAccess {
         persona.setLastName(rs.getString("last_name"));
         persona.setPhoneNumber(rs.getString("phone"));
         persona.setTheme(rs.getString("theme"));
+        persona.setCreatedBy(rs.getString("created_by"));
         if (!isSystemEmail(email)) {
             Database.withPs("SELECT item_id FROM borrowed_items WHERE email=?", ps -> {
                 ps.setString(1, email);

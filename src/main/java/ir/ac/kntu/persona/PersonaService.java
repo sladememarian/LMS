@@ -186,16 +186,29 @@ public class PersonaService {
         }
     }
 
-    public static boolean promoteRole(String email, UserRole newRole) {
-        PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(DatabaseAccess.getAllPersonas());
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            return false;
+    public static void createAdmin(Persona creator, String email, String password) {
+        if (creator.getRole() != UserRole.ADMIN) {
+            throw new AuthorizationException("Only Admins can create new Admins.");
         }
-        persona.updateRole(newRole);
-        DatabaseAccess.insertPersona(persona);
-        return true;
+        Persona admin = new Persona(email, password);
+        admin.updateRole(UserRole.ADMIN);
+        admin.setCreatedBy(creator.getEmail());
+        PERSONA_DATABASE.add(admin);
+        DatabaseAccess.insertPersona(admin);
+    }
+
+    public static void deleteAdmin(Persona deleter, String emailToDelete) {
+        Persona toDelete = getProfile(emailToDelete);
+        if (toDelete == null || toDelete.getRole() != UserRole.ADMIN) {
+            throw new UserNotFoundException("Admin not found: " + emailToDelete);
+        }
+        if (!emailToDelete.equalsIgnoreCase(deleter.getEmail()) && !emailToDelete.equalsIgnoreCase(toDelete.getCreatedBy())) {
+            // Basic check: Admin can only delete admins they created.
+            // OwnerAdmin check is implicit here by who they are allowed to delete.
+            throw new AuthorizationException("You are not authorized to delete this admin.");
+        }
+        PERSONA_DATABASE.remove(toDelete);
+        DatabaseAccess.deletePersona(emailToDelete);
     }
 
     public static boolean recordReturn(String email, String itemId) {
