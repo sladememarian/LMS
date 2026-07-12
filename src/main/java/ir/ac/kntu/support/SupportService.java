@@ -103,10 +103,13 @@ public class SupportService {
         if (agent.getRole() != UserRole.CALLCENTER) {
             return getAllTickets();
         }
-        
-        java.util.Set<SupportSection> allowedSections = ((ir.ac.kntu.persona.CallCenterProfile) agent.getUserProfile()).getAssignedSections();
+
+        TICKETS.clear();
+        TICKETS.addAll(DatabaseAccess.getAllSupportTickets());
+
+        java.util.Set<SupportSection> allowedSections = agent.getAssignedSupportSections();
         List<SupportTicket> filtered = new ArrayList<>();
-        for (SupportTicket ticket : getAllTickets()) {
+        for (SupportTicket ticket : TICKETS) {
             if (allowedSections.contains(ticket.getSection())) {
                 filtered.add(ticket);
             }

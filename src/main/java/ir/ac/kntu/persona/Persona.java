@@ -1,7 +1,11 @@
 package ir.ac.kntu.persona;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+
+import ir.ac.kntu.support.SupportSection;
 
 public class Persona {
     // representing humans as objects, what could go wrong
@@ -20,7 +24,9 @@ public class Persona {
     private String phoneNumber;
     private String theme;
     private String createdBy;
+    private boolean owner;
     private final List<String> borrowedItemIds = new ArrayList<>();
+    private final Set<SupportSection> assignedSupportSections = EnumSet.noneOf(SupportSection.class);
 
     public Persona(String email, String password) {
         this.username = null;
@@ -142,6 +148,40 @@ public class Persona {
         this.createdBy = createdBy;
     }
 
+    public boolean isOwner() {
+        return owner;
+    }
+
+    public void setOwner(boolean owner) {
+        this.owner = owner;
+    }
+
+    /**
+     * Support sections this CallCenter agent is allowed to see.
+     * Stored on the persona itself (not on the per-call UserProfile instance)
+     * so the assignment survives across getUserProfile() calls.
+     */
+    public Set<SupportSection> getAssignedSupportSections() {
+        return EnumSet.copyOf(assignedSupportSections);
+    }
+
+    public void setAssignedSupportSections(Set<SupportSection> sections) {
+        assignedSupportSections.clear();
+        if (sections != null) {
+            assignedSupportSections.addAll(sections);
+        }
+    }
+
+    public void addAssignedSupportSection(SupportSection section) {
+        if (section != null) {
+            assignedSupportSections.add(section);
+        }
+    }
+
+    public void removeAssignedSupportSection(SupportSection section) {
+        assignedSupportSections.remove(section);
+    }
+
     public List<String> getBorrowedItemIds() {
         return new ArrayList<>(borrowedItemIds);
     }
@@ -175,6 +215,6 @@ public class Persona {
      *   if (user.getUserProfile().canExtend()) { showExtendOption(); }
      */
     public UserProfile getUserProfile() {
-        return UserProfile.forRole(this.role);
+        return UserProfile.forRole(this);
     }
 }

@@ -78,8 +78,25 @@ public abstract class UserProfile {
     /**
      * Returns the correct UserProfile subclass for the given role.
      * This is the single place that maps UserRole → profile behaviour.
+     *
+     * Note: this overload has no owning Persona to attach, so a CALLCENTER
+     * profile built through this path cannot see/modify assigned support
+     * sections. Prefer forRole(Persona) when a Persona is available.
      */
     public static UserProfile forRole(UserRole role) {
+        return forRole(role, null);
+    }
+
+    /**
+     * Returns the correct UserProfile subclass for the given persona's role,
+     * wiring the profile back to its owning Persona where the subclass needs
+     * durable per-persona state (e.g. CallCenterProfile's assigned sections).
+     */
+    public static UserProfile forRole(Persona persona) {
+        return forRole(persona == null ? null : persona.getRole(), persona);
+    }
+
+    private static UserProfile forRole(UserRole role, Persona owningPersona) {
         if (role == null) {
             return new GuestProfile();
         }
@@ -87,7 +104,7 @@ public abstract class UserProfile {
             case ADMIN:
                 return new AdminProfile();
             case CALLCENTER:
-                return new CallCenterProfile();
+                return new CallCenterProfile(owningPersona);
             case TEACHER:
                 return new TeacherProfile();
             case STUDENT:
