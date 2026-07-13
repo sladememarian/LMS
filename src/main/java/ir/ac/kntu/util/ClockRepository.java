@@ -4,12 +4,9 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Persistence for the single-row {@code clock_state} table backing
- * {@link ir.ac.kntu.finance.SimulationClock}. Split out of the former
- * monolithic {@code DatabaseAccess} class as part of the per-domain
- * repository migration.
- */
+// Persistence for the single-row clock_state table backing
+// SimulationClock. Split out of the former monolithic
+// DatabaseAccess class as part of the per-domain repository migration.
 public final class ClockRepository {
 
     private ClockRepository() {

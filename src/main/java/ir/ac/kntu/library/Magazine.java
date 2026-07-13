@@ -19,8 +19,7 @@ public class Magazine extends PhysicalItem {
 
     @Override
     public boolean canReserve() {
-        // issues go stale fast; queuing for a specific back-issue isn't worth offering
-        return false;
+        return true;
     }
 
     @Override

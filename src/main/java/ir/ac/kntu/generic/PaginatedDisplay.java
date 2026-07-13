@@ -6,14 +6,12 @@ import java.util.function.BiConsumer;
 
 import ir.ac.kntu.util.ConsoleColor;
 
-/**
- * Generic paginated display component. Replaces per-type paginated printing
- * (LibraryPrinter, TicketPrinter, etc.) with a single reusable class that
- * works for any element type via a rendering callback.
- *
- * Uses generics (type parameter T) and functional interfaces
- * (BiConsumer<T, Integer> for rendering) to avoid code duplication.
- */
+// Generic paginated display component. Replaces per-type paginated printing
+// (LibraryPrinter, TicketPrinter, etc.) with a single reusable class that
+// works for any element type via a rendering callback.
+//
+// Uses generics (type parameter T) and functional interfaces
+// (BiConsumer<T, Integer> for rendering) to avoid code duplication.
 public class PaginatedDisplay<T> {
 
     private static final int PAGE_SIZE = 10;
@@ -23,11 +21,9 @@ public class PaginatedDisplay<T> {
     private final List<T> items;
     private final BiConsumer<T, Integer> renderer;
 
-    /**
-     * @param title    banner text (e.g. "LIBRARY ITEMS", "ALL USERS")
-     * @param items    full list to paginate
-     * @param renderer accepts (item, displayIndex) and prints one line
-     */
+    // title    banner text (e.g. "LIBRARY ITEMS", "ALL USERS")
+    // items    full list to paginate
+    // renderer accepts (item, displayIndex) and prints one line
     public PaginatedDisplay(String title, List<T> items,
             BiConsumer<T, Integer> renderer) {
         this.title = title;
@@ -35,9 +31,7 @@ public class PaginatedDisplay<T> {
         this.renderer = renderer;
     }
 
-    /**
-     * Renders pages interactively until the user presses Q.
-     */
+    // Renders pages interactively until the user presses Q.
     public void showPaginated(Scanner scanner) {
         if (items.isEmpty()) {
             System.out.println(ConsoleColor.gray("  (nothing to show)"));
@@ -66,9 +60,7 @@ public class PaginatedDisplay<T> {
         }
     }
 
-    /**
-     * Prints all items without pagination (single pass).
-     */
+    // Prints all items without pagination (single pass).
     public void showAll() {
         if (items.isEmpty()) {
             System.out.println(ConsoleColor.gray("  (nothing to show)"));

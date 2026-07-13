@@ -9,12 +9,10 @@ import ir.ac.kntu.library.LibraryOperatorConsole;
 import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.support.inbox.CallCenterInbox;
 
-/**
- * CallCenter behaviour profile. Assigned sections are NOT stored on this
- * object: UserProfile.forRole() allocates a fresh instance on every call,
- * so any state kept here would be lost immediately. Instead this class
- * reads/writes through the owning Persona, which is the durable holder.
- */
+// CallCenter behaviour profile. Assigned sections are NOT stored on this
+// object: UserProfile.forRole() allocates a fresh instance on every call,
+// so any state kept here would be lost immediately. Instead this class
+// reads/writes through the owning Persona, which is the durable holder.
 public class CallCenterProfile extends UserProfile {
     private final Persona owningPersona;
 

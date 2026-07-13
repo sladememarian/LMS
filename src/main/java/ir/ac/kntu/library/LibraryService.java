@@ -209,11 +209,9 @@ public class LibraryService {
         return SearchEngine.search(INVENTORY, keyword);
     }
 
-    /**
-     * Same search as searchItems(), but also reports which field (title or
-     * category) each result matched on. Demonstrates SearchResult<T> without
-     * changing the behavior/signature of the original searchItems() callers.
-     */
+    // Same search as searchItems(), but also reports which field (title or
+    // category) each result matched on. Demonstrates SearchResult<T> without
+    // changing the behavior/signature of the original searchItems() callers.
     public static List<SearchResult<LibraryItem>> searchItemsDetailed(
             String keyword) {
         return searchItems(keyword).stream()

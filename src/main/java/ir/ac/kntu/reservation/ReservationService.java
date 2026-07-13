@@ -12,6 +12,8 @@ import ir.ac.kntu.exception.NotFoundException;
 import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
+import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.ReservationRepository;
 import ir.ac.kntu.util.SystemSettingsService;
 
@@ -183,9 +185,7 @@ public class ReservationService {
     }
 
     private static int getReservationLimit(String memberId) {
-        ir.ac.kntu.persona.Persona persona =
-                ir.ac.kntu.persona.PersonaService
-                        .getProfileByMemberId(memberId);
+        Persona persona = PersonaService.getProfileByMemberId(memberId);
         if (persona == null) {
             return 0;
         }

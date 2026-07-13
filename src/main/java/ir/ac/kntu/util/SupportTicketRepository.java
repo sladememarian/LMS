@@ -5,11 +5,9 @@ import java.util.List;
 import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.support.SupportTicket;
 
-/**
- * Persistence for the {@code support_tickets} table. Split out of the former
- * monolithic {@code DatabaseAccess} class as part of the per-domain
- * repository migration.
- */
+// Persistence for the {@code support_tickets} table. Split out of the former
+// monolithic {@code DatabaseAccess} class as part of the per-domain
+// repository migration.
 public final class SupportTicketRepository {
 
     private SupportTicketRepository() {

@@ -12,12 +12,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Owner/Admin hierarchy management: creating and removing Admins, promoting
- * or demoting roles, resetting passwords, and assigning CallCenter support
- * sections. Split out of {@link PersonaService} to keep each class focused
- * on a single responsibility.
- */
+// Owner/Admin hierarchy management: creating and removing Admins, promoting
+// or demoting roles, resetting passwords, and assigning CallCenter support
+// sections. Split out of {@link PersonaService} to keep each class focused
+// on a single responsibility.
 public final class AdminManagementService {
     private static final String USER_NOT_FOUND_PREFIX = "User not found: ";
 
@@ -59,11 +57,9 @@ public final class AdminManagementService {
         }
     }
 
-    /**
-     * Only the Owner, or the Admin who personally created the target admin,
-     * may manage (delete/promote/demote/reset password of) that admin. Nobody
-     * may manage the Owner.
-     */
+    // Only the Owner, or the Admin who personally created the target admin,
+    // may manage (delete/promote/demote/reset password of) that admin. Nobody
+    // may manage the Owner.
     private static void requireCanManageAdmin(Persona manager, Persona target) {
         if (target.isOwner()) {
             throw new AuthorizationException("The Owner cannot be managed by another Admin.", null);
@@ -124,9 +120,7 @@ public final class AdminManagementService {
         PersonaRepository.insertPersona(target);
     }
 
-    /**
-     * Owner/Admin assigns which support sections a CallCenter agent may see.
-     */
+    // Owner/Admin assigns which support sections a CallCenter agent may see.
     public static void assignSupportSections(Persona actor, String agentEmail, Set<SupportSection> sections) {
         if (actor.getRole() != UserRole.ADMIN) {
             throw new AuthorizationException("Only Admins can assign support sections.");

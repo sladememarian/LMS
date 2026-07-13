@@ -5,11 +5,9 @@ import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 
-/**
- * Lets the Owner/Admin move configurable library values (borrow days, fine
- * rate, reservation days, max reservations) into the database instead of
- * being hardcoded, per Step 11.
- */
+// Lets the Owner/Admin move configurable library values (borrow days, fine
+// rate, reservation days, max reservations) into the database instead of
+// being hardcoded, per Step 11.
 public final class SystemSettingsService {
 
     private static int borrowDays = SystemSettings.DEFAULT_BORROW_DAYS;

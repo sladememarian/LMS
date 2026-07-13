@@ -79,23 +79,21 @@ public abstract class LibraryItem implements Borrowable, Searchable {
         return totalCopies - availableCopies;
     }
 
-    /**
-     * Whether stock allows another borrow right now. This is per-instance DATA
-     * (how many copies are left), not per-type behavior, so unlike the methods
-     * below it is intentionally NOT abstract/overridden — see docs/step4.md.
-     */
+    // Whether stock allows another borrow right now. This is per-instance DATA
+    // (how many copies are left), not per-type behavior, so unlike the methods
+    // below it is intentionally NOT abstract/overridden -- see docs/step4.md.
     @Override
     public boolean canBorrow() {
         return availableCopies > 0;
     }
 
-    /** Whether a search keyword matches this item's title or category. */
+    // Whether a search keyword matches this item's title or category.
     @Override
     public boolean matchesQuery(String query) {
         return matchedField(query) != null;
     }
 
-    /** Which field a search keyword matched ("title"/"category"), or null if none. */
+    // Which field a search keyword matched ("title"/"category"), or null if none.
     public String matchedField(String query) {
         if (query == null || query.trim().isEmpty()) {
             return null;
@@ -110,16 +108,16 @@ public abstract class LibraryItem implements Borrowable, Searchable {
         return null;
     }
 
-    /** Whether this item type supports being placed on a reservation queue. */
+    // Whether this item type supports being placed on a reservation queue.
     public abstract boolean canReserve();
 
-    /** Loan length in days for this item type. */
+    // Loan length in days for this item type.
     public abstract int borrowPeriod();
 
-    /** One-line, type-specific detail (e.g. author, narrator, page count). */
+    // One-line, type-specific detail (e.g. author, narrator, page count).
     public abstract String displayInfo();
 
-    /** Actions a member can perform on this item, tailored to its type. */
+    // Actions a member can perform on this item, tailored to its type.
     public abstract List<String> availableActions();
 
     protected List<String> baseActions() {

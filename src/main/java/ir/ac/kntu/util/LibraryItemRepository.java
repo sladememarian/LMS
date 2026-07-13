@@ -10,11 +10,9 @@ import ir.ac.kntu.library.EBook;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.Magazine;
 
-/**
- * Persistence for the {@code library_items} table. Split out of the former
- * monolithic {@code DatabaseAccess} class as part of the per-domain
- * repository migration.
- */
+// Persistence for the {@code library_items} table. Split out of the former
+// monolithic {@code DatabaseAccess} class as part of the per-domain
+// repository migration.
 public final class LibraryItemRepository {
 
     private LibraryItemRepository() {

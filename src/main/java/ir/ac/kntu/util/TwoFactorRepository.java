@@ -1,10 +1,8 @@
 package ir.ac.kntu.util;
 
-/**
- * Persistence for the {@code two_factor_codes} table. Split out of the
- * former monolithic {@code DatabaseAccess} class as part of the per-domain
- * repository migration.
- */
+// Persistence for the {@code two_factor_codes} table. Split out of the
+// former monolithic {@code DatabaseAccess} class as part of the per-domain
+// repository migration.
 public final class TwoFactorRepository {
 
     private TwoFactorRepository() {

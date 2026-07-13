@@ -4,11 +4,9 @@ import java.util.List;
 
 import ir.ac.kntu.support.rolerequest.RoleRequest;
 
-/**
- * Persistence for the {@code role_requests} table. Split out of the former
- * monolithic {@code DatabaseAccess} class as part of the per-domain
- * repository migration.
- */
+// Persistence for the {@code role_requests} table. Split out of the former
+// monolithic {@code DatabaseAccess} class as part of the per-domain
+// repository migration.
 public final class RoleRequestRepository {
 
     private RoleRequestRepository() {

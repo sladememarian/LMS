@@ -15,6 +15,7 @@ import ir.ac.kntu.reservation.Reservation;
 import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
+import ir.ac.kntu.util.SystemSettingsService;
 
 public class LibraryMemberConsole {
     // member console: where dreams of borrowing come true
@@ -133,8 +134,8 @@ public class LibraryMemberConsole {
             LibraryItem item = LibraryService.getItemById(itemId);
             LibraryService.executeBorrow(itemId);
             PersonaService.recordBorrow(user.getEmail(), itemId);
-            int loanPeriodDays = Math.min(item.borrowPeriod(),
-                    ir.ac.kntu.util.SystemSettingsService.getBorrowDays());
+            int loanPeriodDays = Math.min(                    item.borrowPeriod(),
+                    SystemSettingsService.getBorrowDays());
             LoanService.recordLoan(user.getMemberId(), itemId,
                     SimulationClock.getCurrentDay(), loanPeriodDays);
             ReservationService.completeReservation(
@@ -220,7 +221,8 @@ public class LibraryMemberConsole {
         }
     }
 
-    private static void doCancelReservation(Scanner scanner, Persona user) {
+    private static void doCancelReservation(Scanner scanner,
+            Persona user) {
         List<Reservation> reservations =
                 ReservationService.getMemberReservations(
                         user.getMemberId());
@@ -231,10 +233,11 @@ public class LibraryMemberConsole {
         for (Reservation reservation : reservations) {
             System.out.println("  " + reservation.getReservationId()
                     + " | Item: " + reservation.getItemId()
-                    + " | Status: " + reservation.getStatus().getLabel());
+                    + " | Status: "
+                    + reservation.getStatus().getLabel());
         }
         String resId = ConsoleMenu.readLine(scanner,
-                "Reservation ID to cancel: ");
+                "Enter reservation ID (e.g. RES-XXXXXXXX): ");
         try {
             ReservationService.cancel(resId);
             ConsoleColor.printSuccess("Reservation cancelled.");
@@ -248,20 +251,25 @@ public class LibraryMemberConsole {
                 ReservationService.getMemberReservations(
                         user.getMemberId());
         if (reservations.isEmpty()) {
-            System.out.println(ConsoleColor.gray("  No active reservations."));
+            System.out.println(ConsoleColor.gray(
+                    "  No active reservations."));
             return;
         }
         System.out.println("  Active reservations:");
         for (Reservation reservation : reservations) {
             String line = "  " + reservation.getReservationId()
                     + " | Item: " + reservation.getItemId()
-                    + " | Status: " + reservation.getStatus().getLabel()
-                    + " | Expires: day " + reservation.getExpiresOnDay();
+                    + " | Status: "
+                    + reservation.getStatus().getLabel()
+                    + " | Expires: day "
+                    + reservation.getExpiresOnDay();
             if (reservation.isPending()) {
                 int pos = ReservationService.getQueuePosition(
                         reservation.getReservationId(),
                         reservation.getItemId());
                 line += " | Queue #" + pos;
+            } else {
+                line += " | Ready for pickup";
             }
             System.out.println(line);
         }

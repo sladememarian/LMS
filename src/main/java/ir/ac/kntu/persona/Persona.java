@@ -165,11 +165,9 @@ public class Persona {
         this.active = active;
     }
 
-    /**
-     * Support sections this CallCenter agent is allowed to see.
-     * Stored on the persona itself (not on the per-call UserProfile instance)
-     * so the assignment survives across getUserProfile() calls.
-     */
+    // Support sections this CallCenter agent is allowed to see.
+    // Stored on the persona itself (not on the per-call UserProfile instance)
+    // so the assignment survives across getUserProfile() calls.
     public Set<SupportSection> getAssignedSupportSections() {
         return EnumSet.copyOf(assignedSupportSections);
     }
@@ -213,16 +211,14 @@ public class Persona {
         return borrowedItemIds.remove(itemId);
     }
 
-    /**
-     * Returns the polymorphic profile for this persona's current role.
-     * Use this instead of comparing getRole() == UserRole.X in console code.
-     *
-     * Example:
-     *   // Old (fragile):
-     *   if (user.getRole() != UserRole.GUEST) { showExtendOption(); }
-     *   // New (polymorphic):
-     *   if (user.getUserProfile().canExtend()) { showExtendOption(); }
-     */
+    // Returns the polymorphic profile for this persona's current role.
+    // Use this instead of comparing getRole() == UserRole.X in console code.
+    //
+    // Example:
+    //   // Old (fragile):
+    //   if (user.getRole() != UserRole.GUEST) { showExtendOption(); }
+    //   // New (polymorphic):
+    //   if (user.getUserProfile().canExtend()) { showExtendOption(); }
     public UserProfile getUserProfile() {
         return UserProfile.forRole(this);
     }

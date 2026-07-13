@@ -2,6 +2,7 @@ package ir.ac.kntu.persona;
 
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.NotFoundException;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.library.LibraryItem;
@@ -45,7 +46,7 @@ public class InventoryConsole {
             } else {
                 System.out.println(ConsoleColor.gray("    Due on day " + dueDay));
             }
-        } catch (ir.ac.kntu.exception.NotFoundException ignored) {
+        } catch (NotFoundException ignored) {
         }
     }
 

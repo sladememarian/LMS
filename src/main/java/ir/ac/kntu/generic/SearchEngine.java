@@ -5,11 +5,9 @@ import java.util.stream.Collectors;
 
 import ir.ac.kntu.interfaces.Searchable;
 
-/**
- * Generic keyword search over any list of Searchable items. Works the same
- * way whether T is a LibraryItem, a SupportTicket, or anything else that
- * promises matchesQuery() -- the searching logic itself is written once.
- */
+// Generic keyword search over any list of Searchable items. Works the same
+// way whether T is a LibraryItem, a SupportTicket, or anything else that
+// promises matchesQuery() -- the searching logic itself is written once.
 public final class SearchEngine {
 
     private SearchEngine() {

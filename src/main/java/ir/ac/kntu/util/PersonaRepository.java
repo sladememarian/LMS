@@ -10,11 +10,9 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.SupportSection;
 
-/**
- * Persistence for the {@code personas} and {@code borrowed_items} tables.
- * Split out of the former monolithic {@code DatabaseAccess} class as part of
- * the per-domain repository migration.
- */
+// Persistence for the {@code personas} and {@code borrowed_items} tables.
+// Split out of the former monolithic {@code DatabaseAccess} class as part of
+// the per-domain repository migration.
 public final class PersonaRepository {
 
     private PersonaRepository() {

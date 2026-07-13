@@ -53,10 +53,8 @@ public class PersonaService {
         PersonaRepository.insertPersona(admin);
     }
 
-    /**
-     * Data created before the Owner/Admin hierarchy existed: the first Admin
-     * on record (the one nobody "created") becomes the Owner.
-     */
+    // Data created before the Owner/Admin hierarchy existed: the first Admin
+    // on record (the one nobody "created") becomes the Owner.
     private static void promoteOldestAdminToOwner() {
         for (Persona p : PERSONA_DATABASE) {
             if (p.getRole() == UserRole.ADMIN && p.getCreatedBy() == null) {
@@ -213,10 +211,8 @@ public class PersonaService {
         }
     }
 
-    /**
-     * Hooks so {@link AdminManagementService} can mutate the shared in-memory
-     * list without duplicating it.
-     */
+    // Hooks so {@link AdminManagementService} can mutate the shared in-memory
+    // list without duplicating it.
     public static void addPersona(Persona persona) {
         PERSONA_DATABASE.add(persona);
     }

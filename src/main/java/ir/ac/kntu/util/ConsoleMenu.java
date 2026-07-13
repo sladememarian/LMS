@@ -53,11 +53,9 @@ public class ConsoleMenu {
         scanner.nextLine();
     }
 
-    /**
-     * Prints any list of Displayable items by calling toDisplayString() on each.
-     * This works for SupportTicket, SupplierFinancials, or any future class
-     * that implements Displayable -- the menu code never needs to know which.
-     */
+    // Prints any list of Displayable items by calling toDisplayString() on each.
+    // This works for SupportTicket, SupplierFinancials, or any future class
+    // that implements Displayable -- the menu code never needs to know which.
     public static void printAll(List<? extends Displayable> items) {
         if (items.isEmpty()) {
             System.out.println(ConsoleColor.gray("  (nothing to show)"));

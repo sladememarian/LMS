@@ -7,6 +7,7 @@ import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.generic.PaginatedDisplay;
 import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
@@ -87,7 +88,7 @@ public class AdminUserManagement {
 
     private static void editUserProfileAction(Scanner scanner,
             Persona actor) {
-        if (actor.getRole() != ir.ac.kntu.persona.UserRole.ADMIN) {
+        if (actor.getRole() != UserRole.ADMIN) {
             ConsoleColor.printError("Only Admins can edit user profiles.");
             return;
         }
@@ -105,8 +106,7 @@ public class AdminUserManagement {
         System.out.println("Roles: ADMIN, CALLCENTER, TEACHER, STUDENT, GUEST");
         String roleStr = ConsoleMenu.readLine(scanner, "New role: ")
                 .toUpperCase();
-        ir.ac.kntu.persona.UserRole newRole =
-                ir.ac.kntu.persona.UserRole.valueOf(roleStr);
+        UserRole newRole = UserRole.valueOf(roleStr);
         AdminManagementService.promoteAdmin(actor, email, newRole);
         ConsoleColor.printSuccess("Role updated for: " + email
                 + " -> " + newRole);
