@@ -58,7 +58,7 @@ public class AdminInbox {
         ConsoleMenu.option("7", "View Database Records");
         ConsoleMenu.option("8", "Debug Tools");
         ConsoleMenu.option("9", "Advance Simulated Day (Time God)");
-        ConsoleMenu.option("10", "Manage Admins");
+        ConsoleMenu.option("10", "Manage Users");
         ConsoleMenu.option("11", "Assign CallCenter Support Sections");
         ConsoleMenu.option("12", "System Settings");
         ConsoleMenu.back();
@@ -118,10 +118,11 @@ public class AdminInbox {
     }
 
     private static void manageAdmins(Scanner scanner, Persona actor) {
-        ConsoleMenu.banner("MANAGE ADMINS");
+        ConsoleMenu.banner("MANAGE USERS");
         ConsoleMenu.option("1", "Create Admin");
-        ConsoleMenu.option("2", "Delete Admin");
-        ConsoleMenu.option("3", "Reset Admin Password");
+        ConsoleMenu.option("2", "Create CallCenter");
+        ConsoleMenu.option("3", "Delete Admin");
+        ConsoleMenu.option("4", "Reset Password");
         ConsoleMenu.back();
         String choice = promptChoice(scanner);
         try {
@@ -137,9 +138,12 @@ public class AdminInbox {
                 createAdminAction(scanner, actor);
                 break;
             case "2":
-                deleteAdminAction(scanner, actor);
+                createCallCenterAction(scanner, actor);
                 break;
             case "3":
+                deleteAdminAction(scanner, actor);
+                break;
+            case "4":
                 resetPasswordAction(scanner, actor);
                 break;
             default:
@@ -153,6 +157,13 @@ public class AdminInbox {
         String newPassword = ConsoleMenu.readLine(scanner, "Password: ");
         AdminManagementService.createAdmin(actor, newEmail, newPassword);
         ConsoleColor.printSuccess("Admin created: " + newEmail);
+    }
+
+    private static void createCallCenterAction(Scanner scanner, Persona actor) {
+        String newEmail = ConsoleMenu.readLine(scanner, PROMPT_EMAIL);
+        String newPassword = ConsoleMenu.readLine(scanner, "Password: ");
+        AdminManagementService.createCallCenter(actor, newEmail, newPassword);
+        ConsoleColor.printSuccess("CallCenter agent created: " + newEmail);
     }
 
     private static void deleteAdminAction(Scanner scanner, Persona actor) {

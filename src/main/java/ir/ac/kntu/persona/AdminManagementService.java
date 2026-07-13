@@ -28,6 +28,16 @@ public final class AdminManagementService {
         PersonaRepository.insertPersona(admin);
     }
 
+    public static void createCallCenter(Persona creator, String email, String password) {
+        if (creator.getRole() != UserRole.ADMIN) {
+            throw new AuthorizationException("Only Admins can create CallCenter agents.");
+        }
+        Persona agent = new Persona(email, password);
+        agent.updateRole(UserRole.CALLCENTER);
+        PersonaService.addPersona(agent);
+        PersonaRepository.insertPersona(agent);
+    }
+
     /**
      * Only the Owner, or the Admin who personally created the target admin,
      * may manage (delete/promote/demote/reset password of) that admin. Nobody
