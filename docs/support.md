@@ -14,7 +14,8 @@ support
 ├── SupportService / SupportTicket / TicketPrinter   (ticket module)
 ├── inbox
 │   ├── AdminInbox
-│   └── CallCenterInbox
+│   ├── AdminUserManagement           (user management sub-menu)
+│   └── CallCenterInbox               (dynamic section-filtered inbox)
 ├── notification
 │   └── NotificationService        (delegates to Mail — single message store)
 └── rolerequest
@@ -27,10 +28,10 @@ support
 
 | Role | Console | Capabilities |
 |------|---------|--------------|
-| Guest | `SupportMemberConsole` | request Student/Teacher role, create tickets, view tickets/notifications |
-| Student/Teacher | `SupportMemberConsole` | create tickets, view tickets/notifications |
-| CallCenter | `CallCenterInbox` | view technical/book tickets, **respond with a message** (marks IN_PROGRESS + notifies the member), close, add library item (via Support), notifications |
-| Admin | `AdminInbox` | role requests (approve/reject), user tickets, CallCenter activity, notifications, encrypted DB, debug, **Advance Simulated Day** |
+| Guest | `SupportMemberConsole` | request Student/Teacher role, create tickets (all 4 sections), view tickets/notifications |
+| Student/Teacher | `SupportMemberConsole` | create tickets (all 4 sections), view tickets/notifications |
+| CallCenter | `CallCenterInbox` | view tickets filtered by assigned sections, respond, close, add library item, notifications |
+| Admin | `AdminInbox` | role requests, user tickets, CallCenter activity, notifications, DB inspection, day simulation, **user management**, **CallCenter creation**, **support section assignment**, **system settings** |
 
 ## Key functions
 All mutating methods now throw specific exceptions on failure instead of
@@ -57,7 +58,8 @@ a logged-in member opens `SupportMemberConsole`; staff authenticate and open
 removed (reports now live in the Admin Library/Finance dashboards).
 
 ## Ticket model
-`ticketId, userId, title, description, category` (TECHNICAL / BOOK_REQUEST),
+`ticketId, userId, title, description, section` (`SupportSection` enum:
+`BOOK_REQUEST`, `TECHNICAL`, `FINANCE`, `RESERVATION`),
 `priority` (LOW/HIGH/CRITICAL), `status` (OPEN/IN_PROGRESS/RESOLVED/CLOSED), and
 `response` (the latest CallCenter reply, shown under the ticket in `TicketPrinter`).
 

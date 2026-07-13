@@ -20,3 +20,9 @@ of returning `null`, keeping error handling consistent across the app.
 
 ## Communications
 SSO → IAM (password change), SSO → Persona (profile, theme), SSO → SessionManager.
+
+## Login deactivation guard
+The login flow (`IamService.loginMenu`) now checks `persona.isActive()` after
+credential validation and before 2FA. If the account is deactivated, an
+`AccountDeactivatedException` is thrown instead of proceeding to 2FA. This
+prevents deactivated users from authenticating even with correct credentials.

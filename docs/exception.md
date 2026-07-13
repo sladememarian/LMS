@@ -23,7 +23,8 @@ RuntimeException
        │    ├─ InvalidThemeException
        │    └─ InsufficientFundsException   (wallet has no cover — Finance)
        ├─ AuthorizationException       (wrong credentials / not permitted)
-       │    └─ InvalidCredentialsException
+       │    ├─ InvalidCredentialsException
+       │    └─ AccountDeactivatedException  (account deactivated by admin)
        ├─ NotFoundException            (looked for something that doesn't exist)
        │    └─ UserNotFoundException   (email/member-id has no matching persona)
        └─ ConflictException            (action conflicts with existing state)
@@ -70,6 +71,7 @@ This pattern is used across **all** console layers: `LibraryMemberConsole`,
 | Module | Exception | Extends | Thrown by |
 |--------|-----------|---------|-----------|
 | **IAM** | `InvalidCredentialsException` | `AuthorizationException` | `IamService` |
+| **IAM** | `AccountDeactivatedException` | `AuthorizationException` | `IamService` |
 | **Persona** | `DuplicateEmailException` | `ConflictException` | `PersonaService` |
 | **Persona** | `UserNotFoundException` | `NotFoundException` | `PersonaService` |
 | **SSO** | `InvalidPasswordException` | `ValidationException` | `SsoService` |
