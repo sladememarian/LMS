@@ -1,9 +1,12 @@
 package ir.ac.kntu.persona;
 
 import ir.ac.kntu.exception.AuthorizationException;
+import ir.ac.kntu.exception.InvalidEmailFormatException;
+import ir.ac.kntu.exception.InvalidPasswordException;
 import ir.ac.kntu.exception.UserNotFoundException;
 import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.util.PersonaRepository;
+import ir.ac.kntu.util.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +26,7 @@ public final class AdminManagementService {
         if (creator.getRole() != UserRole.ADMIN) {
             throw new AuthorizationException("Only Admins can create new Admins.");
         }
+        validateCredentials(email, password);
         Persona admin = new Persona(email, password);
         admin.updateRole(UserRole.ADMIN);
         admin.setCreatedBy(creator.getEmail());
@@ -34,10 +38,23 @@ public final class AdminManagementService {
         if (creator.getRole() != UserRole.ADMIN) {
             throw new AuthorizationException("Only Admins can create CallCenter agents.");
         }
+        validateCredentials(email, password);
         Persona agent = new Persona(email, password);
         agent.updateRole(UserRole.CALLCENTER);
         PersonaService.addPersona(agent);
         PersonaRepository.insertPersona(agent);
+    }
+
+    private static void validateCredentials(String email, String password) {
+        if (!Validator.isValidEmail(email)) {
+            throw new InvalidEmailFormatException(
+                    "Invalid email format: " + email);
+        }
+        if (!Validator.isValidPassword(password)) {
+            throw new InvalidPasswordException(
+                    "Password must be at least 8 characters with uppercase, "
+                    + "lowercase, digit, and special character.");
+        }
     }
 
     /**
@@ -164,11 +181,13 @@ public final class AdminManagementService {
         if (target == null) {
             throw new UserNotFoundException("User not found: " + email);
         }
-        if (target.getRole() == UserRole.ADMIN) {
-            throw new AuthorizationException("Admin accounts cannot be deactivated.");
-        }
         if (target.isOwner()) {
             throw new AuthorizationException("The Owner account cannot be deactivated.");
+        }
+        if (target.getRole() == UserRole.ADMIN) {
+            requireCanManageAdmin(actor, target);
+        } else if (actor.getRole() != UserRole.ADMIN) {
+            throw new AuthorizationException("Only Admins can deactivate accounts.");
         }
         target.setActive(!target.isActive());
         PersonaRepository.insertPersona(target);
