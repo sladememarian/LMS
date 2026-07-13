@@ -4,6 +4,8 @@ import ir.ac.kntu.exception.AuthorizationException;
 import ir.ac.kntu.exception.UserNotFoundException;
 import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.util.PersonaRepository;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -116,5 +118,44 @@ public final class AdminManagementService {
         }
         agent.setAssignedSupportSections(sections);
         PersonaRepository.insertPersona(agent);
+    }
+
+    public static List<Persona> listAllUsers() {
+        return new ArrayList<>(PersonaRepository.getAllPersonas());
+    }
+
+    public static List<Persona> searchUsers(String keyword) {
+        List<Persona> results = new ArrayList<>();
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return results;
+        }
+        String lower = keyword.toLowerCase();
+        for (Persona persona : PersonaRepository.getAllPersonas()) {
+            if (matchesUser(persona, lower)) {
+                results.add(persona);
+            }
+        }
+        return results;
+    }
+
+    private static boolean matchesUser(Persona persona, String lowerKeyword) {
+        return containsIgnoreCase(persona.getEmail(), lowerKeyword)
+                || containsIgnoreCase(persona.getFirstName(), lowerKeyword)
+                || containsIgnoreCase(persona.getLastName(), lowerKeyword)
+                || containsIgnoreCase(persona.getMemberId(), lowerKeyword)
+                || containsIgnoreCase(persona.getRole().name(), lowerKeyword);
+    }
+
+    private static boolean containsIgnoreCase(String field, String keyword) {
+        return field != null && field.toLowerCase().contains(keyword);
+    }
+
+    public static void editUserProfile(String email,
+            String firstName, String lastName, String phone) {
+        Persona target = PersonaService.getProfile(email);
+        if (target == null) {
+            throw new UserNotFoundException("User not found: " + email);
+        }
+        PersonaService.updateProfile(email, firstName, lastName, phone);
     }
 }

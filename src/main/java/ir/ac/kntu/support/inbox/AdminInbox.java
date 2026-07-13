@@ -59,8 +59,9 @@ public class AdminInbox {
         ConsoleMenu.option("8", "Debug Tools");
         ConsoleMenu.option("9", "Advance Simulated Day (Time God)");
         ConsoleMenu.option("10", "Manage Users");
-        ConsoleMenu.option("11", "Assign CallCenter Support Sections");
-        ConsoleMenu.option("12", "System Settings");
+        ConsoleMenu.option("11", "User Management");
+        ConsoleMenu.option("12", "Assign CallCenter Support Sections");
+        ConsoleMenu.option("13", "System Settings");
         ConsoleMenu.back();
     }
 
@@ -78,15 +79,6 @@ public class AdminInbox {
             case "4":
                 TicketPrinter.printTickets(SupportService.getAllTickets());
                 return true;
-            case "0":
-                return false;
-            default:
-                return handleAdvanced(choice, scanner, admin);
-        }
-    }
-
-    private static boolean handleAdvanced(String choice, Scanner scanner, Persona admin) {
-        switch (choice) {
             case "5":
                 printActivity();
                 return true;
@@ -97,8 +89,16 @@ public class AdminInbox {
                 inspectDatabase();
                 return true;
             case "8":
-                System.out.println("  Pending role requests: " + RoleRequestService.getPending().size());
+                System.out.println("  Pending role requests: "
+                        + RoleRequestService.getPending().size());
                 return true;
+            default:
+                return handleLower(choice, scanner, admin);
+        }
+    }
+
+    private static boolean handleLower(String choice, Scanner scanner, Persona admin) {
+        switch (choice) {
             case "9":
                 advanceSimulatedDay();
                 return true;
@@ -106,11 +106,16 @@ public class AdminInbox {
                 manageAdmins(scanner, admin);
                 return true;
             case "11":
-                assignSupportSections(scanner, admin);
+                AdminUserManagement.open(scanner, admin);
                 return true;
             case "12":
+                assignSupportSections(scanner, admin);
+                return true;
+            case "13":
                 manageSystemSettings(scanner, admin);
                 return true;
+            case "0":
+                return false;
             default:
                 ConsoleColor.printError(INVALID_ENTRY);
                 return true;
@@ -223,9 +228,6 @@ public class AdminInbox {
         ConsoleMenu.option("4", "Edit Max Reservations");
         ConsoleMenu.back();
         String choice = promptChoice(scanner);
-        if ("0".equals(choice)) {
-            return;
-        }
         applySettingChoice(choice, scanner, actor);
     }
 
