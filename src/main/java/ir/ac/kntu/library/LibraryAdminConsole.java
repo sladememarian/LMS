@@ -118,10 +118,10 @@ public class LibraryAdminConsole {
     }
 
     private static void doAdd(Scanner scanner) {
-        Book book = ItemEntry.readNewBook(scanner);
+        LibraryItem item = ItemEntry.readNewItem(scanner);
         try {
-            LibraryService.addItem(book);
-            ConsoleColor.printSuccess("Item added: " + book.getItemId());
+            LibraryService.addItem(item);
+            ConsoleColor.printSuccess("Item added: " + item.getItemId());
         } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
         }

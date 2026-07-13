@@ -6,7 +6,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import ir.ac.kntu.exception.BaseException;
-import ir.ac.kntu.library.Book;
+import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.ItemEntry;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.support.SupportSection;
@@ -156,10 +156,11 @@ public class CallCenterInbox {
     }
 
     private static void doAddItem(Scanner scanner) {
-        Book book = ItemEntry.readNewBook(scanner);
+        LibraryItem item = ItemEntry.readNewItem(scanner);
         try {
-            SupportService.addLibraryItemViaSupport(book);
-            ConsoleColor.printSuccess("Item added via Support: " + book.getItemId());
+            SupportService.addLibraryItemViaSupport(item);
+            ConsoleColor.printSuccess("Item added via Support: "
+                    + item.getItemId());
         } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
         }

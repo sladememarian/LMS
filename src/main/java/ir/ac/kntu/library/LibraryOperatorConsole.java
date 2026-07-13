@@ -62,10 +62,10 @@ public class LibraryOperatorConsole {
     }
 
     private static void doAdd(Scanner scanner) {
-        Book book = ItemEntry.readNewBook(scanner);
+        LibraryItem item = ItemEntry.readNewItem(scanner);
         try {
-            SupportService.addLibraryItemViaSupport(book);
-            ConsoleColor.printSuccess("Item added: " + book.getItemId());
+            SupportService.addLibraryItemViaSupport(item);
+            ConsoleColor.printSuccess("Item added: " + item.getItemId());
         } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
         }

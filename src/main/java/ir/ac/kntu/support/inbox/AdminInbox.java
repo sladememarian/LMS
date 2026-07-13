@@ -3,9 +3,9 @@ package ir.ac.kntu.support.inbox;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
-import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.reservation.ReservationService;
@@ -58,7 +58,7 @@ public class AdminInbox {
         ConsoleMenu.option("7", "View Database Records");
         ConsoleMenu.option("8", "Debug Tools");
         ConsoleMenu.option("9", "Advance Simulated Day (Time God)");
-        ConsoleMenu.option("10", "Manage Users");
+        ConsoleMenu.option("10", "Manage Admins/Callcenters");
         ConsoleMenu.option("11", "User Management");
         ConsoleMenu.option("12", "Assign CallCenter Support Sections");
         ConsoleMenu.option("13", "System Settings");
@@ -139,6 +139,8 @@ public class AdminInbox {
 
     private static void runAdminAction(String choice, Scanner scanner, Persona actor) {
         switch (choice) {
+            case "0":
+                return;
             case "1":
                 createAdminAction(scanner, actor);
                 break;
@@ -228,6 +230,9 @@ public class AdminInbox {
         ConsoleMenu.option("4", "Edit Max Reservations");
         ConsoleMenu.back();
         String choice = promptChoice(scanner);
+        if ("0".equals(choice)) {
+            return;
+        }
         applySettingChoice(choice, scanner, actor);
     }
 

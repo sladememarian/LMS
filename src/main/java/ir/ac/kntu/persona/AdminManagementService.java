@@ -18,6 +18,7 @@ import java.util.Set;
  * on a single responsibility.
  */
 public final class AdminManagementService {
+    private static final String USER_NOT_FOUND_PREFIX = "User not found: ";
 
     private AdminManagementService() {
     }
@@ -171,7 +172,7 @@ public final class AdminManagementService {
             String firstName, String lastName, String phone) {
         Persona target = PersonaService.getProfile(email);
         if (target == null) {
-            throw new UserNotFoundException("User not found: " + email);
+            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
         }
         PersonaService.updateProfile(email, firstName, lastName, phone);
     }
@@ -179,7 +180,7 @@ public final class AdminManagementService {
     public static boolean toggleActive(Persona actor, String email) {
         Persona target = PersonaService.getProfile(email);
         if (target == null) {
-            throw new UserNotFoundException("User not found: " + email);
+            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
         }
         if (target.isOwner()) {
             throw new AuthorizationException("The Owner account cannot be deactivated.");
@@ -192,5 +193,24 @@ public final class AdminManagementService {
         target.setActive(!target.isActive());
         PersonaRepository.insertPersona(target);
         return target.isActive();
+    }
+
+    public static void deleteUser(Persona actor, String email) {
+        if (actor.getRole() != UserRole.ADMIN) {
+            throw new AuthorizationException("Only Admins can delete users.");
+        }
+        Persona target = PersonaService.getProfile(email);
+        if (target == null) {
+            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
+        }
+        if (target.isOwner()) {
+            throw new AuthorizationException(
+                    "The Owner account cannot be deleted.");
+        }
+        if (target.getRole() == UserRole.ADMIN) {
+            requireCanManageAdmin(actor, target);
+        }
+        PersonaService.removePersona(target);
+        PersonaRepository.deletePersona(email);
     }
 }

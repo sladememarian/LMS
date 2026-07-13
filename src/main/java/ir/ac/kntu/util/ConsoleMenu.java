@@ -25,6 +25,15 @@ public class ConsoleMenu {
         }
     }
 
+    public static long readLong(Scanner scanner, String label) {
+        String raw = readLine(scanner, label);
+        try {
+            return Long.parseLong(raw);
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
+
     public static void banner(String title) {
         System.out.println(ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET);
         System.out.println(ConsoleColor.BOLD + "  " + title + ConsoleColor.RESET);
