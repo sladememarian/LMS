@@ -14,6 +14,8 @@ public class SupportMemberConsole {
     // members typing their problems hoping for solutions
     private static final String CAT_TECHNICAL = "Technical";
     private static final String CAT_BOOK = "BookRequest";
+    private static final String CAT_FINANCE = "Finance";
+    private static final String CAT_RESERVATION = "Reservation";
     private static final String GUEST_ONLY = "Only guests can request a role upgrade.";
     private static final String PROMPT_TITLE = "Title: ";
     private static final String PROMPT_MESSAGE = "Message: ";
@@ -35,12 +37,33 @@ public class SupportMemberConsole {
         }
         ConsoleMenu.option("3", "Create Technical Ticket");
         ConsoleMenu.option("4", "Create Book Request Ticket");
-        ConsoleMenu.option("5", "View My Tickets");
-        ConsoleMenu.option("6", "View Notifications");
+        ConsoleMenu.option("5", "Create Finance Ticket");
+        ConsoleMenu.option("6", "Create Reservation Ticket");
+        ConsoleMenu.option("7", "View My Tickets");
+        ConsoleMenu.option("8", "View Notifications");
         ConsoleMenu.back();
     }
 
     private static boolean handle(String choice, Scanner scanner, Persona user) {
+        if (handleRoleOrTicket(choice, scanner, user)) {
+            return true;
+        }
+        switch (choice) {
+            case "7":
+                TicketPrinter.printTickets(TicketPrinter.byCreator(user.getMemberId()));
+                return true;
+            case "8":
+                NotificationService.showNotifications(scanner, user);
+                return true;
+            case "0":
+                return false;
+            default:
+                ConsoleColor.printError("Invalid entry.");
+                return true;
+        }
+    }
+
+    private static boolean handleRoleOrTicket(String choice, Scanner scanner, Persona user) {
         switch (choice) {
             case "1":
                 requestRole(scanner, user, UserRole.STUDENT);
@@ -55,16 +78,13 @@ public class SupportMemberConsole {
                 createTicket(scanner, user, CAT_BOOK);
                 return true;
             case "5":
-                TicketPrinter.printTickets(TicketPrinter.byCreator(user.getMemberId()));
+                createTicket(scanner, user, CAT_FINANCE);
                 return true;
             case "6":
-                NotificationService.showNotifications(scanner, user);
+                createTicket(scanner, user, CAT_RESERVATION);
                 return true;
-            case "0":
-                return false;
             default:
-                ConsoleColor.printError("Invalid entry.");
-                return true;
+                return false;
         }
     }
 

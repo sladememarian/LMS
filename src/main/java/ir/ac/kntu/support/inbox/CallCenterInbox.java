@@ -1,12 +1,17 @@
 package ir.ac.kntu.support.inbox;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.library.Book;
 import ir.ac.kntu.library.ItemEntry;
 import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.support.SupportService;
+import ir.ac.kntu.support.SupportTicket;
 import ir.ac.kntu.support.TicketPrinter;
 import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.util.ConsoleColor;
@@ -19,48 +24,109 @@ public class CallCenterInbox {
     public static void open(Scanner scanner, Persona operator) {
         boolean active = true;
         while (active) {
-            printMenu();
+            List<SupportSection> assignedSections = getSortedSections(operator);
+            printMenu(assignedSections);
             String choice = ConsoleMenu.readLine(scanner, ConsoleColor.YELLOW + "Choose: " + ConsoleColor.RESET);
-            active = handle(choice, scanner, operator);
+            active = handle(choice, scanner, operator, assignedSections);
         }
     }
 
-    private static void printMenu() {
+    private static List<SupportSection> getSortedSections(Persona operator) {
+        Set<SupportSection> assigned = operator.getAssignedSupportSections();
+        List<SupportSection> sorted = new ArrayList<>(assigned);
+        sorted.sort(java.util.Comparator.comparing(SupportSection::name));
+        return sorted;
+    }
+
+    private static void printMenu(List<SupportSection> sections) {
         ConsoleMenu.banner("CALLCENTER INBOX");
-        ConsoleMenu.option("1", "Technical Tickets");
-        ConsoleMenu.option("2", "Book Requests");
-        ConsoleMenu.option("3", "Respond To Ticket");
-        ConsoleMenu.option("4", "Close Ticket");
-        ConsoleMenu.option("5", "Add Library Item");
-        ConsoleMenu.option("6", "View Notifications");
+        int optionNum = 1;
+        for (SupportSection section : sections) {
+            ConsoleMenu.option(String.valueOf(optionNum), sectionDisplayName(section) + " Tickets");
+            optionNum++;
+        }
+        int respondNum = optionNum;
+        ConsoleMenu.option(String.valueOf(respondNum), "Respond To Ticket");
+        ConsoleMenu.option(String.valueOf(respondNum + 1), "Close Ticket");
+        ConsoleMenu.option(String.valueOf(respondNum + 2), "Add Library Item");
+        ConsoleMenu.option(String.valueOf(respondNum + 3), "View Notifications");
         ConsoleMenu.back();
     }
 
-    private static boolean handle(String choice, Scanner scanner, Persona operator) {
-        switch (choice) {
-            case "1":
-                TicketPrinter.printTickets(TicketPrinter.byCategoryContains("Technical"));
-                return true;
-            case "2":
-                TicketPrinter.printTickets(TicketPrinter.byCategoryContains("Book"));
-                return true;
-            case "3":
-                respondTicket(scanner);
-                return true;
-            case "4":
-                changeStatus(scanner, "CLOSED", "Ticket closed.");
-                return true;
-            case "5":
-                doAddItem(scanner);
-                return true;
-            case "6":
-                NotificationService.showNotifications(scanner, operator);
-                return true;
-            case "0":
-                return false;
-            default:
-                ConsoleColor.printError("Invalid entry.");
-                return true;
+    private static boolean handle(String choice, Scanner scanner, Persona operator,
+            List<SupportSection> sections) {
+        int choiceInt = parseChoice(choice);
+        if (choiceInt < 0) {
+            return true;
+        }
+        if (choiceInt == 0) {
+            return false;
+        }
+        int sectionCount = sections.size();
+        if (choiceInt <= sectionCount) {
+            showSectionTickets(operator, sections.get(choiceInt - 1));
+            return true;
+        }
+        return dispatchAction(choiceInt, sectionCount, scanner, operator);
+    }
+
+    private static int parseChoice(String choice) {
+        try {
+            return Integer.parseInt(choice);
+        } catch (NumberFormatException e) {
+            ConsoleColor.printError("Invalid entry.");
+            return -1;
+        }
+    }
+
+    private static void showSectionTickets(Persona operator, SupportSection section) {
+        List<SupportTicket> filtered = filterBySection(
+                SupportService.getTicketsForAgent(operator), section);
+        TicketPrinter.printTickets(filtered);
+    }
+
+    private static boolean dispatchAction(int choiceInt, int sectionCount,
+            Scanner scanner, Persona operator) {
+        int respondNum = sectionCount + 1;
+        int closeNum = sectionCount + 2;
+        int addItemNum = sectionCount + 3;
+        int notifNum = sectionCount + 4;
+
+        if (choiceInt == respondNum) {
+            respondTicket(scanner);
+            return true;
+        } else if (choiceInt == closeNum) {
+            changeStatus(scanner, "CLOSED", "Ticket closed.");
+            return true;
+        } else if (choiceInt == addItemNum) {
+            doAddItem(scanner);
+            return true;
+        } else if (choiceInt == notifNum) {
+            NotificationService.showNotifications(scanner, operator);
+            return true;
+        }
+        ConsoleColor.printError("Invalid entry.");
+        return true;
+    }
+
+    private static List<SupportTicket> filterBySection(List<SupportTicket> tickets,
+            SupportSection section) {
+        List<SupportTicket> result = new ArrayList<>();
+        for (SupportTicket ticket : tickets) {
+            if (ticket.getSection() == section) {
+                result.add(ticket);
+            }
+        }
+        return result;
+    }
+
+    private static String sectionDisplayName(SupportSection section) {
+        switch (section) {
+            case BOOK_REQUEST: return "Book Request";
+            case TECHNICAL: return "Technical";
+            case FINANCE: return "Finance";
+            case RESERVATION: return "Reservation";
+            default: return section.name();
         }
     }
 
