@@ -34,21 +34,14 @@ public class PersonaService {
     }
 
     private static boolean anyPersonaHasRole(UserRole role) {
-        for (Persona p : PERSONA_DATABASE) {
-            if (p.getRole() == role) {
-                return true;
-            }
-        }
-        return false;
+        return PERSONA_DATABASE.stream()
+                .anyMatch(p -> p.getRole() == role);
     }
 
     private static boolean anyAdminIsOwner() {
-        for (Persona p : PERSONA_DATABASE) {
-            if (p.getRole() == UserRole.ADMIN && p.isOwner()) {
-                return true;
-            }
-        }
-        return false;
+        return PERSONA_DATABASE.stream()
+                .anyMatch(p -> p.getRole() == UserRole.ADMIN
+                        && p.isOwner());
     }
 
     private static void bootstrapDefaultAdmin() {
@@ -98,31 +91,22 @@ public class PersonaService {
         return persona;
     }
 
-    public static boolean validateCredentials(String email, String password) {
+    public static boolean validateCredentials(String email,
+            String password) {
         PERSONA_DATABASE.clear();
         PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
-        for (Persona persona : PERSONA_DATABASE) {
-            if (
-                persona.getEmail() != null &&
-                persona.getEmail().equalsIgnoreCase(email) &&
-                persona.getPassword().equals(password)
-            ) {
-                return true;
-            }
-        }
-        return false;
+        return PERSONA_DATABASE.stream()
+                .anyMatch(p -> p.getEmail() != null
+                        && p.getEmail().equalsIgnoreCase(email)
+                        && p.getPassword().equals(password));
     }
 
     public static Persona getProfile(String email) {
-        for (Persona persona : PERSONA_DATABASE) {
-            if (
-                persona.getEmail() != null &&
-                persona.getEmail().equalsIgnoreCase(email)
-            ) {
-                return persona;
-            }
-        }
-        return null;
+        return PERSONA_DATABASE.stream()
+                .filter(p -> p.getEmail() != null
+                        && p.getEmail().equalsIgnoreCase(email))
+                .findFirst()
+                .orElse(null);
     }
 
     public static void updateProfile(
@@ -263,12 +247,10 @@ public class PersonaService {
         }
         PERSONA_DATABASE.clear();
         PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
-        for (Persona profile : PERSONA_DATABASE) {
-            if (memberId.equals(profile.getMemberId())) {
-                return profile;
-            }
-        }
-        return null;
+        return PERSONA_DATABASE.stream()
+                .filter(p -> memberId.equals(p.getMemberId()))
+                .findFirst()
+                .orElse(null);
     }
 
     public static Persona getProfileByUsername(String username) {
@@ -277,12 +259,11 @@ public class PersonaService {
         }
         PERSONA_DATABASE.clear();
         PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
-        for (Persona profile : PERSONA_DATABASE) {
-            if (username.equalsIgnoreCase(profile.getUsername())) {
-                return profile;
-            }
-        }
-        return null;
+        return PERSONA_DATABASE.stream()
+                .filter(p -> username.equalsIgnoreCase(
+                        p.getUsername()))
+                .findFirst()
+                .orElse(null);
     }
 
     public static void promoteRole(String email, UserRole newRole) {

@@ -2,6 +2,7 @@ package ir.ac.kntu.support.rolerequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.exception.ConflictException;
 import ir.ac.kntu.exception.NotFoundException;
@@ -32,13 +33,10 @@ public class RoleRequestService {
     public static List<RoleRequest> getPending() {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
-        List<RoleRequest> pending = new ArrayList<>();
-        for (RoleRequest request : REQUESTS) {
-            if (RoleRequest.STATUS_PENDING.equals(request.getStatus())) {
-                pending.add(request);
-            }
-        }
-        return pending;
+        return REQUESTS.stream()
+                .filter(r -> RoleRequest.STATUS_PENDING
+                        .equals(r.getStatus()))
+                .collect(Collectors.toList());
     }
 
     public static List<RoleRequest> getAll() {
@@ -81,11 +79,9 @@ public class RoleRequestService {
     }
 
     private static RoleRequest find(String requestId) {
-        for (RoleRequest request : REQUESTS) {
-            if (request.getRequestId().equals(requestId)) {
-                return request;
-            }
-        }
-        return null;
+        return REQUESTS.stream()
+                .filter(r -> r.getRequestId().equals(requestId))
+                .findFirst()
+                .orElse(null);
     }
 }

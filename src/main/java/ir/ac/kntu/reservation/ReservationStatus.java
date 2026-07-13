@@ -1,5 +1,7 @@
 package ir.ac.kntu.reservation;
 
+import java.util.Arrays;
+
 public enum ReservationStatus {
     WAITING("WAITING"),
     ACTIVE("ACTIVE"),
@@ -18,11 +20,9 @@ public enum ReservationStatus {
     }
 
     public static ReservationStatus fromLabel(String label) {
-        for (ReservationStatus s : values()) {
-            if (s.label.equalsIgnoreCase(label)) {
-                return s;
-            }
-        }
-        return WAITING;
+        return Arrays.stream(values())
+                .filter(s -> s.label.equalsIgnoreCase(label))
+                .findFirst()
+                .orElse(WAITING);
     }
 }

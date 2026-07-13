@@ -2,6 +2,7 @@ package ir.ac.kntu.library;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.exception.ConflictException;
 import ir.ac.kntu.exception.InsufficientCopiesException;
@@ -213,12 +214,12 @@ public class LibraryService {
      * category) each result matched on. Demonstrates SearchResult<T> without
      * changing the behavior/signature of the original searchItems() callers.
      */
-    public static List<SearchResult<LibraryItem>> searchItemsDetailed(String keyword) {
-        List<SearchResult<LibraryItem>> results = new ArrayList<>();
-        for (LibraryItem item : searchItems(keyword)) {
-            results.add(new SearchResult<>(item, item.matchedField(keyword)));
-        }
-        return results;
+    public static List<SearchResult<LibraryItem>> searchItemsDetailed(
+            String keyword) {
+        return searchItems(keyword).stream()
+                .map(i -> new SearchResult<>(i,
+                        i.matchedField(keyword)))
+                .collect(Collectors.toList());
     }
 
     public static void updateItemQuantityFromCallCenter(String itemId, int newTotalCopies) {
@@ -281,12 +282,10 @@ public class LibraryService {
         if (itemId == null) {
             return null;
         }
-        for (LibraryItem item : INVENTORY) {
-            if (item.getItemId().equalsIgnoreCase(itemId)) {
-                return item;
-            }
-        }
-        return null;
+        return INVENTORY.stream()
+                .filter(i -> i.getItemId().equalsIgnoreCase(itemId))
+                .findFirst()
+                .orElse(null);
     }
 
     public static List<SupplierCompany> getAllSuppliers() {
@@ -294,12 +293,11 @@ public class LibraryService {
     }
 
     public static String getSupplierName(String supplierId) {
-        for (SupplierCompany supplier : SUPPLIERS) {
-            if (supplier.getCompanyId().equals(supplierId)) {
-                return supplier.getCompanyName();
-            }
-        }
-        return supplierId;
+        return SUPPLIERS.stream()
+                .filter(s -> s.getCompanyId().equals(supplierId))
+                .map(SupplierCompany::getCompanyName)
+                .findFirst()
+                .orElse(supplierId);
     }
 
     public static void initCatalog() {

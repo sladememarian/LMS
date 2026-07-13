@@ -1,5 +1,7 @@
 package ir.ac.kntu.mail;
 
+import java.util.Arrays;
+
 public enum MessageType {
     TWO_FA("2FA"),
     WELCOME("WELCOME"),
@@ -17,11 +19,9 @@ public enum MessageType {
     }
 
     public static MessageType fromLabel(String value) {
-        for (MessageType type : values()) {
-            if (type.label.equals(value)) {
-                return type;
-            }
-        }
-        return SYSTEM_NOTIFICATION;
+        return Arrays.stream(values())
+                .filter(t -> t.label.equals(value))
+                .findFirst()
+                .orElse(SYSTEM_NOTIFICATION);
     }
 }

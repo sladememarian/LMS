@@ -3,6 +3,7 @@ package ir.ac.kntu.support;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.exception.AuthorizationException;
 import ir.ac.kntu.exception.NotFoundException;
@@ -117,7 +118,8 @@ public class SupportService {
         return new ArrayList<>(TICKETS);
     }
 
-    public static List<SupportTicket> getTicketsForAgent(Persona agent) {
+    public static List<SupportTicket> getTicketsForAgent(
+            Persona agent) {
         if (agent.getRole() != UserRole.CALLCENTER) {
             return getAllTickets();
         }
@@ -125,14 +127,11 @@ public class SupportService {
         TICKETS.clear();
         TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
 
-        java.util.Set<SupportSection> allowedSections = agent.getAssignedSupportSections();
-        List<SupportTicket> filtered = new ArrayList<>();
-        for (SupportTicket ticket : TICKETS) {
-            if (allowedSections.contains(ticket.getSection())) {
-                filtered.add(ticket);
-            }
-        }
-        return filtered;
+        java.util.Set<SupportSection> allowedSections =
+                agent.getAssignedSupportSections();
+        return TICKETS.stream()
+                .filter(t -> allowedSections.contains(t.getSection()))
+                .collect(Collectors.toList());
     }
 
     public static boolean submitLibraryItemPlaceholder(String type, String title, String author) {

@@ -1,7 +1,7 @@
 package ir.ac.kntu.support;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.util.ConsoleMenu;
 
@@ -12,23 +12,19 @@ public class TicketPrinter {
     }
 
     public static List<SupportTicket> byCreator(String userId) {
-        List<SupportTicket> result = new ArrayList<>();
-        for (SupportTicket ticket : SupportService.getAllTickets()) {
-            if (ticket.getUserId() != null && ticket.getUserId().equals(userId)) {
-                result.add(ticket);
-            }
-        }
-        return result;
+        return SupportService.getAllTickets().stream()
+                .filter(t -> t.getUserId() != null
+                        && t.getUserId().equals(userId))
+                .collect(Collectors.toList());
     }
 
-    public static List<SupportTicket> byCategoryContains(String keyword) {
-        List<SupportTicket> result = new ArrayList<>();
-        for (SupportTicket ticket : SupportService.getAllTickets()) {
-            String section = ticket.getSection() == null ? "" : ticket.getSection().name();
-            if (section.toLowerCase().contains(keyword.toLowerCase())) {
-                result.add(ticket);
-            }
-        }
-        return result;
+    public static List<SupportTicket> byCategoryContains(
+            String keyword) {
+        String lower = keyword.toLowerCase();
+        return SupportService.getAllTickets().stream()
+                .filter(t -> t.getSection() != null
+                        && t.getSection().name().toLowerCase()
+                                .contains(lower))
+                .collect(Collectors.toList());
     }
 }

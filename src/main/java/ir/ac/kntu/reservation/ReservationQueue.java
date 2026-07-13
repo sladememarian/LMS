@@ -2,6 +2,7 @@ package ir.ac.kntu.reservation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReservationQueue {
 
@@ -33,13 +34,9 @@ public class ReservationQueue {
     }
 
     public List<Reservation> getWaiting() {
-        List<Reservation> waiting = new ArrayList<>();
-        for (Reservation reservation : queue) {
-            if (reservation.isPending()) {
-                waiting.add(reservation);
-            }
-        }
-        return waiting;
+        return queue.stream()
+                .filter(Reservation::isPending)
+                .collect(Collectors.toList());
     }
 
     public List<Reservation> getAll() {
@@ -56,5 +53,19 @@ public class ReservationQueue {
 
     public boolean hasWaiting() {
         return !getWaiting().isEmpty();
+    }
+
+    public int getPosition(Reservation reservation) {
+        int pos = 1;
+        for (Reservation r : queue) {
+            if (r.isPending()) {
+                if (r.getReservationId().equals(
+                        reservation.getReservationId())) {
+                    return pos;
+                }
+                pos++;
+            }
+        }
+        return -1;
     }
 }

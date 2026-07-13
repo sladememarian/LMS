@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.library.LibraryItem;
@@ -109,15 +110,11 @@ public class CallCenterInbox {
         return true;
     }
 
-    private static List<SupportTicket> filterBySection(List<SupportTicket> tickets,
-            SupportSection section) {
-        List<SupportTicket> result = new ArrayList<>();
-        for (SupportTicket ticket : tickets) {
-            if (ticket.getSection() == section) {
-                result.add(ticket);
-            }
-        }
-        return result;
+    private static List<SupportTicket> filterBySection(
+            List<SupportTicket> tickets, SupportSection section) {
+        return tickets.stream()
+                .filter(t -> t.getSection() == section)
+                .collect(Collectors.toList());
     }
 
     private static String sectionDisplayName(SupportSection section) {

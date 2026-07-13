@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.exception.ConflictException;
 import ir.ac.kntu.exception.NotFoundException;
@@ -139,26 +140,20 @@ public class ReservationService {
         }
     }
 
-    public static boolean hasActiveReservation(String memberId, String itemId) {
-        for (Reservation reservation : ALL_RESERVATIONS) {
-            if (reservation.getMemberId().equals(memberId)
-                    && reservation.getItemId().equals(itemId)
-                    && !reservation.isTerminal()) {
-                return true;
-            }
-        }
-        return false;
+    public static boolean hasActiveReservation(String memberId,
+            String itemId) {
+        return ALL_RESERVATIONS.stream()
+                .anyMatch(r -> r.getMemberId().equals(memberId)
+                        && r.getItemId().equals(itemId)
+                        && !r.isTerminal());
     }
 
-    public static List<Reservation> getMemberReservations(String memberId) {
-        List<Reservation> result = new ArrayList<>();
-        for (Reservation reservation : ALL_RESERVATIONS) {
-            if (reservation.getMemberId().equals(memberId)
-                    && !reservation.isTerminal()) {
-                result.add(reservation);
-            }
-        }
-        return result;
+    public static List<Reservation> getMemberReservations(
+            String memberId) {
+        return ALL_RESERVATIONS.stream()
+                .filter(r -> r.getMemberId().equals(memberId)
+                        && !r.isTerminal())
+                .collect(Collectors.toList());
     }
 
     public static int getActiveReservationCount(String memberId) {
@@ -167,6 +162,20 @@ public class ReservationService {
 
     public static ReservationQueue getQueue(String itemId) {
         return QUEUES.get(itemId);
+    }
+
+    public static int getQueuePosition(String reservationId,
+            String itemId) {
+        ReservationQueue queue = QUEUES.get(itemId);
+        if (queue == null) {
+            return -1;
+        }
+        for (Reservation r : queue.getAll()) {
+            if (r.getReservationId().equals(reservationId)) {
+                return queue.getPosition(r);
+            }
+        }
+        return -1;
     }
 
     public static List<Reservation> getAllReservations() {

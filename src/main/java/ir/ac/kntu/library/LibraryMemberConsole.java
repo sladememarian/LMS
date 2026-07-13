@@ -205,7 +205,11 @@ public class LibraryMemberConsole {
                     user.getMemberId(), itemId,
                     SimulationClock.getCurrentDay());
             if (reservation.isPending()) {
-                ConsoleColor.printSuccess("Item unavailable. You are reserved. Pick up by day "
+                int pos = ReservationService.getQueuePosition(
+                        reservation.getReservationId(), itemId);
+                ConsoleColor.printSuccess(
+                        "Item unavailable. You are reserved"
+                        + " (Queue #" + pos + "). Pick up by day "
                         + reservation.getExpiresOnDay() + ".");
             } else {
                 ConsoleColor.printSuccess("Reservation activated. Pick up by day "
@@ -249,10 +253,17 @@ public class LibraryMemberConsole {
         }
         System.out.println("  Active reservations:");
         for (Reservation reservation : reservations) {
-            System.out.println("  " + reservation.getReservationId()
+            String line = "  " + reservation.getReservationId()
                     + " | Item: " + reservation.getItemId()
                     + " | Status: " + reservation.getStatus().getLabel()
-                    + " | Expires: day " + reservation.getExpiresOnDay());
+                    + " | Expires: day " + reservation.getExpiresOnDay();
+            if (reservation.isPending()) {
+                int pos = ReservationService.getQueuePosition(
+                        reservation.getReservationId(),
+                        reservation.getItemId());
+                line += " | Queue #" + pos;
+            }
+            System.out.println(line);
         }
     }
 }

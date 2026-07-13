@@ -1,7 +1,7 @@
 package ir.ac.kntu.generic;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.interfaces.Searchable;
 
@@ -13,16 +13,14 @@ import ir.ac.kntu.interfaces.Searchable;
 public final class SearchEngine {
 
     private SearchEngine() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+        throw new UnsupportedOperationException(
+                "Utility class cannot be instantiated");
     }
 
-    public static <T extends Searchable> List<T> search(List<T> items, String query) {
-        List<T> results = new ArrayList<>();
-        for (T item : items) {
-            if (item.matchesQuery(query)) {
-                results.add(item);
-            }
-        }
-        return results;
+    public static <T extends Searchable> List<T> search(
+            List<T> items, String query) {
+        return items.stream()
+                .filter(item -> item.matchesQuery(query))
+                .collect(Collectors.toList());
     }
 }

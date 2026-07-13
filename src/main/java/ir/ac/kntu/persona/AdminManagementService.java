@@ -10,6 +10,7 @@ import ir.ac.kntu.util.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Owner/Admin hierarchy management: creating and removing Admins, promoting
@@ -143,17 +144,13 @@ public final class AdminManagementService {
     }
 
     public static List<Persona> searchUsers(String keyword) {
-        List<Persona> results = new ArrayList<>();
         if (keyword == null || keyword.trim().isEmpty()) {
-            return results;
+            return new ArrayList<>();
         }
         String lower = keyword.toLowerCase();
-        for (Persona persona : PersonaRepository.getAllPersonas()) {
-            if (matchesUser(persona, lower)) {
-                results.add(persona);
-            }
-        }
-        return results;
+        return PersonaRepository.getAllPersonas().stream()
+                .filter(p -> matchesUser(p, lower))
+                .collect(Collectors.toList());
     }
 
     private static boolean matchesUser(Persona persona, String lowerKeyword) {

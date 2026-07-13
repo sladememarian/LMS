@@ -29,12 +29,8 @@ public class Inbox {
     }
 
     public int getUnreadCount() {
-        int count = 0;
-        for (MailMessage message : messages) {
-            if (!message.isRead()) {
-                count++;
-            }
-        }
-        return count;
+        return (int) messages.stream()
+                .filter(m -> !m.isRead())
+                .count();
     }
 }
