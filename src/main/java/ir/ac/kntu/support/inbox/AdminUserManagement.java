@@ -24,6 +24,7 @@ public class AdminUserManagement {
         ConsoleMenu.option("3", "Edit User Profile");
         ConsoleMenu.option("4", "Promote / Demote User");
         ConsoleMenu.option("5", "Reset Password");
+        ConsoleMenu.option("6", "Activate / Deactivate User");
         ConsoleMenu.back();
         String choice = ConsoleMenu.readLine(scanner,
                 ConsoleColor.YELLOW + "Choose: " + ConsoleColor.RESET);
@@ -50,6 +51,9 @@ public class AdminUserManagement {
                 break;
             case "5":
                 resetPasswordAction(scanner, actor);
+                break;
+            case "6":
+                toggleActiveAction(scanner, actor);
                 break;
             default:
                 ConsoleColor.printError(INVALID_ENTRY);
@@ -109,14 +113,23 @@ public class AdminUserManagement {
         ConsoleColor.printSuccess("Password reset for: " + targetEmail);
     }
 
+    private static void toggleActiveAction(Scanner scanner, Persona actor) {
+        String email = ConsoleMenu.readLine(scanner, PROMPT_EMAIL);
+        boolean nowActive = AdminManagementService.toggleActive(actor, email);
+        String status = nowActive ? "activated" : "deactivated";
+        ConsoleColor.printSuccess("Account " + status + " for: " + email);
+    }
+
     private static String formatUserLine(Persona persona) {
         String first = persona.getFirstName() == null ? "-" : persona.getFirstName();
         String last = persona.getLastName() == null ? "-" : persona.getLastName();
         String email = persona.getEmail() == null ? "-" : persona.getEmail();
         String name = first + " " + last;
+        String active = persona.isActive() ? "ACTIVE" : "INACTIVE";
         return ConsoleColor.CYAN + "  " + persona.getMemberId() + ConsoleColor.RESET
                 + SEP + name.trim()
                 + SEP + email
-                + SEP + persona.getRole().name();
+                + SEP + persona.getRole().name()
+                + SEP + active;
     }
 }

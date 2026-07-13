@@ -25,6 +25,7 @@ public class Persona {
     private String theme;
     private String createdBy;
     private boolean owner;
+    private boolean active = true;
     private final List<String> borrowedItemIds = new ArrayList<>();
     private final Set<SupportSection> assignedSupportSections = EnumSet.noneOf(SupportSection.class);
 
@@ -154,6 +155,14 @@ public class Persona {
 
     public void setOwner(boolean owner) {
         this.owner = owner;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     /**

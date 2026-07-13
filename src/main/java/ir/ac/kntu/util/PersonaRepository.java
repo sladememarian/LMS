@@ -34,7 +34,7 @@ public final class PersonaRepository {
 
     public static void insertPersona(Persona persona) {
         String email = resolveEmail(persona);
-        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by, is_owner, support_sections) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme, created_by = s.created_by, is_owner = s.is_owner, support_sections = s.support_sections WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by, is_owner, support_sections) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme, s.created_by, s.is_owner, s.support_sections)", ps -> {
+        Database.withPs("MERGE INTO personas USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) AS s(email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by, is_owner, support_sections, active) ON personas.email = s.email WHEN MATCHED THEN UPDATE SET username = s.username, password = s.password, role = s.role, member_id = s.member_id, wallet_balance = s.wallet_balance, first_name = s.first_name, last_name = s.last_name, phone = s.phone, theme = s.theme, created_by = s.created_by, is_owner = s.is_owner, support_sections = s.support_sections, active = s.active WHEN NOT MATCHED THEN INSERT (email, username, password, role, member_id, wallet_balance, first_name, last_name, phone, theme, created_by, is_owner, support_sections, active) VALUES (s.email, s.username, s.password, s.role, s.member_id, s.wallet_balance, s.first_name, s.last_name, s.phone, s.theme, s.created_by, s.is_owner, s.support_sections, s.active)", ps -> {
             ps.setString(1, email);
             ps.setString(2, persona.getUsername());
             ps.setString(3, persona.getPassword());
@@ -48,6 +48,7 @@ public final class PersonaRepository {
             ps.setString(11, persona.getCreatedBy());
             ps.setBoolean(12, persona.isOwner());
             ps.setString(13, encodeSections(persona.getAssignedSupportSections()));
+            ps.setBoolean(14, persona.isActive());
             ps.executeUpdate();
         });
     }
@@ -108,6 +109,7 @@ public final class PersonaRepository {
         persona.setTheme(rs.getString("theme"));
         persona.setCreatedBy(rs.getString("created_by"));
         persona.setOwner(rs.getBoolean("is_owner"));
+        persona.setActive(rs.getBoolean("active"));
         persona.setAssignedSupportSections(decodeSections(rs.getString("support_sections")));
         if (!isSystemEmail(email)) {
             Database.withPs("SELECT item_id FROM borrowed_items WHERE email=?", ps -> {

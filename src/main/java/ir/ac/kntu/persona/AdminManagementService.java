@@ -158,4 +158,20 @@ public final class AdminManagementService {
         }
         PersonaService.updateProfile(email, firstName, lastName, phone);
     }
+
+    public static boolean toggleActive(Persona actor, String email) {
+        Persona target = PersonaService.getProfile(email);
+        if (target == null) {
+            throw new UserNotFoundException("User not found: " + email);
+        }
+        if (target.getRole() == UserRole.ADMIN) {
+            throw new AuthorizationException("Admin accounts cannot be deactivated.");
+        }
+        if (target.isOwner()) {
+            throw new AuthorizationException("The Owner account cannot be deactivated.");
+        }
+        target.setActive(!target.isActive());
+        PersonaRepository.insertPersona(target);
+        return target.isActive();
+    }
 }

@@ -1,5 +1,6 @@
 package ir.ac.kntu.iam;
 
+import ir.ac.kntu.exception.AccountDeactivatedException;
 import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.exception.InvalidCredentialsException;
 import ir.ac.kntu.exception.InvalidPasswordException;
@@ -125,11 +126,7 @@ public class IamService {
             String password = scanner.nextLine().trim();
 
             try {
-                if (!PersonaService.validateCredentials(email, password)) {
-                    throw new InvalidCredentialsException(
-                        "Incorrect email or password."
-                    );
-                }
+                validateLogin(email, password);
                 if (performTwoFactor(scanner, email)) {
                     Persona.setCurrentUser(PersonaService.getProfile(email));
                     ConsoleColor.printSuccess(
@@ -143,6 +140,20 @@ public class IamService {
         }
         System.out.println(ConsoleColor.gray(BACK_TO_MENU));
         scanner.nextLine();
+    }
+
+    private static void validateLogin(String email, String password) {
+        if (!PersonaService.validateCredentials(email, password)) {
+            throw new InvalidCredentialsException(
+                "Incorrect email or password."
+            );
+        }
+        Persona candidate = PersonaService.getProfile(email);
+        if (candidate != null && !candidate.isActive()) {
+            throw new AccountDeactivatedException(
+                "This account has been deactivated. Contact an administrator."
+            );
+        }
     }
 
     private static boolean performTwoFactor(Scanner scanner, String email) {

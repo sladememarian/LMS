@@ -140,6 +140,7 @@ public class Database {
         "ALTER TABLE reservations ADD COLUMN IF NOT EXISTS reserved_on_day INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE reservations ADD COLUMN IF NOT EXISTS expires_on_day INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE reservations ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'WAITING'",
+        "ALTER TABLE personas ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE",
     };
 
     public static void executeUpdate(String sql) {
