@@ -45,7 +45,8 @@ public class ReservationService {
         ReservationRepository.insertReservation(reservation);
     }
 
-    public static Reservation reserve(String memberId, String itemId, int currentDay) {
+    public static Reservation reserve(String memberId, String itemId,
+            int currentDay) {
         LibraryItem item = validateReservationRequest(memberId, itemId);
 
         ReservationQueue queue = QUEUES.computeIfAbsent(itemId,
@@ -54,7 +55,8 @@ public class ReservationService {
         if (item.getAvailableCopies() > 0) {
             Reservation reservation = new Reservation(
                     generateId(), memberId, itemId,
-                    currentDay, currentDay + SystemSettingsService.getReservationDays(),
+                    currentDay,
+                    currentDay + SystemSettingsService.getReservationDays(),
                     ReservationStatus.ACTIVE);
             ALL_RESERVATIONS.add(reservation);
             queue.enqueue(reservation);
@@ -62,9 +64,11 @@ public class ReservationService {
             return reservation;
         }
 
+        // WAITING: no expiration yet. Clock starts when promoted to ACTIVE.
         Reservation reservation = new Reservation(
                 generateId(), memberId, itemId,
-                currentDay, ReservationStatus.WAITING);
+                currentDay, -1,
+                ReservationStatus.WAITING);
         ALL_RESERVATIONS.add(reservation);
         queue.enqueue(reservation);
         syncReservation(reservation);

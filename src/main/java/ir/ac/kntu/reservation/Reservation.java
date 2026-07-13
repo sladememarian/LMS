@@ -60,8 +60,8 @@ public class Reservation {
     }
 
     public boolean isExpired(int currentDay) {
-        return currentDay > expiresOnDay
-                && (status == ReservationStatus.WAITING || status == ReservationStatus.ACTIVE);
+        return status == ReservationStatus.ACTIVE
+                && currentDay > expiresOnDay;
     }
 
     public boolean isPending() {

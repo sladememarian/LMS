@@ -233,9 +233,10 @@ public class LibraryMemberConsole {
                 ConsoleColor.printSuccess(
                         "Item unavailable. You are #"
                         + pos + " in queue"
-                        + " (" + holders + " active reservation(s) ahead)."
-                        + " Pick up by day "
-                        + reservation.getExpiresOnDay() + ".");
+                        + " (" + holders
+                        + " active reservation(s) ahead)."
+                        + " Pickup window starts when"
+                        + " a copy becomes available.");
             } else {
                 ConsoleColor.printSuccess(
                         "Reservation activated. Pick up by day "
@@ -285,9 +286,7 @@ public class LibraryMemberConsole {
             String line = "  " + reservation.getReservationId()
                     + " | Item: " + reservation.getItemId()
                     + " | Status: "
-                    + reservation.getStatus().getLabel()
-                    + " | Expires: day "
-                    + reservation.getExpiresOnDay();
+                    + reservation.getStatus().getLabel();
             if (reservation.isPending()) {
                 int pos = ReservationService.getQueuePosition(
                         reservation.getReservationId(),
@@ -295,10 +294,13 @@ public class LibraryMemberConsole {
                 int ahead = ReservationService
                         .getActiveReservationHolders(
                                 reservation.getItemId()).size();
-                line += " | Queue #" + pos
+                line += " | Waiting (no deadline)"
+                        + " | Queue #" + pos
                         + " (" + ahead + " ahead)";
             } else {
-                line += " | Ready for pickup";
+                line += " | Expires: day "
+                        + reservation.getExpiresOnDay()
+                        + " | Ready for pickup";
             }
             System.out.println(line);
         }
