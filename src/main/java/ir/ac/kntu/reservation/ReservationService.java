@@ -191,12 +191,23 @@ public class ReservationService {
                 .count();
     }
 
-    /** Whether this member already has an ACTIVE (ready-for-pickup) reservation on this item. */
-    public static boolean hasReadyReservation(String memberId, String itemId) {
+    // Whether this member already has an ACTIVE (ready-for-pickup) reservation on this item.
+    public static boolean hasReadyReservation(String memberId,
+            String itemId) {
         return ALL_RESERVATIONS.stream()
                 .anyMatch(r -> r.getMemberId().equals(memberId)
                         && r.getItemId().equals(itemId)
                         && r.isActive());
+    }
+
+    // List of ACTIVE reservation holder member-ids for an item.
+    public static List<String> getActiveReservationHolders(
+            String itemId) {
+        return ALL_RESERVATIONS.stream()
+                .filter(r -> r.getItemId().equals(itemId)
+                        && r.isActive())
+                .map(Reservation::getMemberId)
+                .collect(Collectors.toList());
     }
 
     /**

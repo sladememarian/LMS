@@ -137,10 +137,19 @@ public class LibraryMemberConsole {
                 return;
             }
             int walkInAvailable = ReservationService.getWalkInAvailableCopies(
-                    itemId, user.getMemberId(), item.getAvailableCopies());
+                    itemId, user.getMemberId(),
+                    item.getAvailableCopies());
             if (walkInAvailable <= 0) {
+                List<String> holders =
+                        ReservationService.getActiveReservationHolders(
+                                itemId);
+                String who = holders.isEmpty() ? ""
+                        : " (held by " + holders.size()
+                        + " reservation(s))";
                 ConsoleColor.printError(
-                        "This copy is being held for another member's reservation.");
+                        "This copy is being held"
+                        + " for another member's reservation"
+                        + who + ".");
                 return;
             }
             LibraryService.executeBorrow(itemId);
@@ -219,12 +228,17 @@ public class LibraryMemberConsole {
             if (reservation.isPending()) {
                 int pos = ReservationService.getQueuePosition(
                         reservation.getReservationId(), itemId);
+                int holders = ReservationService
+                        .getActiveReservationHolders(itemId).size();
                 ConsoleColor.printSuccess(
-                        "Item unavailable. You are reserved"
-                        + " (Queue #" + pos + "). Pick up by day "
+                        "Item unavailable. You are #"
+                        + pos + " in queue"
+                        + " (" + holders + " active reservation(s) ahead)."
+                        + " Pick up by day "
                         + reservation.getExpiresOnDay() + ".");
             } else {
-                ConsoleColor.printSuccess("Reservation activated. Pick up by day "
+                ConsoleColor.printSuccess(
+                        "Reservation activated. Pick up by day "
                         + reservation.getExpiresOnDay() + ".");
             }
         } catch (BaseException ex) {
@@ -278,7 +292,11 @@ public class LibraryMemberConsole {
                 int pos = ReservationService.getQueuePosition(
                         reservation.getReservationId(),
                         reservation.getItemId());
-                line += " | Queue #" + pos;
+                int ahead = ReservationService
+                        .getActiveReservationHolders(
+                                reservation.getItemId()).size();
+                line += " | Queue #" + pos
+                        + " (" + ahead + " ahead)";
             } else {
                 line += " | Ready for pickup";
             }
