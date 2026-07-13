@@ -27,10 +27,12 @@ public class ReservationQueue {
     }
 
     public Reservation peekFirst() {
-        if (queue.isEmpty()) {
-            return null;
+        for (Reservation reservation : queue) {
+            if (reservation.isPending()) {
+                return reservation;
+            }
         }
-        return queue.get(0);
+        return null;
     }
 
     public List<Reservation> getWaiting() {

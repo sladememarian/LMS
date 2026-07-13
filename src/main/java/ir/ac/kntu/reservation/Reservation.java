@@ -8,7 +8,7 @@ public class Reservation {
     private final String memberId;
     private final String itemId;
     private final int reservedOnDay;
-    private final int expiresOnDay;
+    private int expiresOnDay;
     private ReservationStatus status;
 
     public Reservation(String reservationId, String memberId, String itemId,
@@ -45,6 +45,10 @@ public class Reservation {
 
     public int getExpiresOnDay() {
         return expiresOnDay;
+    }
+
+    public void setExpiresOnDay(int newExpiresOnDay) {
+        this.expiresOnDay = newExpiresOnDay;
     }
 
     public ReservationStatus getStatus() {

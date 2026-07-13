@@ -132,6 +132,17 @@ public class LibraryMemberConsole {
         }
         try {
             LibraryItem item = LibraryService.getItemById(itemId);
+            if (item == null) {
+                ConsoleColor.printError("Item not found.");
+                return;
+            }
+            int walkInAvailable = ReservationService.getWalkInAvailableCopies(
+                    itemId, user.getMemberId(), item.getAvailableCopies());
+            if (walkInAvailable <= 0) {
+                ConsoleColor.printError(
+                        "This copy is being held for another member's reservation.");
+                return;
+            }
             LibraryService.executeBorrow(itemId);
             PersonaService.recordBorrow(user.getEmail(), itemId);
             int loanPeriodDays = Math.min(                    item.borrowPeriod(),

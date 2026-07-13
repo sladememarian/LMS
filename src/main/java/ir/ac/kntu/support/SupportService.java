@@ -13,7 +13,9 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
+import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.support.notification.NotificationService;
+import ir.ac.kntu.time.SystemClock;
 import ir.ac.kntu.util.SupportTicketRepository;
 
 public class SupportService {
@@ -144,6 +146,9 @@ public class SupportService {
             throw new AuthorizationException("Action denied. Unauthorized security clearance scope.");
         }
         LibraryService.updateItemQuantityFromCallCenter(itemId, quantity);
+        if (quantity > 0) {
+            ReservationService.fulfillFromQueue(itemId, quantity, SystemClock.getCurrentDay());
+        }
     }
 
     public static void addLibraryItemViaSupport(LibraryItem item) {

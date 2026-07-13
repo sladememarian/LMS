@@ -14,6 +14,7 @@ import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.time.SystemClock;
 import ir.ac.kntu.util.ReservationRepository;
 import ir.ac.kntu.util.SystemSettingsService;
 
@@ -92,8 +93,14 @@ public class ReservationService {
         for (Reservation reservation : ALL_RESERVATIONS) {
             if (reservation.getReservationId().equals(reservationId)
                     && !reservation.isTerminal()) {
+                boolean wasActive = reservation.isActive();
                 reservation.setStatus(ReservationStatus.CANCELLED);
                 syncReservation(reservation);
+                if (wasActive) {
+                    // The copy held for this reservation is free again;
+                    // let the next person in that item's queue have it.
+                    processReturn(reservation.getItemId(), SystemClock.getCurrentDay());
+                }
                 return;
             }
         }
@@ -110,6 +117,10 @@ public class ReservationService {
             return false;
         }
         first.setStatus(ReservationStatus.ACTIVE);
+        // The member gets a fresh pickup window starting now, not the
+        // (possibly already-elapsed) deadline from when they were merely
+        // queued and waiting for a copy.
+        first.setExpiresOnDay(currentDay + SystemSettingsService.getReservationDays());
         syncReservation(first);
         System.out.println("[Reservation]: Activated reservation "
                 + first.getReservationId() + " for member "
@@ -118,14 +129,33 @@ public class ReservationService {
         return true;
     }
 
+    /**
+     * Calls {@link #processReturn} once per newly available copy, so a
+     * multi-copy restock (or return) fulfills as many queued reservations
+     * as there are freed-up copies instead of just the first one.
+     */
+    public static void fulfillFromQueue(String itemId, int copiesFreed, int currentDay) {
+        for (int i = 0; i < copiesFreed; i++) {
+            if (!processReturn(itemId, currentDay)) {
+                break;
+            }
+        }
+    }
+
     public static void expireReservations(int currentDay) {
         for (Reservation reservation : ALL_RESERVATIONS) {
             if (reservation.isExpired(currentDay)) {
+                boolean wasActive = reservation.isActive();
                 reservation.setStatus(ReservationStatus.EXPIRED);
                 syncReservation(reservation);
                 System.out.println("[Reservation]: Expired reservation "
                         + reservation.getReservationId() + " for item "
                         + reservation.getItemId() + ".");
+                if (wasActive) {
+                    // The expired reservation's held copy is free again;
+                    // let the next person in that item's queue have it.
+                    processReturn(reservation.getItemId(), currentDay);
+                }
             }
         }
     }
@@ -148,6 +178,40 @@ public class ReservationService {
                 .anyMatch(r -> r.getMemberId().equals(memberId)
                         && r.getItemId().equals(itemId)
                         && !r.isTerminal());
+    }
+
+    /**
+     * Number of copies of this item currently earmarked for pickup by an
+     * {@code ACTIVE} reservation (i.e. sitting in {@code availableCopies}
+     * but not actually free for a walk-in borrow).
+     */
+    public static int getHeldCopiesCount(String itemId) {
+        return (int) ALL_RESERVATIONS.stream()
+                .filter(r -> r.getItemId().equals(itemId) && r.isActive())
+                .count();
+    }
+
+    /** Whether this member already has an ACTIVE (ready-for-pickup) reservation on this item. */
+    public static boolean hasReadyReservation(String memberId, String itemId) {
+        return ALL_RESERVATIONS.stream()
+                .anyMatch(r -> r.getMemberId().equals(memberId)
+                        && r.getItemId().equals(itemId)
+                        && r.isActive());
+    }
+
+    /**
+     * Copies genuinely free for an unrelated walk-in borrow: available
+     * copies minus those held for other members' ACTIVE reservations. A
+     * member picking up their own ACTIVE reservation always gets their held
+     * copy back.
+     */
+    public static int getWalkInAvailableCopies(String itemId,
+            String memberId, int availableCopies) {
+        int held = getHeldCopiesCount(itemId);
+        if (hasReadyReservation(memberId, itemId)) {
+            held -= 1;
+        }
+        return availableCopies - held;
     }
 
     public static List<Reservation> getMemberReservations(

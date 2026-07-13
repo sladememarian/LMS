@@ -8,6 +8,8 @@ import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.generic.Menu;
 import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.report.ReportService;
+import ir.ac.kntu.reservation.ReservationService;
+import ir.ac.kntu.time.SystemClock;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 import ir.ac.kntu.util.LibraryItemRepository;
@@ -152,6 +154,9 @@ public class LibraryAdminConsole {
         int delta = ConsoleMenu.readInt(scanner, "Add how many copies: ");
         try {
             LibraryService.updateItemQuantityFromCallCenter(itemId, delta);
+            if (delta > 0) {
+                ReservationService.fulfillFromQueue(itemId, delta, SystemClock.getCurrentDay());
+            }
             ConsoleColor.printSuccess("Quantities updated for " + itemId + ".");
         } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
