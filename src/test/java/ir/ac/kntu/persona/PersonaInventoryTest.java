@@ -1,9 +1,12 @@
 package ir.ac.kntu.persona;
 
+import ir.ac.kntu.exception.BaseException;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PersonaInventoryTest {
@@ -43,9 +46,9 @@ class PersonaInventoryTest {
         PersonaService.registerPersona(email, "Passw0rd!");
         PersonaService.recordBorrow(email, "ITEM-003");
         assertTrue(PersonaService.getProfile(email).hasBorrowed("ITEM-003"));
-        assertTrue(PersonaService.recordReturn(email, "ITEM-003"));
+        assertDoesNotThrow(() -> PersonaService.recordReturn(email, "ITEM-003"));
         assertFalse(PersonaService.getProfile(email).hasBorrowed("ITEM-003"));
-        assertFalse(PersonaService.recordReturn(email, "ITEM-999"));
+        assertDoesNotThrow(() -> PersonaService.recordReturn(email, "ITEM-999"));
     }
 
     @Test
@@ -53,10 +56,10 @@ class PersonaInventoryTest {
         // Promotion: now with extra prefix!
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
-        assertTrue(PersonaService.promoteRole(email, UserRole.STUDENT));
+        assertDoesNotThrow(() -> PersonaService.promoteRole(email, UserRole.STUDENT));
         Persona persona = PersonaService.getProfile(email);
         assertEquals(UserRole.STUDENT, persona.getRole());
         assertTrue(persona.getMemberId().startsWith("STU-"));
-        assertFalse(PersonaService.promoteRole("ghost@none.com", UserRole.TEACHER));
+        assertThrows(BaseException.class, () -> PersonaService.promoteRole("ghost@none.com", UserRole.TEACHER));
     }
 }

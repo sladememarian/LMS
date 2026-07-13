@@ -35,7 +35,7 @@ class FinanceServiceTest {
         FinanceService.recordDebt(user, 20_000, "overdue item");
         assertEquals(20_000, FinanceService.getOutstandingDebt(user.getMemberId()));
         assertFalse(FinanceService.checkBorrowingPermission(user.getMemberId()));
-        assertTrue(FinanceService.payDebt(user));
+        FinanceService.payDebt(user);
         assertEquals(0, FinanceService.getOutstandingDebt(user.getMemberId()));
         assertTrue(FinanceService.checkBorrowingPermission(user.getMemberId()));
     }
@@ -46,7 +46,7 @@ class FinanceServiceTest {
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 100_000);
         int before = FinanceService.getTaxRevenueCollected();
-        assertTrue(FinanceService.proccessExtentionPayment(user, 10_000));
+        FinanceService.proccessExtentionPayment(user, 10_000);
         assertTrue(FinanceService.getTaxRevenueCollected() > before);
     }
 

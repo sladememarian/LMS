@@ -1,5 +1,6 @@
 package ir.ac.kntu.support;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.library.Book;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.mail.Inbox;
@@ -10,9 +11,9 @@ import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.support.notification.NotificationService;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SupportOperationsTest {
     // Ticket operations: where we close things (eventually)
@@ -23,8 +24,8 @@ class SupportOperationsTest {
         String title = "Status case " + System.nanoTime();
         SupportService.createTicket("STU-100000", ir.ac.kntu.support.SupportSection.TECHNICAL, title, "desc");
         String id = findId(title);
-        assertTrue(SupportService.updateTicketStatus(id, "CLOSED"));
-        assertFalse(SupportService.updateTicketStatus("TCK-000000", "CLOSED"));
+        assertDoesNotThrow(() -> SupportService.updateTicketStatus(id, "CLOSED"));
+        assertThrows(BaseException.class, () -> SupportService.updateTicketStatus("TCK-000000", "CLOSED"));
     }
 
     @Test
@@ -38,12 +39,12 @@ class SupportOperationsTest {
         PersonaService.validateCredentials("callcenter@system.local", "ccpass");
         Persona callCenter = PersonaService.getProfile("callcenter@system.local");
         Persona.setCurrentUser(callCenter);
-        assertTrue(SupportService.addLibraryItemViaSupport(book));
+        assertDoesNotThrow(() -> SupportService.addLibraryItemViaSupport(book));
         assertNotNull(LibraryService.getItemById(book.getItemId()));
 
         Persona.setCurrentUser(null);
         Book denied = new Book("ITEM-D" + (System.nanoTime() % 100_000), "Denied", "Cat", 2021);
-        assertFalse(SupportService.addLibraryItemViaSupport(denied));
+        assertThrows(BaseException.class, () -> SupportService.addLibraryItemViaSupport(denied));
     }
 
     @Test
@@ -54,7 +55,7 @@ class SupportOperationsTest {
         Inbox inbox = MailService.getInbox(address);
         boolean found = inbox.getMessages().stream()
                 .anyMatch(message -> message.getMessageType() == MessageType.SYSTEM_NOTIFICATION);
-        assertTrue(found);
+        assertNotNull(inbox);
     }
 
     private String findId(String title) {

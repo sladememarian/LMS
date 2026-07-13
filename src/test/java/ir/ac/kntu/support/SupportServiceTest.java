@@ -1,9 +1,12 @@
 package ir.ac.kntu.support;
 
+import ir.ac.kntu.exception.BaseException;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SupportServiceTest {
@@ -40,11 +43,11 @@ class SupportServiceTest {
         String title = "Need help " + System.nanoTime();
         SupportService.createTicket("STU-100000", ir.ac.kntu.support.SupportSection.BOOK_REQUEST, title, "desc");
         String ticketId = findByTitle(title).getTicketId();
-        assertTrue(SupportService.respondToTicket(ticketId, "We are looking into it."));
+        assertDoesNotThrow(() -> SupportService.respondToTicket(ticketId, "We are looking into it."));
         SupportTicket updated = findByTitle(title);
         assertEquals("IN_PROGRESS", updated.getStatus());
         assertEquals("We are looking into it.", updated.getResponse());
-        assertFalse(SupportService.respondToTicket("TCK-000000", "no such ticket"));
+        assertThrows(BaseException.class, () -> SupportService.respondToTicket("TCK-000000", "no such ticket"));
     }
 
     @Test

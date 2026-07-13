@@ -3,6 +3,8 @@ package ir.ac.kntu.finance;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.exception.InsufficientFundsException;
+import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.TransactionRepository;
@@ -54,22 +56,22 @@ public class FinanceService {
         TransactionRepository.insertTransaction(tx);
     }
 
-    public static boolean proccessExtentionPayment(Persona persona, int amount) {
+    public static void proccessExtentionPayment(Persona persona, int amount) {
+        if (amount <= 0) {
+            throw new ValidationException("Extension amount must be positive.");
+        }
         int tax = (int) (amount * TAX_RATE);
         int totalAmount = amount + tax;
-
-        if (amount <= 0) {
-            return false;
-        }
         if (persona.getWalletBalance() < totalAmount) {
-            return false;
+            throw new InsufficientFundsException(
+                "Insufficient funds. Required: " + totalAmount
+                + ", available: " + persona.getWalletBalance()
+            );
         }
-
         PersonaService.updateWalletBalance(persona.getEmail(), -totalAmount);
         PersonaService.transferToAdmin(tax);
         logTransaction(persona.getMemberId(), amount, TYPE_DEBT, "Extension payment amount");
         logTransaction(persona.getMemberId(), tax, TYPE_TAX, "Extension payment tax");
-        return true;
     }
 
     public static List<Transaction> getTransactionsForMember(String memberId) {
@@ -109,20 +111,22 @@ public class FinanceService {
         logTransaction(persona.getMemberId(), amount, TYPE_DEBT, description);
     }
 
-    public static boolean payDebt(Persona persona) {
+    public static void payDebt(Persona persona) {
         int debt = getOutstandingDebt(persona.getMemberId());
         if (debt <= 0) {
-            return false;
+            throw new ValidationException("No outstanding debt to pay.");
         }
         int tax = (int) (debt * TAX_RATE);
         int total = debt + tax;
         if (persona.getWalletBalance() < total) {
-            return false;
+            throw new InsufficientFundsException(
+                "Insufficient funds to pay debt. Required: " + total
+                + ", available: " + persona.getWalletBalance()
+            );
         }
         PersonaService.updateWalletBalance(persona.getEmail(), -total);
         PersonaService.transferToAdmin(tax);
         logTransaction(persona.getMemberId(), debt, TYPE_DEBT_PAYMENT, "Debt cleared");
         logTransaction(persona.getMemberId(), tax, TYPE_TAX, "Debt payment tax");
-        return true;
     }
 }

@@ -59,7 +59,7 @@ class IamServiceTest {
         IamService.registerUser(
             new UserCredentials(email, "Passw0rd!", "A", "B", "09121112233")
         );
-        assertTrue(IamService.changePassword(email, "Passw0rd!", "Brandnew1!"));
+        assertDoesNotThrow(() -> IamService.changePassword(email, "Passw0rd!", "Brandnew1!"));
         assertTrue(PersonaService.validateCredentials(email, "Brandnew1!"));
     }
 

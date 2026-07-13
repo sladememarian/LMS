@@ -1,5 +1,6 @@
 package ir.ac.kntu.support;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserRole;
@@ -7,9 +8,10 @@ import ir.ac.kntu.support.rolerequest.RoleRequest;
 import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RoleRequestServiceTest {
@@ -49,9 +51,9 @@ class RoleRequestServiceTest {
         // You get a role! You get a role! EVERYONE GETS... oh wait, rejected
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.STUDENT.name(), "please");
-        assertTrue(RoleRequestService.approve(request.getRequestId()));
+        assertDoesNotThrow(() -> RoleRequestService.approve(request.getRequestId()));
         assertEquals(UserRole.STUDENT, PersonaService.getProfile(guest.getEmail()).getRole());
-        assertFalse(RoleRequestService.approve(request.getRequestId()), "already processed");
+        assertThrows(BaseException.class, () -> RoleRequestService.approve(request.getRequestId()));
     }
 
     @Test
@@ -59,10 +61,10 @@ class RoleRequestServiceTest {
         // Rejected: the "thanks for playing" of role requests
         Persona guest = freshGuest();
         RoleRequest request = RoleRequestService.submit(guest, UserRole.TEACHER.name(), "please");
-        assertTrue(RoleRequestService.reject(request.getRequestId()));
+        assertDoesNotThrow(() -> RoleRequestService.reject(request.getRequestId()));
         RoleRequest reloaded = reloadById(request.getRequestId());
         assertNotNull(reloaded);
         assertEquals(RoleRequest.STATUS_REJECTED, reloaded.getStatus());
-        assertFalse(RoleRequestService.reject("RR-000000"));
+        assertThrows(BaseException.class, () -> RoleRequestService.reject("RR-000000"));
     }
 }

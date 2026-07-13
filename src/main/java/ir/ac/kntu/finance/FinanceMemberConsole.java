@@ -2,6 +2,7 @@ package ir.ac.kntu.finance;
 
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserProfile;
 import ir.ac.kntu.util.ConsoleColor;
@@ -54,10 +55,11 @@ public class FinanceMemberConsole {
     }
 
     private static void doPayDebt(Persona user) {
-        if (FinanceService.payDebt(user)) {
+        try {
+            FinanceService.payDebt(user);
             ConsoleColor.printSuccess("Debt cleared. Wallet now " + user.getWalletBalance() + ".");
-        } else {
-            ConsoleColor.printError("No debt to pay, or insufficient wallet balance.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
@@ -66,10 +68,11 @@ public class FinanceMemberConsole {
             ConsoleColor.printError(user.getUserProfile().dashboardLabel() + " cannot extend return dates.");
             return;
         }
-        if (FinanceService.proccessExtentionPayment(user, EXTENSION_FEE)) {
+        try {
+            FinanceService.proccessExtentionPayment(user, EXTENSION_FEE);
             ConsoleColor.printSuccess("Return date extended (fee " + EXTENSION_FEE + ").");
-        } else {
-            ConsoleColor.printError("Extension failed. Insufficient wallet balance.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 }

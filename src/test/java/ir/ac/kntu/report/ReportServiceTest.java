@@ -1,5 +1,6 @@
 package ir.ac.kntu.report;
 
+import ir.ac.kntu.exception.AuthorizationException;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
@@ -67,7 +68,7 @@ class ReportServiceTest {
     void exportRequiresAuthorization() {
         // Export without auth? IllegalStateException says no.
         Persona.setCurrentUser(null);
-        assertThrows(IllegalStateException.class, () -> ReportService.exportReport("build/should_not_exist.html"));
+        assertThrows(AuthorizationException.class, () -> ReportService.exportReport("build/should_not_exist.html"));
     }
 
     @Test

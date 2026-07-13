@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.generic.Menu;
 import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.report.ReportService;
@@ -118,42 +119,50 @@ public class LibraryAdminConsole {
 
     private static void doAdd(Scanner scanner) {
         Book book = ItemEntry.readNewBook(scanner);
-        if (LibraryService.addItem(book)) {
+        try {
+            LibraryService.addItem(book);
             ConsoleColor.printSuccess("Item added: " + book.getItemId());
-        } else {
-            ConsoleColor.printError("Add rejected (duplicate ID).");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doEditPrice(Scanner scanner) {
         String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
         int price = ConsoleMenu.readInt(scanner, "New Unit Price: ");
-        if (LibraryService.updateItemPrice(itemId, price)) {
+        try {
+            LibraryService.updateItemPrice(itemId, price);
             ConsoleColor.printSuccess("Price updated.");
-        } else {
-            ConsoleColor.printError("Item not found or invalid price.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doDelete(Scanner scanner) {
-        if (LibraryService.deleteItem(ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID))) {
+        try {
+            LibraryService.deleteItem(ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID));
             ConsoleColor.printSuccess("Item deleted.");
-        } else {
-            ConsoleColor.printError("Item not found.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doManageQuantities(Scanner scanner) {
         String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
         int delta = ConsoleMenu.readInt(scanner, "Add how many copies: ");
-        LibraryService.updateItemQuantityFromCallCenter(itemId, delta);
+        try {
+            LibraryService.updateItemQuantityFromCallCenter(itemId, delta);
+            ConsoleColor.printSuccess("Quantities updated for " + itemId + ".");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
+        }
     }
 
     private static void doReport() {
         try {
             String path = ReportService.exportReport(REPORT_PATH);
             ConsoleColor.printSuccess("Report generated at " + path);
-        } catch (IllegalStateException ex) {
+        } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
         }
     }

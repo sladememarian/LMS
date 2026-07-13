@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import ir.ac.kntu.exception.ConflictException;
+import ir.ac.kntu.exception.NotFoundException;
+import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.util.ReservationRepository;
@@ -38,21 +41,8 @@ public class ReservationService {
         ReservationRepository.insertReservation(reservation);
     }
 
-    public static String reserve(String memberId, String itemId, int currentDay) {
-        LibraryItem item = LibraryService.getItemById(itemId);
-        if (item == null) {
-            return "Item not found.";
-        }
-        if (!item.canReserve()) {
-            return "This item type cannot be reserved.";
-        }
-        if (hasActiveReservation(memberId, itemId)) {
-            return "You already have a reservation for this item.";
-        }
-        int activeCount = getActiveReservationCount(memberId);
-        if (activeCount >= getReservationLimit(memberId)) {
-            return "Reservation limit reached for your role.";
-        }
+    public static Reservation reserve(String memberId, String itemId, int currentDay) {
+        LibraryItem item = validateReservationRequest(memberId, itemId);
 
         ReservationQueue queue = QUEUES.computeIfAbsent(itemId,
                 ReservationQueue::new);
@@ -65,8 +55,7 @@ public class ReservationService {
             ALL_RESERVATIONS.add(reservation);
             queue.enqueue(reservation);
             syncReservation(reservation);
-            return "Reservation activated. Pick up by day "
-                    + reservation.getExpiresOnDay() + ".";
+            return reservation;
         }
 
         Reservation reservation = new Reservation(
@@ -75,20 +64,37 @@ public class ReservationService {
         ALL_RESERVATIONS.add(reservation);
         queue.enqueue(reservation);
         syncReservation(reservation);
-        return "Item unavailable. You are #" + queue.waitingCount()
-                + " in the queue.";
+        return reservation;
     }
 
-    public static boolean cancel(String reservationId) {
+    private static LibraryItem validateReservationRequest(String memberId, String itemId) {
+        LibraryItem item = LibraryService.getItemById(itemId);
+        if (item == null) {
+            throw new NotFoundException("Item not found: " + itemId);
+        }
+        if (!item.canReserve()) {
+            throw new ValidationException("This item type cannot be reserved.");
+        }
+        if (hasActiveReservation(memberId, itemId)) {
+            throw new ConflictException("You already have a reservation for this item.");
+        }
+        int activeCount = getActiveReservationCount(memberId);
+        if (activeCount >= getReservationLimit(memberId)) {
+            throw new ConflictException("Reservation limit reached for your role.");
+        }
+        return item;
+    }
+
+    public static void cancel(String reservationId) {
         for (Reservation reservation : ALL_RESERVATIONS) {
             if (reservation.getReservationId().equals(reservationId)
                     && !reservation.isTerminal()) {
                 reservation.setStatus(ReservationStatus.CANCELLED);
                 syncReservation(reservation);
-                return true;
+                return;
             }
         }
-        return false;
+        throw new NotFoundException("Reservation not found or already completed: " + reservationId);
     }
 
     public static boolean processReturn(String itemId, int currentDay) {

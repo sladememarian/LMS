@@ -1,5 +1,6 @@
 package ir.ac.kntu.persona;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,7 +35,7 @@ class PersonaServiceTest {
         // Level up! You are now a STUDENT. +5 to book borrowing.
         String email = unique();
         PersonaService.registerPersona(email, "Passw0rd!");
-        assertTrue(PersonaService.promoteRole(email, UserRole.STUDENT));
+        assertDoesNotThrow(() -> PersonaService.promoteRole(email, UserRole.STUDENT));
         assertEquals(
             UserRole.STUDENT,
             PersonaService.getProfile(email).getRole()

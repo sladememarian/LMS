@@ -22,12 +22,17 @@ Two default staff accounts are seeded: `admin` (ADMIN) and `callcenter`
 `removeBorrowedItem`. The list is persisted as a pipe-separated `borrowed` field.
 
 `PersonaService` additions:
-| Method | Description |
-|--------|-------------|
-| `recordBorrow(email, itemId)` | Adds an owned item and persists. |
-| `recordReturn(email, itemId)` | Removes an owned item and persists. |
-| `promoteRole(email, role)` | Applies an approved role change and persists. |
-| `getProfileByMemberId(memberId)` | Looks up a user by member id (used to route CallCenter ticket replies and inject overdue fines to the right user). |
+| Method | Throws | Description |
+|--------|--------|-------------|
+| `updateProfile(email, first, last, phone)` | `UserNotFoundException` | Updates name and phone; persists. |
+| `updatePassword(email, newPassword)` | `UserNotFoundException` | Changes password; persists. |
+| `updateTheme(email, theme)` | `UserNotFoundException` | Sets LIGHT/DARK theme; persists. |
+| `updateWalletBalance(email, amount)` | `UserNotFoundException` | Adjusts balance and syncs current session. |
+| `recordBorrow(email, itemId)` | `UserNotFoundException` | Adds an owned item and persists. |
+| `recordReturn(email, itemId)` | `UserNotFoundException` | Removes an owned item and persists. |
+| `promoteRole(email, role)` | `UserNotFoundException` | Applies an approved role change and persists. |
+| `getWalletBalance(email)` | `UserNotFoundException` | Returns current balance. |
+| `getProfileByMemberId(memberId)` | — | Looks up a user by member id (returns `null` if missing). |
 
 Existing wallet functions reused by Finance: `getWalletBalance`,
 `updateWalletBalance`, `transferToAdmin`.

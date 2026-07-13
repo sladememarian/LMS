@@ -3,6 +3,7 @@ package ir.ac.kntu.finance;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.exception.NotFoundException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.LoanRepository;
@@ -57,7 +58,9 @@ public class LoanService {
                 return loan.getDueDay();
             }
         }
-        return -1;
+        throw new NotFoundException(
+            "Loan not found for member " + memberId + " item " + itemId
+        );
     }
 
     public static boolean isOverdue(String memberId, String itemId, int currentDay) {

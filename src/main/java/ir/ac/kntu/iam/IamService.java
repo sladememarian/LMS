@@ -184,7 +184,7 @@ public class IamService {
         return true;
     }
 
-    public static boolean changePassword(
+    public static void changePassword(
         String email,
         String currentPassword,
         String newPassword
@@ -199,11 +199,8 @@ public class IamService {
                 "New password does not meet the security policy"
             );
         }
-        boolean updated = PersonaService.updatePassword(email, newPassword);
-        if (updated) {
-            MailService.sendPasswordReset(email);
-        }
-        return updated;
+        PersonaService.updatePassword(email, newPassword);
+        MailService.sendPasswordReset(email);
     }
 
     public static List<UserCredentials> getRegisteredCredentials() {

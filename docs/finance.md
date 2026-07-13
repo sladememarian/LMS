@@ -24,19 +24,21 @@ Users never start in Finance; it is reached from Library/Persona when money is
 involved.
 
 ## Key service functions (`FinanceService`)
-Existing (reused): `proccessWalletCharge`, `proccessExtentionPayment`,
-`checkBorrowingPermission`, `loadTransactions`.
+All payment methods now throw specific exceptions on failure instead of
+returning a boolean.
 
-Added:
-| Method | Description |
-|--------|-------------|
-| `getOutstandingDebt(memberId)` | Net debt = Σ `DEBT` − Σ `DEBT_PAYMENT`. |
-| `getTransactionsForMember(memberId)` | Per-user transaction history. |
-| `getAllTransactions()` | Full ledger (admin/operator views). |
-| `getTaxRevenueCollected()` | Σ of all `TAX` transactions. |
-| `recordDebt(persona, amount, desc)` | Records an outstanding `DEBT` (e.g. overdue item). |
-| `payDebt(persona)` | Pays net debt + 10% tax from wallet; logs `DEBT_PAYMENT`; unblocks borrowing. |
-| `getTransactionsForMember` / `getAllTransactions` | Now return history **sorted by time** (oldest → newest) using each transaction's timestamp. |
+| Method | Throws | Description |
+|--------|--------|-------------|
+| `proccessWalletCharge(...)` | — | Simulated card payment; validates format, credits wallet. |
+| `proccessExtentionPayment(persona)` | `InsufficientFundsException` (wallet too low), `ValidationException` (no active borrows / already max extensions) | Charges wallet + tax for borrow-extension; delegates to LoanService. |
+| `checkBorrowingPermission(memberId)` | — | Returns `true` if net debt is zero. |
+| `getOutstandingDebt(memberId)` | — | Net debt = Σ DEBT − Σ DEBT_PAYMENT. |
+| `payDebt(persona)` | `InsufficientFundsException` (wallet too low), `ValidationException` (no outstanding debt) | Pays net debt + 10% tax from wallet; logs DEBT_PAYMENT; unblocks borrowing. |
+| `getTransactionsForMember(memberId)` | — | Per-user transaction history (time-sorted). |
+| `getAllTransactions()` | — | Full ledger (admin/operator views). |
+| `getTaxRevenueCollected()` | — | Σ of all TAX transactions. |
+| `recordDebt(persona, amount, desc)` | — | Records an outstanding DEBT (e.g. overdue item). |
+| `loadTransactions()` | — | Re-reads transactions from disk. |
 
 `checkBorrowingPermission` was upgraded to use **net** debt so that `payDebt`
 can restore borrowing (the existing "extension creates a debt" behaviour is

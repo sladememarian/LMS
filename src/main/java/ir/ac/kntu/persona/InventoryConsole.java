@@ -36,16 +36,16 @@ public class InventoryConsole {
 
     private static void printDueStatus(Persona user, String itemId) {
         int currentDay = SimulationClock.getCurrentDay();
-        int dueDay = LoanService.getDueDay(user.getMemberId(), itemId);
-        if (dueDay < 0) {
-            return;
-        }
-        if (LoanService.isOverdue(user.getMemberId(), itemId, currentDay)) {
-            int daysLate = currentDay - dueDay;
-            System.out.println(ConsoleColor.RED + "    Overdue by " + daysLate
-                    + " day(s), was due on day " + dueDay + ConsoleColor.RESET);
-        } else {
-            System.out.println(ConsoleColor.gray("    Due on day " + dueDay));
+        try {
+            int dueDay = LoanService.getDueDay(user.getMemberId(), itemId);
+            if (LoanService.isOverdue(user.getMemberId(), itemId, currentDay)) {
+                int daysLate = currentDay - dueDay;
+                System.out.println(ConsoleColor.RED + "    Overdue by " + daysLate
+                        + " day(s), was due on day " + dueDay + ConsoleColor.RESET);
+            } else {
+                System.out.println(ConsoleColor.gray("    Due on day " + dueDay));
+            }
+        } catch (ir.ac.kntu.exception.NotFoundException ignored) {
         }
     }
 

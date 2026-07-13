@@ -9,6 +9,7 @@ import java.util.List;
 
 public class PersonaService {
 
+    private static final String PERSONA_NOT_FOUND = "Persona not found for email: ";
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
 
     static {
@@ -131,30 +132,37 @@ public class PersonaService {
         String phoneNumber
     ) {
         Persona persona = getProfile(email);
-        if (persona != null) {
-            persona.setFirstName(firstName);
-            persona.setLastName(lastName);
-            persona.setPhoneNumber(phoneNumber);
-            PersonaRepository.insertPersona(persona);
+        if (persona == null) {
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
         }
+        persona.setFirstName(firstName);
+        persona.setLastName(lastName);
+        persona.setPhoneNumber(phoneNumber);
+        PersonaRepository.insertPersona(persona);
     }
 
-    public static boolean updatePassword(String email, String newPassword) {
+    public static void updatePassword(String email, String newPassword) {
         Persona persona = getProfile(email);
         if (persona == null) {
-            return false;
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
         }
         persona.setPassword(newPassword);
         PersonaRepository.insertPersona(persona);
-        return true;
     }
 
     public static void updateTheme(String email, String theme) {
         Persona persona = getProfile(email);
-        if (persona != null) {
-            persona.setTheme(theme);
-            PersonaRepository.insertPersona(persona);
+        if (persona == null) {
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
         }
+        persona.setTheme(theme);
+        PersonaRepository.insertPersona(persona);
     }
 
     public static int getWalletBalance(String email) {
@@ -163,17 +171,20 @@ public class PersonaService {
             return persona.getWalletBalance();
         }
         throw new UserNotFoundException(
-            "Persona not found for email: " + email
+            PERSONA_NOT_FOUND + email
         );
     }
 
     public static void updateWalletBalance(String email, int amount) {
         Persona persona = getProfile(email);
-        if (persona != null) {
-            persona.setWalletBalance(persona.getWalletBalance() + amount);
-            PersonaRepository.insertPersona(persona);
-            syncCurrentUserWallet(email, persona.getWalletBalance());
+        if (persona == null) {
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
         }
+        persona.setWalletBalance(persona.getWalletBalance() + amount);
+        PersonaRepository.insertPersona(persona);
+        syncCurrentUserWallet(email, persona.getWalletBalance());
     }
 
     private static void syncCurrentUserWallet(String email, int newBalance) {
@@ -204,14 +215,17 @@ public class PersonaService {
 
     public static void recordBorrow(String email, String itemId) {
         Persona persona = getProfile(email);
-        if (persona != null) {
-            persona.addBorrowedItem(itemId);
-            PersonaRepository.saveBorrowedItems(persona);
-            PersonaRepository.insertPersona(persona);
-            Persona current = Persona.getCurrentUser();
-            if (current != null && email.equalsIgnoreCase(current.getEmail())) {
-                current.addBorrowedItem(itemId);
-            }
+        if (persona == null) {
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
+        }
+        persona.addBorrowedItem(itemId);
+        PersonaRepository.saveBorrowedItems(persona);
+        PersonaRepository.insertPersona(persona);
+        Persona current = Persona.getCurrentUser();
+        if (current != null && email.equalsIgnoreCase(current.getEmail())) {
+            current.addBorrowedItem(itemId);
         }
     }
 
@@ -227,21 +241,20 @@ public class PersonaService {
         PERSONA_DATABASE.remove(persona);
     }
 
-    public static boolean recordReturn(String email, String itemId) {
+    public static void recordReturn(String email, String itemId) {
         Persona persona = getProfile(email);
         if (persona == null) {
-            return false;
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
         }
-        boolean removed = persona.removeBorrowedItem(itemId);
-        if (removed) {
-            PersonaRepository.saveBorrowedItems(persona);
-            PersonaRepository.insertPersona(persona);
-            Persona current = Persona.getCurrentUser();
-            if (current != null && email.equalsIgnoreCase(current.getEmail())) {
-                current.removeBorrowedItem(itemId);
-            }
+        persona.removeBorrowedItem(itemId);
+        PersonaRepository.saveBorrowedItems(persona);
+        PersonaRepository.insertPersona(persona);
+        Persona current = Persona.getCurrentUser();
+        if (current != null && email.equalsIgnoreCase(current.getEmail())) {
+            current.removeBorrowedItem(itemId);
         }
-        return removed;
     }
 
     public static Persona getProfileByMemberId(String memberId) {
@@ -272,15 +285,16 @@ public class PersonaService {
         return null;
     }
 
-    public static boolean promoteRole(String email, UserRole newRole) {
+    public static void promoteRole(String email, UserRole newRole) {
         PERSONA_DATABASE.clear();
         PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
         Persona persona = getProfile(email);
         if (persona == null) {
-            return false;
+            throw new UserNotFoundException(
+                PERSONA_NOT_FOUND + email
+            );
         }
         persona.updateRole(newRole);
         PersonaRepository.insertPersona(persona);
-        return true;
     }
 }

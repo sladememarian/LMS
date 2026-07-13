@@ -3,6 +3,7 @@ package ir.ac.kntu.library;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.support.SupportService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
@@ -62,27 +63,34 @@ public class LibraryOperatorConsole {
 
     private static void doAdd(Scanner scanner) {
         Book book = ItemEntry.readNewBook(scanner);
-        if (SupportService.addLibraryItemViaSupport(book)) {
+        try {
+            SupportService.addLibraryItemViaSupport(book);
             ConsoleColor.printSuccess("Item added: " + book.getItemId());
-        } else {
-            ConsoleColor.printError("Add rejected (duplicate ID or no permission).");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doEditPrice(Scanner scanner) {
         String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
         int price = ConsoleMenu.readInt(scanner, "New Unit Price: ");
-        if (LibraryService.updateItemPrice(itemId, price)) {
+        try {
+            LibraryService.updateItemPrice(itemId, price);
             ConsoleColor.printSuccess("Price updated.");
-        } else {
-            ConsoleColor.printError("Item not found or invalid price.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doUpdateQuantity(Scanner scanner) {
         String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
         int delta = ConsoleMenu.readInt(scanner, "Add how many copies: ");
-        SupportService.handleCallCenterStockUpdate(itemId, delta);
+        try {
+            SupportService.handleCallCenterStockUpdate(itemId, delta);
+            ConsoleColor.printSuccess("Quantities updated for " + itemId + ".");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
+        }
     }
 
     private static void printSuppliers() {

@@ -3,6 +3,7 @@ package ir.ac.kntu.finance;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.generic.Menu;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
@@ -116,7 +117,7 @@ public class FinanceAdminConsole {
         try {
             String path = ReportService.exportReport(REPORT_PATH);
             ConsoleColor.printSuccess("Report generated at " + path);
-        } catch (IllegalStateException ex) {
+        } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
         }
     }

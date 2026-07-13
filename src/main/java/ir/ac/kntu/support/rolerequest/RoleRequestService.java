@@ -3,6 +3,8 @@ package ir.ac.kntu.support.rolerequest;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.exception.ConflictException;
+import ir.ac.kntu.exception.NotFoundException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserRole;
@@ -45,33 +47,37 @@ public class RoleRequestService {
         return new ArrayList<>(REQUESTS);
     }
 
-    public static boolean approve(String requestId) {
+    public static void approve(String requestId) {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         RoleRequest request = find(requestId);
-        if (request == null || !RoleRequest.STATUS_PENDING.equals(request.getStatus())) {
-            return false;
+        if (request == null) {
+            throw new NotFoundException("Role request not found: " + requestId);
+        }
+        if (!RoleRequest.STATUS_PENDING.equals(request.getStatus())) {
+            throw new ConflictException("Role request " + requestId + " has already been processed.");
         }
         request.setStatus(RoleRequest.STATUS_APPROVED);
         RoleRequestRepository.updateRoleRequestStatus(requestId, RoleRequest.STATUS_APPROVED);
         PersonaService.promoteRole(request.getRequesterEmail(), UserRole.valueOf(request.getRequestedRole()));
         NotificationService.notifyAddress(request.getRequesterEmail(), SUBJECT,
                 "Approved: you are now " + request.getRequestedRole());
-        return true;
     }
 
-    public static boolean reject(String requestId) {
+    public static void reject(String requestId) {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         RoleRequest request = find(requestId);
-        if (request == null || !RoleRequest.STATUS_PENDING.equals(request.getStatus())) {
-            return false;
+        if (request == null) {
+            throw new NotFoundException("Role request not found: " + requestId);
+        }
+        if (!RoleRequest.STATUS_PENDING.equals(request.getStatus())) {
+            throw new ConflictException("Role request " + requestId + " has already been processed.");
         }
         request.setStatus(RoleRequest.STATUS_REJECTED);
         RoleRequestRepository.updateRoleRequestStatus(requestId, RoleRequest.STATUS_REJECTED);
         NotificationService.notifyAddress(request.getRequesterEmail(), SUBJECT,
                 "Rejected: your " + request.getRequestedRole() + " request was declined");
-        return true;
     }
 
     private static RoleRequest find(String requestId) {

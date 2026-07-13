@@ -13,11 +13,12 @@ public class SsoService {
 
     private static final String THEME_LIGHT = "LIGHT";
     private static final String THEME_DARK = "DARK";
+    private static final String NO_PROFILE = "No profile found for ";
 
     public static String viewProfile(String email) {
         Persona persona = PersonaService.getProfile(email);
         if (persona == null) {
-            throw new UserNotFoundException("No profile found for " + email);
+            throw new UserNotFoundException(NO_PROFILE + email);
         }
         StringBuilder summary = new StringBuilder();
         summary.append("ID: ").append(persona.getMemberId());
@@ -42,7 +43,7 @@ public class SsoService {
     ) {
         Persona persona = PersonaService.getProfile(email);
         if (persona == null) {
-            throw new UserNotFoundException("No profile found for " + email);
+            throw new UserNotFoundException(NO_PROFILE + email);
         }
         if (!Validator.isValidPhoneNumber(phoneNumber)) {
             throw new InvalidPhoneFormatException(
@@ -52,7 +53,7 @@ public class SsoService {
         PersonaService.updateProfile(email, firstName, lastName, phoneNumber);
     }
 
-    public static boolean changePassword(
+    public static void changePassword(
         String email,
         String currentPassword,
         String newPassword,
@@ -63,7 +64,7 @@ public class SsoService {
                 "New password and confirmation do not match"
             );
         }
-        return IamService.changePassword(email, currentPassword, newPassword);
+        IamService.changePassword(email, currentPassword, newPassword);
     }
 
     public static void changeTheme(String email, String theme) {
@@ -76,7 +77,10 @@ public class SsoService {
 
     public static String getTheme(String email) {
         Persona persona = PersonaService.getProfile(email);
-        return persona == null ? THEME_LIGHT : persona.getTheme();
+        if (persona == null) {
+            throw new UserNotFoundException(NO_PROFILE + email);
+        }
+        return persona.getTheme();
     }
 
     public static void logout() {

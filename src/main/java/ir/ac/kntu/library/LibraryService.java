@@ -3,6 +3,10 @@ package ir.ac.kntu.library;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.exception.ConflictException;
+import ir.ac.kntu.exception.InsufficientCopiesException;
+import ir.ac.kntu.exception.NotFoundException;
+import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.generic.SearchEngine;
 import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.util.LibraryItemRepository;
@@ -11,7 +15,7 @@ import ir.ac.kntu.util.SupplierRepository;
 public class LibraryService {
     private static final List<LibraryItem> INVENTORY = new ArrayList<>();
     private static final List<SupplierCompany> SUPPLIERS = new ArrayList<>();
-    private static final String ITEM_NOT_FOUND = "[Library Module]: Item ID not found in inventory registry.";
+    private static final String ITEM_NOT_FOUND_MSG = "Item ID not found in inventory registry: ";
     private static final String SUP_GLOBAL = "SUP-101";
     private static final String SUP_DIGITAL = "SUP-102";
     private static final String SUP_ACADEMIC = "SUP-103";
@@ -158,23 +162,22 @@ public class LibraryService {
         item.setUnitPrice(price);
     }
 
-    public static boolean executeBorrow(String itemId) {
+    public static void executeBorrow(String itemId) {
         INVENTORY.clear();
         INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() > 0) {
                     item.setAvailableCopies(item.getAvailableCopies() - 1);
-                    System.out.println("[Library Module]: Inventory decremented for Item: " + itemId);
                     LibraryItemRepository.insertLibraryItem(item);
-                    return true;
+                    return;
                 }
-                System.out.println("[Library Module]: Borrow failed. Zero copies available for Item: " + itemId);
-                return false;
+                throw new InsufficientCopiesException(
+                    "Borrow failed. Zero copies available for Item: " + itemId
+                );
             }
         }
-        System.out.println(ITEM_NOT_FOUND);
-        return false;
+        throw new NotFoundException(ITEM_NOT_FOUND_MSG + itemId);
     }
 
     public static void executeReturn(String itemId) {
@@ -184,15 +187,16 @@ public class LibraryService {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() < item.getTotalCopies()) {
                     item.setAvailableCopies(item.getAvailableCopies() + 1);
-                    System.out.println("[Library Module]: Inventory incremented for Item: " + itemId);
                     LibraryItemRepository.insertLibraryItem(item);
                 } else {
-                    System.out.println("[Library Module]: Return failed. Copies already at maximum for: " + itemId);
+                    throw new ConflictException(
+                        "Return failed. Copies already at maximum for: " + itemId
+                    );
                 }
                 return;
             }
         }
-        System.out.println(ITEM_NOT_FOUND);
+        throw new NotFoundException(ITEM_NOT_FOUND_MSG + itemId);
     }
 
     public static List<LibraryItem> searchItems(String keyword) {
@@ -224,45 +228,47 @@ public class LibraryService {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 item.setTotalCopies(item.getTotalCopies() + newTotalCopies);
                 item.setAvailableCopies(item.getAvailableCopies() + newTotalCopies);
-                System.out.println("[Library Module]: Updated total copies for Item: " + itemId
-                        + " to " + item.getTotalCopies());
                 LibraryItemRepository.insertLibraryItem(item);
                 return;
             }
         }
-        System.out.println(ITEM_NOT_FOUND);
+        throw new NotFoundException(ITEM_NOT_FOUND_MSG + itemId);
     }
 
-    public static boolean addItem(LibraryItem item) {
+    public static void addItem(LibraryItem item) {
         INVENTORY.clear();
         INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
-        if (item == null || getItemById(item.getItemId()) != null) {
-            return false;
+        if (item == null) {
+            throw new ValidationException("Cannot add null item.");
+        }
+        if (getItemById(item.getItemId()) != null) {
+            throw new ConflictException(
+                "Item with ID " + item.getItemId() + " already exists."
+            );
         }
         INVENTORY.add(item);
         LibraryItemRepository.insertLibraryItem(item);
-        return true;
     }
 
-    public static boolean deleteItem(String itemId) {
+    public static void deleteItem(String itemId) {
         LibraryItem target = getItemById(itemId);
         if (target == null) {
-            System.out.println(ITEM_NOT_FOUND);
-            return false;
+            throw new NotFoundException(ITEM_NOT_FOUND_MSG + itemId);
         }
         INVENTORY.remove(target);
         LibraryItemRepository.deleteLibraryItem(itemId);
-        return true;
     }
 
-    public static boolean updateItemPrice(String itemId, int newPrice) {
+    public static void updateItemPrice(String itemId, int newPrice) {
         LibraryItem target = getItemById(itemId);
-        if (target == null || newPrice < 0) {
-            return false;
+        if (target == null) {
+            throw new NotFoundException(ITEM_NOT_FOUND_MSG + itemId);
+        }
+        if (newPrice < 0) {
+            throw new ValidationException("Price cannot be negative.");
         }
         target.setUnitPrice(newPrice);
         LibraryItemRepository.insertLibraryItem(target);
-        return true;
     }
 
     public static List<LibraryItem> getAllItems() {

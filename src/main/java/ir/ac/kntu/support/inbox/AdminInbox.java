@@ -279,12 +279,15 @@ public class AdminInbox {
 
     private static void review(Scanner scanner, boolean approve) {
         String requestId = ConsoleMenu.readLine(scanner, PROMPT_REQUEST);
-        boolean done = approve
-                ? RoleRequestService.approve(requestId) : RoleRequestService.reject(requestId);
-        if (done) {
+        try {
+            if (approve) {
+                RoleRequestService.approve(requestId);
+            } else {
+                RoleRequestService.reject(requestId);
+            }
             ConsoleColor.printSuccess("Request " + requestId + (approve ? " approved." : " rejected."));
-        } else {
-            ConsoleColor.printError("Request not found or already processed.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 

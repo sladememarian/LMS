@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import ir.ac.kntu.exception.AuthorizationException;
+import ir.ac.kntu.exception.NotFoundException;
+import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.persona.PersonaService;
@@ -33,16 +36,10 @@ public class SupportService {
     }
 
     public static void createTicket(String userId, SupportSection section, String title, String description) {
+        validateTicketFields(title, description);
         TICKETS.clear();
         TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
-        String priority = "LOW";
-        if (SupportSection.TECHNICAL == section) {
-            priority = "HIGH";
-        }
-        String upperTitle = title.toUpperCase();
-        if (upperTitle.contains("URGENT") || upperTitle.contains("CRASH") || upperTitle.contains("BLOCK")) {
-            priority = "CRITICAL";
-        }
+        String priority = resolvePriority(section, title);
 
         String id = "TCK-" + ((int) (Math.random() * 900_000) + 100_000);
         SupportTicket ticket = new SupportTicket(id, userId, title, description, section);
@@ -53,7 +50,28 @@ public class SupportService {
         SupportTicketRepository.insertSupportTicket(ticket);
     }
 
-    public static boolean updateTicketStatus(String ticketId, String status) {
+    private static void validateTicketFields(String title, String description) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new ValidationException("Ticket title cannot be empty.");
+        }
+        if (description == null || description.trim().isEmpty()) {
+            throw new ValidationException("Ticket description cannot be empty.");
+        }
+    }
+
+    private static String resolvePriority(SupportSection section, String title) {
+        if (SupportSection.TECHNICAL == section) {
+            return "HIGH";
+        }
+        String upperTitle = title.toUpperCase();
+        if (upperTitle.contains("URGENT") || upperTitle.contains("CRASH")
+                || upperTitle.contains("BLOCK")) {
+            return "CRITICAL";
+        }
+        return "LOW";
+    }
+
+    public static void updateTicketStatus(String ticketId, String status) {
         TICKETS.clear();
         TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         for (SupportTicket ticket : TICKETS) {
@@ -62,13 +80,13 @@ public class SupportService {
                 SupportTicketRepository.updateSupportTicketStatus(ticketId, status);
                 TICKETS.clear();
                 TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
-                return true;
+                return;
             }
         }
-        return false;
+        throw new NotFoundException("Ticket not found: " + ticketId);
     }
 
-    public static boolean respondToTicket(String ticketId, String message) {
+    public static void respondToTicket(String ticketId, String message) {
         TICKETS.clear();
         TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         for (SupportTicket ticket : TICKETS) {
@@ -77,10 +95,10 @@ public class SupportService {
                 ticket.setStatus("IN_PROGRESS");
                 SupportTicketRepository.updateSupportTicketResponse(ticketId, message, "IN_PROGRESS");
                 notifyCreator(ticket, message);
-                return true;
+                return;
             }
         }
-        return false;
+        throw new NotFoundException("Ticket not found: " + ticketId);
     }
 
     private static void notifyCreator(SupportTicket ticket, String message) {
@@ -123,26 +141,19 @@ public class SupportService {
 
     public static void handleCallCenterStockUpdate(String itemId, int quantity) {
         Persona current = Persona.getCurrentUser();
-        if (current != null && current.getRole() == UserRole.CALLCENTER) {
-            LibraryService.updateItemQuantityFromCallCenter(itemId, quantity);
-            System.out.println("[Support Bridge]: Verified agent request routed to inventory module.");
-        } else {
-            System.out.println("[Support Bridge Error]: Action denied. Unauthorized security clearance scope.");
+        if (current == null || current.getRole() != UserRole.CALLCENTER) {
+            throw new AuthorizationException("Action denied. Unauthorized security clearance scope.");
         }
+        LibraryService.updateItemQuantityFromCallCenter(itemId, quantity);
     }
 
-    public static boolean addLibraryItemViaSupport(LibraryItem item) {
+    public static void addLibraryItemViaSupport(LibraryItem item) {
         Persona current = Persona.getCurrentUser();
         boolean allowed = current != null
                 && (current.getRole() == UserRole.CALLCENTER || current.getRole() == UserRole.ADMIN);
         if (!allowed) {
-            System.out.println("[Support Bridge Error]: Action denied. Unauthorized security clearance scope.");
-            return false;
+            throw new AuthorizationException("Action denied. Unauthorized security clearance scope.");
         }
-        boolean added = LibraryService.addItem(item);
-        if (added) {
-            System.out.println("[Support Bridge]: New catalog item routed CallCenter -> Support -> Library.");
-        }
-        return added;
+        LibraryService.addItem(item);
     }
 }

@@ -1,5 +1,6 @@
 package ir.ac.kntu.sso;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -78,7 +79,7 @@ class SsoServiceTest {
                 "Mismatch1!"
             )
         );
-        assertTrue(
+        assertDoesNotThrow(() ->
             SsoService.changePassword(
                 email,
                 "Passw0rd!",

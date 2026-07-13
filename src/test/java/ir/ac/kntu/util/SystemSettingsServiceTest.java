@@ -79,11 +79,18 @@ class SystemSettingsServiceTest {
 
         SystemSettingsService.updateMaxReservations(owner, 1);
 
-        LibraryService.getAllItems().stream()
-                .filter(item -> item.canReserve())
-                .limit(2)
-                .forEach(item -> ReservationService.reserve(teacher.getMemberId(), item.getItemId(),
-                        SimulationClock.getCurrentDay()));
+        java.util.List<ir.ac.kntu.library.LibraryItem> reservable =
+                LibraryService.getAllItems().stream()
+                        .filter(item -> item.canReserve())
+                        .limit(2)
+                        .collect(java.util.stream.Collectors.toList());
+        for (ir.ac.kntu.library.LibraryItem item : reservable) {
+            try {
+                ReservationService.reserve(teacher.getMemberId(), item.getItemId(),
+                        SimulationClock.getCurrentDay());
+            } catch (ir.ac.kntu.exception.BaseException ignored) {
+            }
+        }
 
         assertTrue(ReservationService.getActiveReservationCount(teacher.getMemberId()) <= 1);
     }

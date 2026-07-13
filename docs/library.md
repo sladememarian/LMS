@@ -21,17 +21,23 @@ Guests/Students/Teachers never see supplier companies, borrow statistics, or the
 encrypted database — `LibraryPrinter` hides those fields for member views.
 
 ## Key service functions (`LibraryService`)
-Existing (reused, **not** duplicated): `searchItems`, `executeBorrow`,
-`executeReturn`, `updateItemQuantityFromCallCenter`, `getAllItems`,
-`getAllSuppliers`, `getSupplierName`.
+All mutating methods now throw specific exceptions on failure instead of
+returning a boolean. Callers catch `BaseException` to handle every case
+uniformly.
 
-Added for the role dashboards:
-| Method | Description |
-|--------|-------------|
-| `getItemById(id)` | Looks up a single item (used everywhere details are needed). |
-| `addItem(LibraryItem)` | Adds a new catalog item if the id is unique; saves. |
-| `deleteItem(id)` | Removes an item; saves; returns success. |
-| `updateItemPrice(id, price)` | Edits unit price; saves. |
+| Method | Throws | Description |
+|--------|--------|-------------|
+| `searchItems(keyword)` | — | Keyword search; returns empty list for null/blank input. |
+| `executeBorrow(itemId)` | `InsufficientCopiesException` (zero copies left), `NotFoundException` (bad id) | Decrements available copies and saves. |
+| `executeReturn(itemId)` | `ConflictException` (already at max), `NotFoundException` (bad id) | Increments available copies and saves. |
+| `updateItemQuantityFromCallCenter(itemId, qty)` | `NotFoundException` (bad id) | CallCenter adjusts stock through Support → Library. |
+| `getAllItems()` | — | Full inventory snapshot. |
+| `getAllSuppliers()` | — | Supplier list. |
+| `getSupplierName(id)` | — | Supplier lookup by id. |
+| `getItemById(id)` | — | Single-item lookup (returns `null` if missing). |
+| `addItem(item)` | `ValidationException` (null item), `ConflictException` (duplicate id) | Adds a new catalog item and persists. |
+| `deleteItem(id)` | `NotFoundException` (bad id) | Removes item and persists. |
+| `updateItemPrice(id, price)` | `NotFoundException` (bad id), `ValidationException` (negative price) | Updates unit price and persists. |
 
 Supporting UI classes: `LibraryPrinter` (role-aware rendering, including
 **paginated** result lists), `ItemEntry` (shared "add book" prompt used by both

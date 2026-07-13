@@ -33,17 +33,22 @@ support
 | Admin | `AdminInbox` | role requests (approve/reject), user tickets, CallCenter activity, notifications, encrypted DB, debug, **Advance Simulated Day** |
 
 ## Key functions
-Existing (reused): `createTicket`, `getAllTickets`, `validateCallCenterLogin`,
-`handleCallCenterStockUpdate`, `submitLibraryItemPlaceholder`.
+All mutating methods now throw specific exceptions on failure instead of
+returning a boolean.
 
-Added:
-| Method | Description |
-|--------|-------------|
-| `SupportService.updateTicketStatus(id, status)` | Used by close (CLOSED) and other status moves. |
-| `SupportService.respondToTicket(id, message)` | CallCenter reply: stores the message on the ticket, marks it `IN_PROGRESS`, and notifies the ticket creator (member-id → email) via the notification centre. |
-| `SupportService.addLibraryItemViaSupport(item)` | CallCenter/Admin add a catalog item through Support → Library. |
-| `RoleRequestService.submit/getPending/approve/reject` | Guest role-upgrade workflow, now **persisted** (see below). |
-| `NotificationService.notify/notifyAddress/showNotifications` | Notification centre backed by Mail. |
+| Method | Throws | Description |
+|--------|--------|-------------|
+| `createTicket(userId, section, title, desc)` | `ValidationException` (empty title or description) | Validates input, auto-assigns priority, persists. |
+| `getAllTickets()` | — | Reloads and returns all tickets. |
+| `validateCallCenterLogin(email, password)` | — | Returns `true` if credentials are valid AND role is CALLCENTER. |
+| `updateTicketStatus(id, status)` | `NotFoundException` (bad id) | Changes ticket status and persists. |
+| `respondToTicket(id, message)` | `NotFoundException` (bad id) | Stores response, marks IN_PROGRESS, notifies creator. |
+| `handleCallCenterStockUpdate(itemId, qty)` | `AuthorizationException` (not CALLCENTER) | CallCenter adjusts stock through Support → Library. |
+| `addLibraryItemViaSupport(item)` | `AuthorizationException` (not CALLCENTER/ADMIN) | Adds a catalog item through Support → Library. |
+| `RoleRequestService.submit/getPending` | — | Guest role-upgrade workflow, persisted. |
+| `RoleRequestService.approve(id)` | `NotFoundException` (bad id), `ConflictException` (already processed) | Approves role request, promotes persona, persists. |
+| `RoleRequestService.reject(id)` | `NotFoundException` (bad id), `ConflictException` (already processed) | Rejects role request and persists. |
+| `NotificationService.notify/notifyAddress/showNotifications` | — | Notification centre backed by Mail. |
 
 ## Staff console wiring
 `Main` option **5 (Support)** now genuinely uses the Support microservice:

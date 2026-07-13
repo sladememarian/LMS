@@ -35,7 +35,9 @@ A table with one row per supplier:
 | **In Circulation** | Value of the copies currently checked out |
 
 ## Who can generate it?
-Only **Admin** and **Call Center** roles. If a regular user tries, the app shows an error.
+Only **Admin** and **Call Center** roles. If a regular user tries, the app
+throws an `AuthorizationException` (caught by the console and printed as an
+error message — the menu keeps running).
 
 ## How is it styled?
 Dark theme (dark blue background), blue cards, colored bars and charts. Inline CSS — nothing to download. Just double-click the file to open it.

@@ -41,7 +41,7 @@ class FinanceDebtTest {
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 100_000);
         FinanceService.recordDebt(user, 20_000, "overdue");
-        assertTrue(FinanceService.payDebt(user));
+        FinanceService.payDebt(user);
         assertEquals(0, FinanceService.getOutstandingDebt(user.getMemberId()));
         assertTrue(FinanceService.checkBorrowingPermission(user.getMemberId()));
     }
@@ -51,7 +51,8 @@ class FinanceDebtTest {
         // Can't pay what you don't owe (philosophical)
         Persona user = freshUser();
         FinanceService.proccessWalletCharge(user, 100_000);
-        assertFalse(FinanceService.payDebt(user));
+        assertThrows(ir.ac.kntu.exception.ValidationException.class,
+                () -> FinanceService.payDebt(user));
     }
 
     @Test

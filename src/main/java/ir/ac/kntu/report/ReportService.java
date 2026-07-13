@@ -9,6 +9,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.exception.AuthorizationException;
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
@@ -78,13 +80,13 @@ public class ReportService {
 
     public static String exportReport(String path) {
         if (!isAuthorized()) {
-            throw new IllegalStateException("Only ADMIN or CALLCENTER roles may generate financial reports");
+            throw new AuthorizationException("Only ADMIN or CALLCENTER roles may generate financial reports");
         }
         String html = buildHtml(computeSupplierFinancials());
         try (FileOutputStream fos = new FileOutputStream(path)) {
             fos.write(html.getBytes(StandardCharsets.UTF_8));
         } catch (IOException ex) {
-            throw new IllegalStateException("Failed to write report: " + ex.getMessage(), ex);
+            throw new BaseException("Failed to write report: " + ex.getMessage(), ex);
         }
         return new File(path).getAbsolutePath();
     }

@@ -3,6 +3,7 @@ package ir.ac.kntu.library;
 import java.util.List;
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
@@ -128,8 +129,9 @@ public class LibraryMemberConsole {
             ConsoleColor.printError("You already have this item.");
             return;
         }
-        LibraryItem item = LibraryService.getItemById(itemId);
-        if (LibraryService.executeBorrow(itemId)) {
+        try {
+            LibraryItem item = LibraryService.getItemById(itemId);
+            LibraryService.executeBorrow(itemId);
             PersonaService.recordBorrow(user.getEmail(), itemId);
             int loanPeriodDays = Math.min(item.borrowPeriod(),
                     ir.ac.kntu.util.SystemSettingsService.getBorrowDays());
@@ -138,8 +140,8 @@ public class LibraryMemberConsole {
             ReservationService.completeReservation(
                     user.getMemberId(), itemId);
             ConsoleColor.printSuccess("Borrowed " + itemId + ".");
-        } else {
-            ConsoleColor.printError("Borrow failed (item missing or no copies).");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
@@ -166,12 +168,16 @@ public class LibraryMemberConsole {
             ConsoleColor.printError(NOT_OWNED);
             return;
         }
-        LibraryService.executeReturn(itemId);
-        PersonaService.recordReturn(user.getEmail(), itemId);
-        LoanService.clearLoan(user.getMemberId(), itemId);
-        ReservationService.processReturn(itemId,
-                SimulationClock.getCurrentDay());
-        ConsoleColor.printSuccess("Returned " + itemId + ".");
+        try {
+            LibraryService.executeReturn(itemId);
+            PersonaService.recordReturn(user.getEmail(), itemId);
+            LoanService.clearLoan(user.getMemberId(), itemId);
+            ReservationService.processReturn(itemId,
+                    SimulationClock.getCurrentDay());
+            ConsoleColor.printSuccess("Returned " + itemId + ".");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
+        }
     }
 
     private static void doExtend(Scanner scanner, Persona user) {
@@ -180,27 +186,33 @@ public class LibraryMemberConsole {
             ConsoleColor.printError(NOT_OWNED);
             return;
         }
-        if (FinanceService.proccessExtentionPayment(user, EXTENSION_FEE)) {
+        try {
+            FinanceService.proccessExtentionPayment(user, EXTENSION_FEE);
             if (LoanService.extendLoan(user.getMemberId(), itemId, 3)) {
                 ConsoleColor.printSuccess("Return date extended +3 days (fee " + EXTENSION_FEE + " charged).");
             } else {
                 ConsoleColor.printError("Loan record not found for this item.");
             }
-        } else {
-            ConsoleColor.printError("Extension failed. Charge your wallet under Finance first.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doReserve(Scanner scanner, Persona user) {
         String itemId = ConsoleMenu.readLine(scanner, PROMPT_ITEM_ID);
-        String result = ReservationService.reserve(
-                user.getMemberId(), itemId,
-                SimulationClock.getCurrentDay());
-        if (result.startsWith("Reservation activated")
-                || result.startsWith("Item unavailable")) {
-            ConsoleColor.printSuccess(result);
-        } else {
-            ConsoleColor.printError(result);
+        try {
+            Reservation reservation = ReservationService.reserve(
+                    user.getMemberId(), itemId,
+                    SimulationClock.getCurrentDay());
+            if (reservation.isPending()) {
+                ConsoleColor.printSuccess("Item unavailable. You are reserved. Pick up by day "
+                        + reservation.getExpiresOnDay() + ".");
+            } else {
+                ConsoleColor.printSuccess("Reservation activated. Pick up by day "
+                        + reservation.getExpiresOnDay() + ".");
+            }
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
@@ -219,10 +231,11 @@ public class LibraryMemberConsole {
         }
         String resId = ConsoleMenu.readLine(scanner,
                 "Reservation ID to cancel: ");
-        if (ReservationService.cancel(resId)) {
+        try {
+            ReservationService.cancel(resId);
             ConsoleColor.printSuccess("Reservation cancelled.");
-        } else {
-            ConsoleColor.printError("Cancel failed. Check the ID.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 

@@ -2,6 +2,7 @@ package ir.ac.kntu.support.inbox;
 
 import java.util.Scanner;
 
+import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.library.Book;
 import ir.ac.kntu.library.ItemEntry;
 import ir.ac.kntu.persona.Persona;
@@ -70,28 +71,31 @@ public class CallCenterInbox {
             ConsoleColor.printError("Response message cannot be empty.");
             return;
         }
-        if (SupportService.respondToTicket(ticketId, message)) {
+        try {
+            SupportService.respondToTicket(ticketId, message);
             ConsoleColor.printSuccess("Response sent to the member; ticket marked IN_PROGRESS.");
-        } else {
-            ConsoleColor.printError("Ticket not found.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void changeStatus(Scanner scanner, String status, String okMessage) {
         String ticketId = ConsoleMenu.readLine(scanner, PROMPT_TICKET);
-        if (SupportService.updateTicketStatus(ticketId, status)) {
+        try {
+            SupportService.updateTicketStatus(ticketId, status);
             ConsoleColor.printSuccess(okMessage);
-        } else {
-            ConsoleColor.printError("Ticket not found.");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 
     private static void doAddItem(Scanner scanner) {
         Book book = ItemEntry.readNewBook(scanner);
-        if (SupportService.addLibraryItemViaSupport(book)) {
+        try {
+            SupportService.addLibraryItemViaSupport(book);
             ConsoleColor.printSuccess("Item added via Support: " + book.getItemId());
-        } else {
-            ConsoleColor.printError("Add rejected (duplicate ID or no permission).");
+        } catch (BaseException ex) {
+            ConsoleColor.printError(ex.getMessage());
         }
     }
 }

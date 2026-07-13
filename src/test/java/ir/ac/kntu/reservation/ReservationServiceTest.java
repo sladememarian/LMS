@@ -31,8 +31,8 @@ class ReservationServiceTest {
         String itemId = "ITEM-001"; // Clean Code, 5 copies
         int day = SimulationClock.getCurrentDay();
 
-        String result = ReservationService.reserve(memberId, itemId, day);
-        assertTrue(result.contains("activated"), "Result was: " + result);
+        Reservation reservation = ReservationService.reserve(memberId, itemId, day);
+        assertEquals(ReservationStatus.ACTIVE, reservation.getStatus());
         assertEquals(1, ReservationService.getQueue(itemId).size());
         assertEquals(ReservationStatus.ACTIVE, ReservationService.getQueue(itemId).peekFirst().getStatus());
     }
@@ -50,9 +50,9 @@ class ReservationServiceTest {
 
         int day = SimulationClock.getCurrentDay();
         ReservationService.reserve(memberId1, itemId, day);
-        String result = ReservationService.reserve(memberId2, itemId, day);
+        Reservation reservation = ReservationService.reserve(memberId2, itemId, day);
 
-        assertTrue(result.contains("queue"));
+        assertEquals(ReservationStatus.WAITING, reservation.getStatus());
         assertEquals(2, ReservationService.getQueue(itemId).size());
         assertEquals(ReservationStatus.WAITING, ReservationService.getQueue(itemId).getAll().get(1).getStatus());
     }
@@ -78,9 +78,12 @@ class ReservationServiceTest {
         String memberId2 = ir.ac.kntu.persona.PersonaService.getProfile("stu2@test.com").getMemberId();
         String itemId = "ITEM-001";
 
-        // Take all copies
+        // Take all available copies
         for (int i = 0; i < 5; i++) {
-            LibraryService.executeBorrow(itemId);
+            try {
+                LibraryService.executeBorrow(itemId);
+            } catch (ir.ac.kntu.exception.BaseException ignored) {
+            }
         }
 
         int day = SimulationClock.getCurrentDay();
