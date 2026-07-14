@@ -1,6 +1,5 @@
 package ir.ac.kntu.library;
 
-import java.util.List;
 import java.util.Scanner;
 
 import ir.ac.kntu.exception.BaseException;
@@ -48,7 +47,7 @@ public class LibraryOperatorConsole {
                 doUpdateQuantity(scanner);
                 return true;
             case "5":
-                printSuppliers();
+                LibraryPrinter.printSuppliers(LibraryService.getAllSuppliers());
                 return true;
             case "6":
                 LibraryPrinter.printListPaginated(LibraryService.getAllItems(), true, scanner);
@@ -90,14 +89,6 @@ public class LibraryOperatorConsole {
             ConsoleColor.printSuccess("Quantities updated for " + itemId + ".");
         } catch (BaseException ex) {
             ConsoleColor.printError(ex.getMessage());
-        }
-    }
-
-    private static void printSuppliers() {
-        List<SupplierCompany> suppliers = LibraryService.getAllSuppliers();
-        for (SupplierCompany supplier : suppliers) {
-            System.out.println(ConsoleColor.CYAN + "  " + supplier.getCompanyId() + ConsoleColor.RESET
-                    + " - " + supplier.getCompanyName());
         }
     }
 }

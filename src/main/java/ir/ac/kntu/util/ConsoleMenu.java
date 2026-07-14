@@ -1,6 +1,7 @@
 package ir.ac.kntu.util;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import ir.ac.kntu.interfaces.Displayable;
@@ -51,6 +52,16 @@ public class ConsoleMenu {
     public static void pause(Scanner scanner) {
         System.out.println(ConsoleColor.gray(PAUSE_TEXT));
         scanner.nextLine();
+    }
+
+    // Prints a "--- header ---" banner followed by one "  label: count" line per
+    // entry, in iteration order. Shared by the various admin "inspect database"
+    // screens so each console only needs to build the label->count map.
+    public static void printCounts(String header, Map<String, Integer> labelToCount) {
+        System.out.println(ConsoleColor.BOLD + "--- " + header + " ---" + ConsoleColor.RESET);
+        for (Map.Entry<String, Integer> entry : labelToCount.entrySet()) {
+            System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+        }
     }
 
     // Prints any list of Displayable items by calling toDisplayString() on each.

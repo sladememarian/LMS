@@ -5,6 +5,7 @@ import java.util.List;
 
 import ir.ac.kntu.interfaces.Borrowable;
 import ir.ac.kntu.interfaces.Searchable;
+import ir.ac.kntu.util.Validator;
 
 public abstract class LibraryItem implements Borrowable, Searchable {
 
@@ -95,7 +96,7 @@ public abstract class LibraryItem implements Borrowable, Searchable {
 
     // Which field a search keyword matched ("title"/"category"), or null if none.
     public String matchedField(String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (Validator.isBlank(query)) {
             return null;
         }
         String cleanQuery = query.toLowerCase().trim();

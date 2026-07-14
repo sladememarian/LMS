@@ -9,6 +9,7 @@ import ir.ac.kntu.mail.MailService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.ConsoleColor;
+import ir.ac.kntu.util.ConsoleMenu;
 import ir.ac.kntu.util.Validator;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +19,6 @@ public class IamService {
 
     private static final List<UserCredentials> DATABASE = new ArrayList<>();
 
-    private static final String DIVIDER =
-        "==============================================";
-
     private static final String BACK_TO_MENU =
         "Press Enter to head back to Main Menu...";
 
@@ -28,15 +26,7 @@ public class IamService {
 
     public static void signUpMenu(Scanner scanner) {
         // step 1: collect data, step 2: pretend it's secure
-        System.out.println(
-            ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET
-        );
-        System.out.println(
-            ConsoleColor.BOLD +
-                "            REGISTRATION PORTAL               " +
-                ConsoleColor.RESET
-        );
-        System.out.println(ConsoleColor.CYAN + DIVIDER + ConsoleColor.RESET);
+        ConsoleMenu.banner("REGISTRATION PORTAL");
 
         System.out.print("First Name (or 0 to go back): ");
         String firstName = scanner.nextLine().trim();
@@ -105,15 +95,7 @@ public class IamService {
     }
 
     public static void loginMenu(Scanner scanner) {
-        System.out.println(
-            ConsoleColor.CYAN + ConsoleColor.BOLD + DIVIDER + ConsoleColor.RESET
-        );
-        System.out.println(
-            ConsoleColor.BOLD +
-                "                LOGIN PORTAL                  " +
-                ConsoleColor.RESET
-        );
-        System.out.println(ConsoleColor.CYAN + DIVIDER + ConsoleColor.RESET);
+        ConsoleMenu.banner("LOGIN PORTAL");
 
         while (true) {
             System.out.print("Email (or 0 to go back): ");

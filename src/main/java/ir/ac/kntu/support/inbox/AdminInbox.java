@@ -1,6 +1,8 @@
 package ir.ac.kntu.support.inbox;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import ir.ac.kntu.exception.BaseException;
@@ -321,15 +323,16 @@ public class AdminInbox {
     }
 
     private static void inspectDatabase() {
-        System.out.println(ConsoleColor.BOLD + "--- Database Records ---" + ConsoleColor.RESET);
-        System.out.println("  Personas: " + PersonaRepository.getAllPersonas().size());
-        System.out.println("  Mail messages: " + MailRepository.getAllMailMessages().size());
-        System.out.println("  Transactions: " + TransactionRepository.getAllTransactions().size());
-        System.out.println("  Loans: " + LoanRepository.getAllLoans().size());
-        System.out.println("  Library items: " + LibraryItemRepository.getAllLibraryItems().size());
-        System.out.println("  Suppliers: " + SupplierRepository.getAllSuppliers().size());
-        System.out.println("  Support tickets: " + SupportTicketRepository.getAllSupportTickets().size());
-        System.out.println("  Role requests: " + RoleRequestRepository.getAllRoleRequests().size());
-        System.out.println("  Simulated day: " + SimulationClock.getCurrentDay());
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("Personas", PersonaRepository.getAllPersonas().size());
+        counts.put("Mail messages", MailRepository.getAllMailMessages().size());
+        counts.put("Transactions", TransactionRepository.getAllTransactions().size());
+        counts.put("Loans", LoanRepository.getAllLoans().size());
+        counts.put("Library items", LibraryItemRepository.getAllLibraryItems().size());
+        counts.put("Suppliers", SupplierRepository.getAllSuppliers().size());
+        counts.put("Support tickets", SupportTicketRepository.getAllSupportTickets().size());
+        counts.put("Role requests", RoleRequestRepository.getAllRoleRequests().size());
+        counts.put("Simulated day", SimulationClock.getCurrentDay());
+        ConsoleMenu.printCounts("Database Records", counts);
     }
 }

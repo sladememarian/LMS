@@ -80,4 +80,11 @@ public class LibraryPrinter {
     private static String availability(LibraryItem item) {
         return item.getAvailableCopies() > 0 ? YES : NO;
     }
+
+    public static void printSuppliers(List<SupplierCompany> suppliers) {
+        for (SupplierCompany supplier : suppliers) {
+            System.out.println(ConsoleColor.CYAN + "  " + supplier.getCompanyId() + ConsoleColor.RESET
+                    + " - " + supplier.getCompanyName());
+        }
+    }
 }

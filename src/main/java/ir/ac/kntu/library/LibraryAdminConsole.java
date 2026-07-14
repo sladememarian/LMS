@@ -1,7 +1,9 @@
 package ir.ac.kntu.library;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import ir.ac.kntu.exception.BaseException;
@@ -14,6 +16,7 @@ import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 import ir.ac.kntu.util.LibraryItemRepository;
 import ir.ac.kntu.util.SupplierRepository;
+import ir.ac.kntu.util.Validator;
 
 public class LibraryAdminConsole {
     private static final String PROMPT_ITEM_ID = "Item ID: ";
@@ -71,7 +74,7 @@ public class LibraryAdminConsole {
     private static boolean handleAdvanced(String choice) {
         switch (choice) {
             case "6":
-                printSuppliers();
+                LibraryPrinter.printSuppliers(LibraryService.getAllSuppliers());
                 return true;
             case "7":
                 doReport();
@@ -96,7 +99,7 @@ public class LibraryAdminConsole {
 
     private static void doSearch(Scanner scanner) {
         String keyword = ConsoleMenu.readLine(scanner, "Keyword (blank = all): ");
-        if (keyword == null || keyword.trim().isEmpty()) {
+        if (Validator.isBlank(keyword)) {
             LibraryPrinter.printListPaginated(LibraryService.getAllItems(), true, scanner);
             return;
         }
@@ -172,13 +175,6 @@ public class LibraryAdminConsole {
         }
     }
 
-    private static void printSuppliers() {
-        for (SupplierCompany supplier : LibraryService.getAllSuppliers()) {
-            System.out.println(ConsoleColor.CYAN + "  " + supplier.getCompanyId() + ConsoleColor.RESET
-                    + " - " + supplier.getCompanyName());
-        }
-    }
-
     private static void printBorrowStatistics() {
         List<LibraryItem> items = LibraryService.getAllItems();
         for (LibraryItem item : items) {
@@ -188,9 +184,10 @@ public class LibraryAdminConsole {
     }
 
     private static void inspectDatabase() {
-        System.out.println(ConsoleColor.BOLD + "--- Library Database Records ---" + ConsoleColor.RESET);
-        System.out.println("  Library items: " + LibraryItemRepository.getAllLibraryItems().size());
-        System.out.println("  Suppliers: " + SupplierRepository.getAllSuppliers().size());
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("Library items", LibraryItemRepository.getAllLibraryItems().size());
+        counts.put("Suppliers", SupplierRepository.getAllSuppliers().size());
+        ConsoleMenu.printCounts("Library Database Records", counts);
     }
 
     private static void printDebug() {
