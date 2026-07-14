@@ -4,8 +4,8 @@ import java.util.List;
 
 import ir.ac.kntu.finance.Loan;
 
-// Persistence for the {@code loans} table (composite key: member_id +
-// item_id). Split out of the former monolithic {@code DatabaseAccess} class
+// Persistence for the loans table (composite key: member_id +
+// item_id). Split out of the former monolithic DatabaseAccess class
 // as part of the per-domain repository migration.
 public final class LoanRepository {
 

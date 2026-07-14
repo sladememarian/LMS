@@ -4,7 +4,7 @@ package ir.ac.kntu.util;
 // borrowed, the daily overdue fine, how many days a reservation stays valid,
 // and how many active reservations a member may hold at once. These used to
 // be hardcoded constants scattered across the codebase; they now live here
-// and are backed by the {@code system_settings} table so the Owner/Admin can
+// and are backed by the system_settings table so the Owner/Admin can
 // edit them at runtime.
 public final class SystemSettings {
 

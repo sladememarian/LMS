@@ -6,14 +6,14 @@ import java.util.Optional;
 import ir.ac.kntu.generic.Repository;
 import ir.ac.kntu.library.SupplierCompany;
 
-// Persistence for the {@code suppliers} table. Split out of the former
-// monolithic {@code DatabaseAccess} class as part of the per-domain
+// Persistence for the suppliers table. Split out of the former
+// monolithic DatabaseAccess class as part of the per-domain
 // repository migration. Suppliers have a single natural key, so this
-// repository also implements the generic {@link Repository} abstraction.
+// repository also implements the generic Repository abstraction.
 public final class SupplierRepository implements Repository<SupplierCompany, String> {
 
     // Package-private: instantiated only to exercise the generic
-    // {@link Repository} interface; static methods remain the primary
+    // Repository interface; static methods remain the primary
     // entry point for other classes.
     SupplierRepository() {
         // no-arg constructor documented per project style rules

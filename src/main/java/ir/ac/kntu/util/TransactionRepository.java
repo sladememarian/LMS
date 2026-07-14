@@ -4,8 +4,8 @@ import java.util.List;
 
 import ir.ac.kntu.finance.Transaction;
 
-// Persistence for the append-only {@code transactions} table. Split out of
-// the former monolithic {@code DatabaseAccess} class as part of the
+// Persistence for the append-only transactions table. Split out of
+// the former monolithic DatabaseAccess class as part of the
 // per-domain repository migration.
 public final class TransactionRepository {
 

@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Persistence for the {@code system_settings} key/value table. Split out of
-// {@link DatabaseAccess} to keep that file under the CheckStyle line-count
+// Persistence for the system_settings key/value table. Split out of
+// DatabaseAccess to keep that file under the CheckStyle line-count
 // limit and to give Step 11's configurable values their own home.
 public final class SystemSettingsRepository {
 

@@ -5,8 +5,8 @@ import java.util.List;
 import ir.ac.kntu.mail.MailMessage;
 import ir.ac.kntu.mail.MessageType;
 
-// Persistence for the {@code mail_messages} table. Split out of the former
-// monolithic {@code DatabaseAccess} class as part of the per-domain
+// Persistence for the mail_messages table. Split out of the former
+// monolithic DatabaseAccess class as part of the per-domain
 // repository migration.
 public final class MailRepository {
 

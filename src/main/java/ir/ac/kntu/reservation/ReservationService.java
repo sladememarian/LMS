@@ -133,11 +133,9 @@ public class ReservationService {
         return true;
     }
 
-    /**
-     * Calls {@link #processReturn} once per newly available copy, so a
-     * multi-copy restock (or return) fulfills as many queued reservations
-     * as there are freed-up copies instead of just the first one.
-     */
+    // Calls processReturn once per newly available copy, so a multi-copy
+    // restock (or return) fulfills as many queued reservations as there
+    // are freed-up copies instead of just the first one.
     public static void fulfillFromQueue(String itemId, int copiesFreed, int currentDay) {
         for (int i = 0; i < copiesFreed; i++) {
             if (!processReturn(itemId, currentDay)) {
@@ -184,11 +182,9 @@ public class ReservationService {
                         && !r.isTerminal());
     }
 
-    /**
-     * Number of copies of this item currently earmarked for pickup by an
-     * {@code ACTIVE} reservation (i.e. sitting in {@code availableCopies}
-     * but not actually free for a walk-in borrow).
-     */
+    // Number of copies of this item currently earmarked for pickup by an
+    // ACTIVE reservation (i.e. sitting in availableCopies but not actually
+    // free for a walk-in borrow).
     public static int getHeldCopiesCount(String itemId) {
         return (int) ALL_RESERVATIONS.stream()
                 .filter(r -> r.getItemId().equals(itemId) && r.isActive())
@@ -214,12 +210,10 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Copies genuinely free for an unrelated walk-in borrow: available
-     * copies minus those held for other members' ACTIVE reservations. A
-     * member picking up their own ACTIVE reservation always gets their held
-     * copy back.
-     */
+    // Copies genuinely free for an unrelated walk-in borrow: available
+    // copies minus those held for other members' ACTIVE reservations. A
+    // member picking up their own ACTIVE reservation always gets their held
+    // copy back.
     public static int getWalkInAvailableCopies(String itemId,
             String memberId, int availableCopies) {
         int held = getHeldCopiesCount(itemId);
