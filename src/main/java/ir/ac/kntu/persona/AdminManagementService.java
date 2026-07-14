@@ -1,8 +1,6 @@
 package ir.ac.kntu.persona;
 
 import ir.ac.kntu.exception.AuthorizationException;
-import ir.ac.kntu.exception.InvalidEmailFormatException;
-import ir.ac.kntu.exception.InvalidPasswordException;
 import ir.ac.kntu.exception.UserNotFoundException;
 import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.util.PersonaRepository;
@@ -14,7 +12,7 @@ import java.util.stream.Collectors;
 
 // Owner/Admin hierarchy management: creating and removing Admins, promoting
 // or demoting roles, resetting passwords, and assigning CallCenter support
-// sections. Split out of {@link PersonaService} to keep each class focused
+// sections. Split out of PersonaService to keep each class focused
 // on a single responsibility.
 public final class AdminManagementService {
     private static final String USER_NOT_FOUND_PREFIX = "User not found: ";
@@ -46,15 +44,8 @@ public final class AdminManagementService {
     }
 
     private static void validateCredentials(String email, String password) {
-        if (!Validator.isValidEmail(email)) {
-            throw new InvalidEmailFormatException(
-                    "Invalid email format: " + email);
-        }
-        if (!Validator.isValidPassword(password)) {
-            throw new InvalidPasswordException(
-                    "Password must be at least 8 characters with uppercase, "
-                    + "lowercase, digit, and special character.");
-        }
+        Validator.requireValidEmail(email);
+        Validator.requireValidPassword(password);
     }
 
     // Only the Owner, or the Admin who personally created the target admin,
@@ -72,6 +63,25 @@ public final class AdminManagementService {
         }
     }
 
+    // Authorizes acting on `target`: if the target is an Admin, only their
+    // manager (Owner or creator) may act; otherwise the actor must be an Admin.
+    // Replaces the repeated if/else-if block previously copied into every method below.
+    private static void requireCanManageTarget(Persona actor, Persona target, String action) {
+        if (target.getRole() == UserRole.ADMIN) {
+            requireCanManageAdmin(actor, target);
+        } else if (actor.getRole() != UserRole.ADMIN) {
+            throw new AuthorizationException("Only Admins can " + action + ".");
+        }
+    }
+
+    private static Persona requireTarget(String email) {
+        Persona target = PersonaService.getProfile(email);
+        if (target == null) {
+            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
+        }
+        return target;
+    }
+
     public static void deleteAdmin(Persona deleter, String emailToDelete) {
         Persona toDelete = PersonaService.getProfile(emailToDelete);
         if (toDelete == null || toDelete.getRole() != UserRole.ADMIN) {
@@ -83,15 +93,8 @@ public final class AdminManagementService {
     }
 
     public static void promoteAdmin(Persona actor, String email, UserRole newRole) {
-        Persona target = PersonaService.getProfile(email);
-        if (target == null) {
-            throw new UserNotFoundException("Persona not found: " + email);
-        }
-        if (target.getRole() == UserRole.ADMIN) {
-            requireCanManageAdmin(actor, target);
-        } else if (actor.getRole() != UserRole.ADMIN) {
-            throw new AuthorizationException("Only Admins can change roles.");
-        }
+        Persona target = requireTarget(email);
+        requireCanManageTarget(actor, target, "change roles");
         target.updateRole(newRole);
         PersonaRepository.insertPersona(target);
     }
@@ -107,15 +110,8 @@ public final class AdminManagementService {
     }
 
     public static void resetPassword(Persona actor, String email, String newPassword) {
-        Persona target = PersonaService.getProfile(email);
-        if (target == null) {
-            throw new UserNotFoundException("Persona not found: " + email);
-        }
-        if (target.getRole() == UserRole.ADMIN) {
-            requireCanManageAdmin(actor, target);
-        } else if (actor.getRole() != UserRole.ADMIN) {
-            throw new AuthorizationException("Only Admins can reset passwords.");
-        }
+        Persona target = requireTarget(email);
+        requireCanManageTarget(actor, target, "reset passwords");
         target.setPassword(newPassword);
         PersonaRepository.insertPersona(target);
     }
@@ -138,7 +134,7 @@ public final class AdminManagementService {
     }
 
     public static List<Persona> searchUsers(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
+        if (Validator.isBlank(keyword)) {
             return new ArrayList<>();
         }
         String lower = keyword.toLowerCase();
@@ -161,26 +157,16 @@ public final class AdminManagementService {
 
     public static void editUserProfile(String email,
             String firstName, String lastName, String phone) {
-        Persona target = PersonaService.getProfile(email);
-        if (target == null) {
-            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
-        }
+        requireTarget(email);
         PersonaService.updateProfile(email, firstName, lastName, phone);
     }
 
     public static boolean toggleActive(Persona actor, String email) {
-        Persona target = PersonaService.getProfile(email);
-        if (target == null) {
-            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
-        }
+        Persona target = requireTarget(email);
         if (target.isOwner()) {
             throw new AuthorizationException("The Owner account cannot be deactivated.");
         }
-        if (target.getRole() == UserRole.ADMIN) {
-            requireCanManageAdmin(actor, target);
-        } else if (actor.getRole() != UserRole.ADMIN) {
-            throw new AuthorizationException("Only Admins can deactivate accounts.");
-        }
+        requireCanManageTarget(actor, target, "deactivate accounts");
         target.setActive(!target.isActive());
         PersonaRepository.insertPersona(target);
         return target.isActive();
@@ -190,10 +176,7 @@ public final class AdminManagementService {
         if (actor.getRole() != UserRole.ADMIN) {
             throw new AuthorizationException("Only Admins can delete users.");
         }
-        Persona target = PersonaService.getProfile(email);
-        if (target == null) {
-            throw new UserNotFoundException(USER_NOT_FOUND_PREFIX + email);
-        }
+        Persona target = requireTarget(email);
         if (target.isOwner()) {
             throw new AuthorizationException(
                     "The Owner account cannot be deleted.");
