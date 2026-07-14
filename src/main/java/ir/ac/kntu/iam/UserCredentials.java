@@ -1,7 +1,5 @@
 package ir.ac.kntu.iam;
 
-import ir.ac.kntu.exception.InvalidEmailFormatException;
-import ir.ac.kntu.exception.InvalidPasswordException;
 import ir.ac.kntu.exception.InvalidPhoneFormatException;
 import ir.ac.kntu.util.Validator;
 import java.util.Objects;
@@ -21,14 +19,8 @@ public class UserCredentials {
         String lastName,
         String phoneNumber
     ) {
-        if (!Validator.isValidEmail(email)) {
-            throw new InvalidEmailFormatException("Invalid email format");
-        }
-        if (!Validator.isValidPassword(password)) {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character"
-            );
-        }
+        Validator.requireValidEmail(email);
+        Validator.requireValidPassword(password);
         if (!Validator.isValidPhoneNumber(phoneNumber)) {
             throw new InvalidPhoneFormatException(
                 "Invalid phone number format"
@@ -62,11 +54,7 @@ public class UserCredentials {
     }
 
     public void setPassword(String password) {
-        if (!Validator.isValidPassword(password)) {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character"
-            );
-        }
+        Validator.requireValidPassword(password);
         this.password = password;
     }
 

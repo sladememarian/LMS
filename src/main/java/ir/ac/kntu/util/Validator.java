@@ -3,10 +3,38 @@ package ir.ac.kntu.util;
 import java.time.Year;
 import java.util.regex.Pattern;
 
+import ir.ac.kntu.exception.InvalidEmailFormatException;
+import ir.ac.kntu.exception.InvalidPasswordException;
+
 public final class Validator {
+
+    private static final String PASSWORD_POLICY_MESSAGE =
+        "Password must be at least 8 characters with uppercase, lowercase, digit, and special character.";
 
     private Validator() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+
+    // True when the string is null, empty, or only whitespace. Replaces the
+    // "x == null || x.trim().isEmpty()" check duplicated across the codebase.
+    public static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    // Throws if the email is invalid, so callers don't have to repeat the
+    // "if (!isValidEmail(...)) throw ..." block themselves.
+    public static void requireValidEmail(String email) {
+        if (!isValidEmail(email)) {
+            throw new InvalidEmailFormatException("Invalid email format: " + email);
+        }
+    }
+
+    // Throws if the password doesn't meet the security policy, so callers
+    // don't have to repeat the check + message themselves.
+    public static void requireValidPassword(String password) {
+        if (!isValidPassword(password)) {
+            throw new InvalidPasswordException(PASSWORD_POLICY_MESSAGE);
+        }
     }
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\\.[a-zA-Z]{2,}$");
