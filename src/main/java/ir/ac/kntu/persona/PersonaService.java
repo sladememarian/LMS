@@ -77,6 +77,11 @@ public class PersonaService {
         loadPersonas();
     }
 
+    private static void ensureLoaded() {
+        PERSONA_DATABASE.clear();
+        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
+    }
+
     public static Persona registerPersona(String email, String password) {
         if (getProfile(email) != null) {
             throw new DuplicateEmailException(
@@ -91,8 +96,7 @@ public class PersonaService {
 
     public static boolean validateCredentials(String email,
             String password) {
-        PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
+        ensureLoaded();
         return PERSONA_DATABASE.stream()
                 .anyMatch(p -> p.getEmail() != null
                         && p.getEmail().equalsIgnoreCase(email)
@@ -107,18 +111,23 @@ public class PersonaService {
                 .orElse(null);
     }
 
+    // Looks up a profile by email, throwing if it doesn't exist. Replaces the
+    // repeated "getProfile then null-check then throw" block used across this class.
+    private static Persona requireProfile(String email) {
+        Persona persona = getProfile(email);
+        if (persona == null) {
+            throw new UserNotFoundException(PERSONA_NOT_FOUND + email);
+        }
+        return persona;
+    }
+
     public static void updateProfile(
         String email,
         String firstName,
         String lastName,
         String phoneNumber
     ) {
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        Persona persona = requireProfile(email);
         persona.setFirstName(firstName);
         persona.setLastName(lastName);
         persona.setPhoneNumber(phoneNumber);
@@ -126,44 +135,23 @@ public class PersonaService {
     }
 
     public static void updatePassword(String email, String newPassword) {
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        Persona persona = requireProfile(email);
         persona.setPassword(newPassword);
         PersonaRepository.insertPersona(persona);
     }
 
     public static void updateTheme(String email, String theme) {
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        Persona persona = requireProfile(email);
         persona.setTheme(theme);
         PersonaRepository.insertPersona(persona);
     }
 
     public static int getWalletBalance(String email) {
-        Persona persona = getProfile(email);
-        if (persona != null) {
-            return persona.getWalletBalance();
-        }
-        throw new UserNotFoundException(
-            PERSONA_NOT_FOUND + email
-        );
+        return requireProfile(email).getWalletBalance();
     }
 
     public static void updateWalletBalance(String email, int amount) {
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        Persona persona = requireProfile(email);
         persona.setWalletBalance(persona.getWalletBalance() + amount);
         PersonaRepository.insertPersona(persona);
         syncCurrentUserWallet(email, persona.getWalletBalance());
@@ -196,12 +184,7 @@ public class PersonaService {
     }
 
     public static void recordBorrow(String email, String itemId) {
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        Persona persona = requireProfile(email);
         persona.addBorrowedItem(itemId);
         PersonaRepository.saveBorrowedItems(persona);
         PersonaRepository.insertPersona(persona);
@@ -211,7 +194,7 @@ public class PersonaService {
         }
     }
 
-    // Hooks so {@link AdminManagementService} can mutate the shared in-memory
+    // Hooks so AdminManagementService can mutate the shared in-memory
     // list without duplicating it.
     public static void addPersona(Persona persona) {
         PERSONA_DATABASE.add(persona);
@@ -222,12 +205,7 @@ public class PersonaService {
     }
 
     public static void recordReturn(String email, String itemId) {
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        Persona persona = requireProfile(email);
         persona.removeBorrowedItem(itemId);
         PersonaRepository.saveBorrowedItems(persona);
         PersonaRepository.insertPersona(persona);
@@ -241,8 +219,7 @@ public class PersonaService {
         if (memberId == null) {
             return null;
         }
-        PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
+        ensureLoaded();
         return PERSONA_DATABASE.stream()
                 .filter(p -> memberId.equals(p.getMemberId()))
                 .findFirst()
@@ -253,8 +230,7 @@ public class PersonaService {
         if (username == null) {
             return null;
         }
-        PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
+        ensureLoaded();
         return PERSONA_DATABASE.stream()
                 .filter(p -> username.equalsIgnoreCase(
                         p.getUsername()))
@@ -263,14 +239,8 @@ public class PersonaService {
     }
 
     public static void promoteRole(String email, UserRole newRole) {
-        PERSONA_DATABASE.clear();
-        PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
-        Persona persona = getProfile(email);
-        if (persona == null) {
-            throw new UserNotFoundException(
-                PERSONA_NOT_FOUND + email
-            );
-        }
+        ensureLoaded();
+        Persona persona = requireProfile(email);
         persona.updateRole(newRole);
         PersonaRepository.insertPersona(persona);
     }

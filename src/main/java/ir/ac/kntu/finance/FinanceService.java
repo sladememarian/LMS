@@ -93,6 +93,41 @@ public class FinanceService {
         return all;
     }
 
+    public static int getTotalOutstandingDebt() {
+        ensureLoaded();
+        int total = 0;
+        for (Transaction tx : TX_LOGS) {
+            if (TYPE_DEBT.equals(tx.getType())) {
+                total += tx.getAmount();
+            } else if (TYPE_DEBT_PAYMENT.equals(tx.getType())) {
+                total -= tx.getAmount();
+            }
+        }
+        return total;
+    }
+
+    public static List<Transaction> getDebtAndPaymentTransactions() {
+        ensureLoaded();
+        List<Transaction> result = new ArrayList<>();
+        for (Transaction tx : TX_LOGS) {
+            if (TYPE_DEBT.equals(tx.getType()) || TYPE_DEBT_PAYMENT.equals(tx.getType())) {
+                result.add(tx);
+            }
+        }
+        return result;
+    }
+
+    public static List<Transaction> getOpenDebtTransactions() {
+        ensureLoaded();
+        List<Transaction> result = new ArrayList<>();
+        for (Transaction tx : TX_LOGS) {
+            if (TYPE_DEBT.equals(tx.getType())) {
+                result.add(tx);
+            }
+        }
+        return result;
+    }
+
     public static int getTaxRevenueCollected() {
         ensureLoaded();
         int total = 0;

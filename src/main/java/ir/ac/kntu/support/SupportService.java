@@ -17,6 +17,7 @@ import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.time.SystemClock;
 import ir.ac.kntu.util.SupportTicketRepository;
+import ir.ac.kntu.util.Validator;
 
 public class SupportService {
     private static final List<SupportTicket> TICKETS = new ArrayList<>();
@@ -24,6 +25,11 @@ public class SupportService {
     static {
         TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
         Collections.sort(TICKETS);
+    }
+
+    private static void ensureLoaded() {
+        TICKETS.clear();
+        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
     }
 
     public static boolean validateCallCenterLogin(String email, String password) {
@@ -40,8 +46,7 @@ public class SupportService {
 
     public static void createTicket(String userId, SupportSection section, String title, String description) {
         validateTicketFields(title, description);
-        TICKETS.clear();
-        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
+        ensureLoaded();
         String priority = resolvePriority(section, title);
 
         String id = "TCK-" + ((int) (Math.random() * 900_000) + 100_000);
@@ -54,10 +59,10 @@ public class SupportService {
     }
 
     private static void validateTicketFields(String title, String description) {
-        if (title == null || title.trim().isEmpty()) {
+        if (Validator.isBlank(title)) {
             throw new ValidationException("Ticket title cannot be empty.");
         }
-        if (description == null || description.trim().isEmpty()) {
+        if (Validator.isBlank(description)) {
             throw new ValidationException("Ticket description cannot be empty.");
         }
     }
@@ -75,14 +80,12 @@ public class SupportService {
     }
 
     public static void updateTicketStatus(String ticketId, String status) {
-        TICKETS.clear();
-        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
+        ensureLoaded();
         for (SupportTicket ticket : TICKETS) {
             if (ticket.getTicketId().equals(ticketId)) {
                 ticket.setStatus(status);
                 SupportTicketRepository.updateSupportTicketStatus(ticketId, status);
-                TICKETS.clear();
-                TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
+                ensureLoaded();
                 return;
             }
         }
@@ -90,8 +93,7 @@ public class SupportService {
     }
 
     public static void respondToTicket(String ticketId, String message) {
-        TICKETS.clear();
-        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
+        ensureLoaded();
         for (SupportTicket ticket : TICKETS) {
             if (ticket.getTicketId().equals(ticketId)) {
                 ticket.setResponse(message);
@@ -115,8 +117,7 @@ public class SupportService {
     }
 
     public static List<SupportTicket> getAllTickets() {
-        TICKETS.clear();
-        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
+        ensureLoaded();
         return new ArrayList<>(TICKETS);
     }
 
@@ -126,8 +127,7 @@ public class SupportService {
             return getAllTickets();
         }
 
-        TICKETS.clear();
-        TICKETS.addAll(SupportTicketRepository.getAllSupportTickets());
+        ensureLoaded();
 
         java.util.Set<SupportSection> allowedSections =
                 agent.getAssignedSupportSections();

@@ -12,6 +12,7 @@ import ir.ac.kntu.generic.SearchEngine;
 import ir.ac.kntu.generic.SearchResult;
 import ir.ac.kntu.util.LibraryItemRepository;
 import ir.ac.kntu.util.SupplierRepository;
+import ir.ac.kntu.util.Validator;
 
 public class LibraryService {
     private static final List<LibraryItem> INVENTORY = new ArrayList<>();
@@ -163,9 +164,13 @@ public class LibraryService {
         item.setUnitPrice(price);
     }
 
-    public static void executeBorrow(String itemId) {
+    private static void ensureLoaded() {
         INVENTORY.clear();
         INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
+    }
+
+    public static void executeBorrow(String itemId) {
+        ensureLoaded();
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() > 0) {
@@ -182,8 +187,7 @@ public class LibraryService {
     }
 
     public static void executeReturn(String itemId) {
-        INVENTORY.clear();
-        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
+        ensureLoaded();
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 if (item.getAvailableCopies() < item.getTotalCopies()) {
@@ -201,9 +205,8 @@ public class LibraryService {
     }
 
     public static List<LibraryItem> searchItems(String keyword) {
-        INVENTORY.clear();
-        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
-        if (keyword == null || keyword.trim().isEmpty()) {
+        ensureLoaded();
+        if (Validator.isBlank(keyword)) {
             return new ArrayList<>();
         }
         return SearchEngine.search(INVENTORY, keyword);
@@ -221,8 +224,7 @@ public class LibraryService {
     }
 
     public static void updateItemQuantityFromCallCenter(String itemId, int newTotalCopies) {
-        INVENTORY.clear();
-        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
+        ensureLoaded();
         for (LibraryItem item : INVENTORY) {
             if (item.getItemId().equalsIgnoreCase(itemId)) {
                 item.setTotalCopies(item.getTotalCopies() + newTotalCopies);
@@ -235,8 +237,7 @@ public class LibraryService {
     }
 
     public static void addItem(LibraryItem item) {
-        INVENTORY.clear();
-        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
+        ensureLoaded();
         if (item == null) {
             throw new ValidationException("Cannot add null item.");
         }
@@ -271,8 +272,7 @@ public class LibraryService {
     }
 
     public static List<LibraryItem> getAllItems() {
-        INVENTORY.clear();
-        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
+        ensureLoaded();
         return new ArrayList<>(INVENTORY);
     }
 
@@ -299,7 +299,6 @@ public class LibraryService {
     }
 
     public static void initCatalog() {
-        INVENTORY.clear();
-        INVENTORY.addAll(LibraryItemRepository.getAllLibraryItems());
+        ensureLoaded();
     }
 }

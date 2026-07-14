@@ -1,6 +1,5 @@
 package ir.ac.kntu.finance;
 
-import java.util.List;
 import java.util.Scanner;
 
 import ir.ac.kntu.util.ConsoleColor;
@@ -8,7 +7,6 @@ import ir.ac.kntu.util.ConsoleMenu;
 
 public class FinanceOperatorConsole {
     // view only - because trust but verify
-    private static final String TYPE_DEBT = "DEBT";
 
     public static void open(Scanner scanner) {
         boolean active = true;
@@ -39,27 +37,14 @@ public class FinanceOperatorConsole {
     }
 
     private static void printDebtStatistics() {
-        List<Transaction> all = FinanceService.getAllTransactions();
-        int outstanding = 0;
-        int debtRecords = 0;
-        for (Transaction tx : all) {
-            if (TYPE_DEBT.equals(tx.getType())) {
-                outstanding += tx.getAmount();
-                debtRecords++;
-            } else if ("DEBT_PAYMENT".equals(tx.getType())) {
-                outstanding -= tx.getAmount();
-            }
-        }
-        System.out.println("  Outstanding (aggregate): " + outstanding);
-        System.out.println("  Debt records: " + debtRecords);
+        System.out.println("  Outstanding (aggregate): " + FinanceService.getTotalOutstandingDebt());
+        System.out.println("  Debt records: " + FinanceService.getOpenDebtTransactions().size());
     }
 
     private static void printAlerts() {
-        for (Transaction tx : FinanceService.getAllTransactions()) {
-            if (TYPE_DEBT.equals(tx.getType())) {
-                System.out.println(ConsoleColor.brightRed("  ALERT ") + tx.getMemberId()
-                        + " owes " + tx.getAmount());
-            }
+        for (Transaction tx : FinanceService.getOpenDebtTransactions()) {
+            System.out.println(ConsoleColor.brightRed("  ALERT ") + tx.getMemberId()
+                    + " owes " + tx.getAmount());
         }
     }
 }

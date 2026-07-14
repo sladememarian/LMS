@@ -1,6 +1,7 @@
 package ir.ac.kntu.finance;
 
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import ir.ac.kntu.exception.BaseException;
@@ -99,11 +100,8 @@ public class FinanceAdminConsole {
     }
 
     private static void printAllDebts() {
-        List<Transaction> all = FinanceService.getAllTransactions();
-        for (Transaction tx : all) {
-            if ("DEBT".equals(tx.getType()) || "DEBT_PAYMENT".equals(tx.getType())) {
-                System.out.println("  " + tx.getMemberId() + " | " + tx.getType() + " " + tx.getAmount());
-            }
+        for (Transaction tx : FinanceService.getDebtAndPaymentTransactions()) {
+            System.out.println("  " + tx.getMemberId() + " | " + tx.getType() + " " + tx.getAmount());
         }
     }
 
@@ -123,7 +121,8 @@ public class FinanceAdminConsole {
     }
 
     private static void inspectDatabase() {
-        System.out.println(ConsoleColor.BOLD + "--- Finance Database Records ---" + ConsoleColor.RESET);
-        System.out.println("  Transactions: " + TransactionRepository.getAllTransactions().size());
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("Transactions", TransactionRepository.getAllTransactions().size());
+        ConsoleMenu.printCounts("Finance Database Records", counts);
     }
 }
