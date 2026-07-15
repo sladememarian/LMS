@@ -40,7 +40,6 @@ jar {
 
 test {
     useJUnitPlatform()
-    testLogging.showStandardStreams = true
     environment 'JDBC_URL', 'jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1'
     environment 'JDBC_USER', 'sa'
     environment 'JDBC_PASSWORD', ''
