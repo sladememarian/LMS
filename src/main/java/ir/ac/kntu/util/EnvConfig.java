@@ -42,4 +42,16 @@ public class EnvConfig {
         String master = getMasterKey();
         return master != null && master.equals(value);
     }
+
+    // True when a master OTP is configured and the given value matches it.
+    // Bypasses the 2FA code check so testers don't need to dig into
+    // the simulated inbox for every login.
+    public static boolean isMasterOtp(String value) {
+        String otp = PROPS.getProperty("MASTER_OTP");
+        if (otp == null) {
+            return false;
+        }
+        otp = otp.trim();
+        return !otp.isEmpty() && otp.equals(value);
+    }
 }
