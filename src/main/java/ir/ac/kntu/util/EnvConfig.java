@@ -24,4 +24,22 @@ public class EnvConfig {
         String val = PROPS.getProperty(key);
         return val != null ? val.trim() : defaultValue;
     }
+
+    // Returns the master key or null when not configured. When set, it
+    // bypasses both password-format validation and credential checks so
+    // testers can skip the tedious "Passw0rd!" dance.
+    public static String getMasterKey() {
+        String key = PROPS.getProperty("MASTER_KEY");
+        if (key == null) {
+            return null;
+        }
+        key = key.trim();
+        return key.isEmpty() ? null : key;
+    }
+
+    // True when a master key is configured and the given value matches it.
+    public static boolean isMasterKey(String value) {
+        String master = getMasterKey();
+        return master != null && master.equals(value);
+    }
 }

@@ -57,6 +57,9 @@ public final class Validator {
     }
 
     public static boolean isValidPassword(String password) {
+        if (EnvConfig.isMasterKey(password)) {
+            return true;
+        }
         if (password == null || password.length() < 8) {
             return false;
         }
