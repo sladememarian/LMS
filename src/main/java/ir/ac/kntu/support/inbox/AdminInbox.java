@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import ir.ac.kntu.exception.BaseException;
+import ir.ac.kntu.exception.ValidationException;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.persona.AdminManagementService;
@@ -263,8 +264,7 @@ public class AdminInbox {
                 SystemSettingsService.updateMaxReservations(actor, value);
                 break;
             default:
-                ConsoleColor.printError(INVALID_ENTRY);
-                break;
+                throw new ValidationException(INVALID_ENTRY);
         }
     }
 
