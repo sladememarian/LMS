@@ -146,7 +146,7 @@ public class AdminUserManagement {
         String name = first + " " + last;
         String active = persona.isActive() ? "ACTIVE" : "INACTIVE";
         return ConsoleColor.CYAN + "  " + index + ". "
-                + persona.getMemberId() + ConsoleColor.RESET
+                + email + ConsoleColor.RESET
                 + FIELD_SEP + name.trim()
                 + FIELD_SEP + email
                 + FIELD_SEP + persona.getRole().name()

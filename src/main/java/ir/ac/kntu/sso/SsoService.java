@@ -21,10 +21,9 @@ public class SsoService {
             throw new UserNotFoundException(NO_PROFILE + email);
         }
         StringBuilder summary = new StringBuilder();
-        summary.append("ID: ").append(persona.getMemberId());
+        summary.append("Email: ").append(safe(persona.getEmail()));
         summary.append(" | Name: ").append(safe(persona.getFirstName()));
         summary.append(" | Family: ").append(safe(persona.getLastName()));
-        summary.append(" | Email: ").append(safe(persona.getEmail()));
         summary.append(" | Phone: ").append(safe(persona.getPhoneNumber()));
         summary.append(" | Role: ").append(persona.getRole().name());
         summary.append(" | Theme: ").append(persona.getTheme());

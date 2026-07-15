@@ -102,7 +102,8 @@ public class LoanService {
         int fineRate = SystemSettingsService.getFineRate();
         FinanceService.recordDebt(borrower, fineRate,
                 "Overdue fine for " + loan.getItemId() + " (day " + currentDay + ")");
-        return loan.getMemberId() + " +" + fineRate + " (" + loan.getItemId() + ")";
+        return borrower.getEmail() + " +" + fineRate
+                + " (" + loan.getItemId() + ")";
     }
 
     public static List<String> accrueOverdueDebts(int currentDay) {

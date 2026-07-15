@@ -95,13 +95,18 @@ public class FinanceAdminConsole {
             ConsoleColor.printError("No user found for " + email + ".");
             return;
         }
-        System.out.println("  " + profile.getMemberId() + " | Wallet: " + profile.getWalletBalance()
+        System.out.println("  " + profile.getEmail() + " | Wallet: " + profile.getWalletBalance()
                 + " | Debt: " + FinanceService.getOutstandingDebt(profile.getMemberId()));
     }
 
     private static void printAllDebts() {
         for (Transaction tx : FinanceService.getDebtAndPaymentTransactions()) {
-            System.out.println("  " + tx.getMemberId() + " | " + tx.getType() + " " + tx.getAmount());
+            Persona owner = PersonaService.getProfileByMemberId(
+                    tx.getMemberId());
+            String who = owner != null ? owner.getEmail()
+                    : tx.getMemberId();
+            System.out.println("  " + who + " | " + tx.getType()
+                    + " " + tx.getAmount());
         }
     }
 

@@ -2,6 +2,8 @@ package ir.ac.kntu.finance;
 
 import java.util.Scanner;
 
+import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.util.ConsoleColor;
 import ir.ac.kntu.util.ConsoleMenu;
 
@@ -43,8 +45,12 @@ public class FinanceOperatorConsole {
 
     private static void printAlerts() {
         for (Transaction tx : FinanceService.getOpenDebtTransactions()) {
-            System.out.println(ConsoleColor.brightRed("  ALERT ") + tx.getMemberId()
-                    + " owes " + tx.getAmount());
+            Persona owner = PersonaService.getProfileByMemberId(
+                    tx.getMemberId());
+            String who = owner != null ? owner.getEmail()
+                    : tx.getMemberId();
+            System.out.println(ConsoleColor.brightRed("  ALERT ")
+                    + who + " owes " + tx.getAmount());
         }
     }
 }

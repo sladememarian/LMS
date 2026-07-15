@@ -126,9 +126,13 @@ public class ReservationService {
         // queued and waiting for a copy.
         first.setExpiresOnDay(currentDay + SystemSettingsService.getReservationDays());
         syncReservation(first);
+        Persona holder = PersonaService.getProfileByMemberId(
+                first.getMemberId());
+        String who = holder != null ? holder.getEmail()
+                : first.getMemberId();
         System.out.println("[Reservation]: Activated reservation "
-                + first.getReservationId() + " for member "
-                + first.getMemberId() + ". Pick up by day "
+                + first.getReservationId() + " for " + who
+                + ". Pick up by day "
                 + first.getExpiresOnDay() + ".");
         return true;
     }
