@@ -118,7 +118,8 @@ public class Main {
 
     private static void printMainMenu() {
         System.out.println(ConsoleColor.CYAN + ConsoleColor.BOLD
-                + "  [Simulated Date: " + SimulationClock.formatCurrentDate() + "]" + ConsoleColor.RESET);
+                + "  [Simulated Date: " + SimulationClock.formatCurrentDate()
+                + " | Day " + SimulationClock.getCurrentDay() + "]" + ConsoleColor.RESET);
         System.out.println(ConsoleColor.BOLD + "MAIN MENU OPTIONS:" + ConsoleColor.RESET);
         System.out.println(ConsoleColor.CYAN + "1. " + ConsoleColor.RESET + "Sign Up       "
                 + ConsoleColor.gray("- Registration, Welcome Mail"));
