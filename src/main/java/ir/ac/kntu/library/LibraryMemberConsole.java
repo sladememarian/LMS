@@ -143,13 +143,15 @@ public class LibraryMemberConsole {
                 List<String> holders =
                         ReservationService.getActiveReservationHolders(
                                 itemId);
-                String who = holders.isEmpty() ? ""
-                        : " (held by " + holders.size()
-                        + " reservation(s))";
-                ConsoleColor.printError(
-                        "This copy is being held"
-                        + " for another member's reservation"
-                        + who + ".");
+                if (holders.isEmpty()) {
+                    ConsoleColor.printError(
+                            "All copies are currently checked out.");
+                } else {
+                    ConsoleColor.printError(
+                            "This copy is being held for "
+                            + holders.size()
+                            + " reservation(s).");
+                }
                 return;
             }
             LibraryService.executeBorrow(itemId);
