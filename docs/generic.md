@@ -1,47 +1,101 @@
-# generic Package (Phase 2)
+# generic Package
 
 ## In plain terms
-"Generic" in Java means a class that works with *any* type, decided later,
-instead of being locked to one specific type. This package holds 4 reusable
-building blocks that any future feature can plug its own type into (`<T>`).
+"Generic" in Java means a class or method that works with *any* type, chosen by
+the caller later, instead of being hard-wired to one type. You write it once
+with a placeholder `<T>`, and it serves `Book`, `Persona`, `SupportTicket`, or
+anything else. This package holds **six** reusable building blocks.
 
-## The building blocks
+> Correction vs. an older draft: there is **no** `JsonRepository` class. The
+> real members are listed below.
 
-### `JsonRepository<T>` — a generic "storage box"
-An abstract base class for an in-memory list of any type `T`, with the usual
-storage operations already built in: `save`, `findById`, `getAll`, `delete`,
-`size`. A future concrete class (e.g. `ReservationRepository extends
-JsonRepository<Reservation>`) only needs to say *how* to get an item's ID and
-how to persist/remove it in the database — the rest (searching, storing,
-removing from the list) is free.
+## The six building blocks
 
-```java
-public class ReservationRepository extends JsonRepository<Reservation> {
-    public String getId(Reservation r) { return r.getReservationId(); }
-    protected void persist(Reservation r) { /* save to DB */ }
-    protected void removeById(String id) { /* delete from DB */ }
-}
-```
+| Member | Kind | Type parameter | What it does |
+|--------|------|----------------|--------------|
+| `SearchResult<T>` | class | `<T>` | Wraps a found item plus which field matched |
+| `PagedList<T>` | class | `<T>` | Slices a big list into one page |
+| `Menu<T extends Displayable>` | class | bounded `<T>` | Prints a numbered menu of displayable items |
+| `SearchEngine` | final utility | generic *method* | Filters any `Searchable` list by keyword |
+| `Repository<T, ID>` | interface | `<T, ID>` | A generic CRUD contract (find/save/delete) |
+| `PaginatedDisplay<T>` | class | `<T>` | Interactive paged browser for any list |
+
+## Member by member
+
+### `SearchResult<T>` — a "found it, and here's why" wrapper
+Holds two things: the item that matched (`T getItem()`) and the name of the
+field that matched (`String getMatchedField()`, e.g. `"title"` or `"author"`).
+This lets a search UI show *why* a result matched, not just *what* matched.
+Used by `LibraryService.searchItemsDetailed(...)`, which returns
+`List<SearchResult<LibraryItem>>`.
+
+### `PagedList<T>` — one page of a long list
+Given the full list, a page number, and a page size, it slices out just that
+page and answers questions about it:
+
+| Method | Answer |
+|--------|--------|
+| `getItems()` | the items on this page |
+| `getPage()` / `getPageSize()` / `getTotalItems()` | the paging numbers |
+| `getTotalPages()` | how many pages in total |
+| `hasNext()` / `hasPrevious()` | is there a page after / before this one |
+
+It is the engine `PaginatedDisplay` uses under the hood.
 
 ### `Menu<T extends Displayable>` — a generic console menu
-Renders any list of items as a numbered menu (as long as each item knows how
-to display itself via `Displayable`), and reads back the user's numeric
-choice. Meant to replace hand-written "print numbered list, read number"
-boilerplate that's currently duplicated across many `*Console` classes.
+The `<T extends Displayable>` bound means: "T can be anything, *as long as* it
+knows how to display itself." That guarantee lets the menu call
+`option.toDisplayString()` on every item. `render()` prints a numbered list
+plus a "0. Back"; `select(scanner)` reads the user's number and returns the
+chosen item (or `null` if out of range). Used to list overdue-loan reports and
+supplier financials.
 
-### `SearchResult<T>` — a generic "found it" wrapper
-Wraps a found item together with *which field matched* the search (e.g.
-"title" or "author"), so search UIs can show *why* something matched, not
-just *what* matched.
+```java
+new Menu<>("Overdue Loans", ReportService.computeOverdueLoans()).render();
+```
 
-### `PagedList<T>` — a generic "page" of results
-Given a full list, a page number, and a page size, it slices out just that
-page and tells you `getTotalPages()`, `hasNext()`, `hasPrevious()`. Useful
-once the library catalog or transaction history gets long enough that
-printing everything to the console isn't practical.
+### `SearchEngine` — a generic search *method*
+A `final` utility class (can't be instantiated — the private constructor throws).
+Instead of a class-level `<T>`, the *method* is generic:
+
+```java
+public static <T extends Searchable> List<T> search(List<T> items, String query)
+```
+
+It streams the list and keeps the items where `item.matchesQuery(query)` is true.
+Because `T` is bounded by `Searchable`, it works for any searchable type.
+`LibraryService.searchItems` calls it with the library inventory.
+
+### `Repository<T, ID>` — a generic storage contract
+An **interface** with two placeholders: `T` (what's stored) and `ID` (the type of
+its key). Four methods:
+
+```java
+List<T> findAll();
+Optional<T> findById(ID id);
+void save(T item);
+void deleteById(ID id);
+```
+
+One class implements it: `SupplierRepository implements Repository<SupplierCompany, String>`.
+It exists mostly to demonstrate the generic contract; a test
+(`RepositoryContractTest`) exercises save/find/delete purely through the
+`Repository` interface type, proving the contract works polymorphically.
+
+### `PaginatedDisplay<T>` — an interactive paged browser
+Takes a title, a list of any `T`, and a `renderer` callback
+(`BiConsumer<T, Integer>` — given an item and its index, print it). Two modes:
+
+- `showPaginated(scanner)` — an interactive loop with `[N]ext / [P]revious /
+  jump-to-page / [Q]uit`, showing 10 per page (uses `PagedList<T>` internally).
+- `showAll()` — dump every item at once, no paging.
+
+Used to browse library items (`LibraryPrinter`) and the full user list
+(`AdminUserManagement`).
 
 ## Why generics matter here
-Without `<T>`, we'd need a separate `Menu`, `SearchResult`, and `PagedList`
-class for every domain type (`BookMenu`, `TicketMenu`, `LoanSearchResult`,
-`TransactionPagedList`, …). Generics let one implementation serve every
-current and future domain type — this is the **Generics** grading criterion.
+Without `<T>`, you'd need a separate `BookMenu`, `TicketMenu`, `LoanSearchResult`,
+`TransactionPagedList`, and so on — one class per domain type. Generics let a
+single implementation serve every current and future type. That is the
+**Generics** grading criterion: reusable, type-safe building blocks that work for
+any type the caller supplies.
