@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id 'application'
+    // Handles JavaFX module-path/dependencies automatically (no manual VM args).
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'ir.ac.kntu'
@@ -10,8 +12,15 @@ java {
     sourceCompatibility = '17'
 }
 
+javafx {
+    version = '21.0.2'
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.graphics', 'javafx.base']
+}
+
 application {
-    mainClass = 'ir.ac.kntu.Main'
+    // GUI is now the default entry point. The original CLI is still runnable
+    // via the `runCli` task defined below.
+    mainClass = 'ir.ac.kntu.gui.GuiLauncher'
 }
 
 repositories {
@@ -28,9 +37,18 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Keep the original command-line interface available:  ./gradlew runCli
+tasks.register('runCli', JavaExec) {
+    group = 'application'
+    description = 'Runs the original command-line LMS (ir.ac.kntu.Main).'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ir.ac.kntu.Main'
+    standardInput = System.in
+}
+
 jar {
     manifest {
-        attributes 'Main-Class': 'ir.ac.kntu.Main'
+        attributes 'Main-Class': 'ir.ac.kntu.gui.GuiLauncher'
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
