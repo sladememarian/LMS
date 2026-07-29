@@ -21,6 +21,14 @@ application {
     // GUI is now the default entry point. The original CLI is still runnable
     // via the `runCli` task defined below.
     mainClass = 'ir.ac.kntu.gui.GuiLauncher'
+    applicationDefaultJvmArgs = []
+}
+
+run {
+    // Use PostgreSQL from docker-compose (port 45432 mapped from 5432).
+    environment 'JDBC_URL', System.getenv('JDBC_URL') ?: 'jdbc:postgresql://localhost:45432/lms'
+    environment 'JDBC_USER', System.getenv('JDBC_USER') ?: 'lms'
+    environment 'JDBC_PASSWORD', System.getenv('JDBC_PASSWORD') ?: 'lms'
 }
 
 repositories {
@@ -32,6 +40,8 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2:2.2.224'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.testfx:testfx-junit5:4.0.16-alpha'
+    testImplementation 'org.testfx:testfx-core:4.0.16-alpha'
     testImplementation 'net.sourceforge.pmd:pmd-java:6.55.0'
     testImplementation 'com.puppycrawl.tools:checkstyle:10.12.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

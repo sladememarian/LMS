@@ -44,20 +44,39 @@ public class LoginView implements View {
     }
 
     private void build() {
+        initFields();
+        initLoginButton();
+        spinner.setMaxSize(22, 22);
+        spinner.setVisible(false);
+
+        VBox card = buildCard();
+        root.getChildren().add(card);
+        root.getStyleClass().add("auth-bg");
+        StackPane.setAlignment(card, Pos.CENTER);
+    }
+
+    private void initFields() {
+        emailField.setPromptText("Email");
+        emailField.setId("emailField");
+        emailField.getStyleClass().add("field");
+        passwordField.setPromptText("Password");
+        passwordField.setId("passwordField");
+        passwordField.getStyleClass().add("field");
+    }
+
+    private void initLoginButton() {
+        loginButton.getStyleClass().add("primary");
+        loginButton.setId("loginButton");
+        loginButton.setDefaultButton(true);
+        loginButton.setMaxWidth(Double.MAX_VALUE);
+        loginButton.setOnAction(event -> handleLogin());
+    }
+
+    private VBox buildCard() {
         Label heading = new Label("KNTU Library");
         heading.getStyleClass().add("h1");
         Label subtitle = new Label("Sign in to your account");
         subtitle.getStyleClass().add("muted");
-
-        emailField.setPromptText("Email");
-        passwordField.setPromptText("Password");
-        emailField.getStyleClass().add("field");
-        passwordField.getStyleClass().add("field");
-
-        loginButton.getStyleClass().add("primary");
-        loginButton.setDefaultButton(true);
-        loginButton.setMaxWidth(Double.MAX_VALUE);
-        loginButton.setOnAction(event -> handleLogin());
 
         Hyperlink createAccount = new Hyperlink("Create a new account");
         createAccount.setOnAction(event -> goToRegister());
@@ -70,8 +89,6 @@ public class LoginView implements View {
             }
         });
 
-        spinner.setMaxSize(22, 22);
-        spinner.setVisible(false);
         HBox buttonRow = new HBox(10, loginButton, spinner);
         buttonRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -80,10 +97,7 @@ public class LoginView implements View {
         card.getStyleClass().add("card");
         card.setMaxWidth(360);
         card.setPadding(new Insets(28));
-
-        root.getChildren().add(card);
-        root.getStyleClass().add("auth-bg");
-        StackPane.setAlignment(card, Pos.CENTER);
+        return card;
     }
 
     private void handleLogin() {

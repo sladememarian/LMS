@@ -1,6 +1,7 @@
-FROM gradle:8.2-jdk17 AS builder
+FROM gradle:8.5-jdk17 AS builder
 WORKDIR /build
 COPY build.gradle settings.gradle ./
+ENV JAVA_OPTS="-Dhttps.protocols=TLSv1.2,TLSv1.3"
 RUN gradle --no-daemon dependencies 2>/dev/null || true
 COPY src src
 RUN gradle --no-daemon build -x test

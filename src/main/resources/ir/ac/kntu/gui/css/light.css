@@ -1,0 +1,65 @@
+/* Light theme — clean neutral palette */
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #f4f5f7;
+    -fx-text-fill: #1f2430;
+}
+
+.auth-bg {
+    -fx-background-color: linear-gradient(to bottom right, #eef1f6, #dfe4ec);
+}
+
+.card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e2e6ee;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 18, 0, 0, 6);
+}
+
+.h1 {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f2430;
+}
+
+.muted {
+    -fx-text-fill: #6b7280;
+}
+
+.field {
+    -fx-background-color: #f6f8fb;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #d5dbe6;
+    -fx-padding: 9 12 9 12;
+}
+.field:focused {
+    -fx-border-color: #3b82f6;
+    -fx-background-color: #ffffff;
+}
+
+.button.primary {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 9 18 9 18;
+    -fx-cursor: hand;
+}
+.button.primary:hover { -fx-background-color: #1d4ed8; }
+
+.button.ghost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2563eb;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+    -fx-cursor: hand;
+}
+.button.ghost:hover { -fx-background-color: #eef2ff; }
+
+.hyperlink { -fx-text-fill: #2563eb; }
