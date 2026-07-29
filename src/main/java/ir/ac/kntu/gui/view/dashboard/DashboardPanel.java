@@ -189,9 +189,9 @@ public class DashboardPanel extends StackPane {
         return box;
     }
 
-    private static boolean isResolved(String rawStatus) {
-        String status = normalise(rawStatus);
-        return status.equals("resolved") || status.equals("closed") || status.equals("done");
+    private static boolean isResolved(String status) {
+        String normalized = normalise(status);
+        return normalized.equals("resolved") || normalized.equals("closed") || normalized.equals("done");
     }
 
     private static String normalise(String status) {

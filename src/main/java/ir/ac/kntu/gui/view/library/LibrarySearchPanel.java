@@ -3,16 +3,23 @@ package ir.ac.kntu.gui.view.library;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.finance.FinanceService;
+import ir.ac.kntu.finance.LoanService;
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
+import ir.ac.kntu.persona.Persona;
+import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.persona.UserProfile;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.ProgressIndicator;
@@ -37,6 +44,8 @@ import javafx.util.Duration;
 public class LibrarySearchPanel extends BorderPane {
 
     private static final int PAGE_SIZE = 10;
+    private static final String TITLE_COL = "Title";
+    private static final String NO_SELECTION = "No selection";
 
     private final TextField searchField = new TextField();
     private final ProgressIndicator spinner = new ProgressIndicator();
@@ -73,7 +82,11 @@ public class LibrarySearchPanel extends BorderPane {
         spinner.setVisible(false);
         resultCount.getStyleClass().add("muted");
 
-        HBox searchRow = new HBox(10, searchField, spinner);
+        Button borrowBtn = new Button("Borrow selected");
+        borrowBtn.getStyleClass().add("primary");
+        borrowBtn.setOnAction(event -> handleBorrow());
+
+        HBox searchRow = new HBox(10, searchField, borrowBtn, spinner);
         searchRow.setAlignment(Pos.CENTER_LEFT);
 
         VBox header = new VBox(12, heading, searchRow, resultCount);
@@ -92,7 +105,7 @@ public class LibrarySearchPanel extends BorderPane {
     private void buildTable() {
         TableColumn<LibraryItem, String> id = new TableColumn<>("ID");
         id.setCellValueFactory(new PropertyValueFactory<>("itemId"));
-        TableColumn<LibraryItem, String> title = new TableColumn<>("Title");
+        TableColumn<LibraryItem, String> title = new TableColumn<>(TITLE_COL);
         title.setCellValueFactory(new PropertyValueFactory<>("title"));
         title.setPrefWidth(260);
         TableColumn<LibraryItem, String> type = new TableColumn<>("Type");
@@ -109,6 +122,48 @@ public class LibrarySearchPanel extends BorderPane {
         table.getColumns().addAll(id, title, type, category, available, total, price);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPlaceholder(new Label("No items found."));
+    }
+
+    /** Borrows the selected item for the signed-in user (background thread). */
+    private void handleBorrow() {
+        LibraryItem item = table.getSelectionModel().getSelectedItem();
+        if (item == null) {
+            Dialogs.warn(NO_SELECTION, "Select an item to borrow.");
+            return;
+        }
+        Persona user = Persona.getCurrentUser();
+        if (user == null) {
+            Dialogs.warn("Not signed in", "You must be signed in to borrow.");
+            return;
+        }
+        // Role-based borrow permission & limit (mirrors LibraryMemberConsole.canBorrow)
+        UserProfile profile = user.getUserProfile();
+        if (!profile.canBorrow()) {
+            Dialogs.warn("Borrowing not allowed", "Your role (" + profile.dashboardLabel() + ") cannot borrow items.");
+            return;
+        }
+        if (user.getBorrowCount() >= profile.borrowLimit()) {
+            Dialogs.warn("Borrow limit reached", "Borrow limit reached for role " + profile.dashboardLabel() + ".");
+            return;
+        }
+        String memberId = user.getMemberId();
+        String email = user.getEmail();
+        int today = SimulationClock.getCurrentDay();
+        BackgroundJobs.runAction(
+                () -> {
+                    if (!FinanceService.checkBorrowingPermission(memberId)) {
+                        throw new IllegalStateException(
+                                "Borrowing blocked: settle outstanding debt first.");
+                    }
+                    LibraryService.executeBorrow(item.getItemId());
+                    PersonaService.recordBorrow(email, item.getItemId());
+                    LoanService.recordLoan(memberId, item.getItemId(), today, item.borrowPeriod());
+                },
+                () -> {
+                    Dialogs.info("Borrowed", "\"" + item.getTitle() + "\" borrowed successfully.");
+                    runSearch(searchField.getText());
+                },
+                error -> Dialogs.error("Borrow failed", error));
     }
 
     /** Runs the search off the FX thread and refreshes pagination on success. */
