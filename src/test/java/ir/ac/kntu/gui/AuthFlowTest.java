@@ -1,6 +1,5 @@
 package ir.ac.kntu.gui;
 
-import ir.ac.kntu.gui.view.HomePlaceholderView;
 import ir.ac.kntu.gui.view.LoginView;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
@@ -11,7 +10,6 @@ import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testfx.api.FxAssert;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.ApplicationTest;
 import org.testfx.framework.junit5.Start;
@@ -66,11 +64,10 @@ public class AuthFlowTest extends ApplicationTest {
 
     @Test
     public void testMasterKeyLoginNavigatesToHome() {
-        // The master key is "bid" (from .env)
         clickOn("#emailField").write("admin@system.local");
         clickOn("#passwordField").write("bid");
         clickOn("#loginButton");
-        // After successful login, the welcome label from HomePlaceholderView should appear
-        verifyThat("Welcome, admin@system.local", NodeMatchers.isVisible());
+        // After successful login, the login screen is replaced by the AppShell sidebar
+        verifyThat(".sidebar", NodeMatchers.isVisible());
     }
 }

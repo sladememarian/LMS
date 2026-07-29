@@ -12,12 +12,8 @@ import javafx.stage.Stage;
  * <p>All existing business services (IAM, Library, Finance, Support, ...) are
  * reused unchanged; this class only bootstraps the graphical shell.
  */
-@SuppressWarnings("PMD.UnnecessaryConstructor")
+@SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.UnnecessaryConstructor"})
 public class App extends Application {
-
-    public App() {
-        super();
-    }
 
     @Override
     public void start(Stage primaryStage) {

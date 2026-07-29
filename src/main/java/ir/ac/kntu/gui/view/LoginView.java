@@ -139,7 +139,7 @@ public class LoginView implements View {
         // Apply the user's saved theme, if any.
         if (navigator != null) {
             navigator.setTheme(UiTheme.from(persona.getTheme()));
-            navigator.switchTo(new HomePlaceholderView(navigator, persona));
+            navigator.switchTo(new ir.ac.kntu.gui.shell.AppShell(navigator, persona));
         }
         passwordField.clear();
     }

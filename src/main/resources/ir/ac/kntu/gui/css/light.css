@@ -63,3 +63,50 @@
 .button.ghost:hover { -fx-background-color: #eef2ff; }
 
 .hyperlink { -fx-text-fill: #2563eb; }
+
+
+/* --- App shell (Step 2) --- */
+.topbar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #e2e6ee transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.brand {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f2430;
+}
+.sidebar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent #e2e6ee transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+.content-area {
+    -fx-background-color: #f4f5f7;
+}
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #384150;
+    -fx-background-radius: 8;
+    -fx-padding: 10 14 10 14;
+    -fx-cursor: hand;
+}
+.nav-item:hover { -fx-background-color: #eef2ff; }
+.nav-item:selected {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+
+/* --- Dashboard (Step 3) --- */
+.stat-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e2e6ee;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0, 0, 4);
+}
+.stat-caption { -fx-text-fill: #6b7280; -fx-font-size: 12px; }
+.stat-value { -fx-text-fill: #1f2430; -fx-font-size: 28px; -fx-font-weight: bold; }
