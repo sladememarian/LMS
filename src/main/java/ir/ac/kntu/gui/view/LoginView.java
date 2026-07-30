@@ -89,6 +89,8 @@ public class LoginView implements View {
             }
         });
 
+        spinner.setMaxSize(22, 22);
+        spinner.setVisible(false);
         HBox buttonRow = new HBox(10, loginButton, spinner);
         buttonRow.setAlignment(Pos.CENTER_LEFT);
 

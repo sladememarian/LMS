@@ -5,6 +5,7 @@ import ir.ac.kntu.gui.View;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.util.Validator;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -25,7 +26,6 @@ import javafx.scene.layout.VBox;
  */
 public class RegisterView implements View {
 
-    private static final String EMAIL_PATTERN = "^[\\w.+-]+@[\\w-]+\\.[\\w.-]+$";
     private static final String FIELD_STYLE = "field";
 
     private final Navigator navigator;
@@ -87,12 +87,13 @@ public class RegisterView implements View {
             Dialogs.warn("Missing information", "Email and password are required.");
             return;
         }
-        if (!email.matches(EMAIL_PATTERN)) {
+        if (!Validator.isValidEmail(email)) {
             Dialogs.warn("Invalid email", "Please enter a valid email address.");
             return;
         }
-        if (password.length() < 4) {
-            Dialogs.warn("Weak password", "Password must be at least 4 characters.");
+        if (!Validator.isValidPassword(password)) {
+            Dialogs.warn("Weak password",
+                    "Password must be at least 8 characters with uppercase, lowercase, digit, and special character.");
             return;
         }
         if (!password.equals(confirm)) {

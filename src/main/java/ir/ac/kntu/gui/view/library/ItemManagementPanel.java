@@ -11,6 +11,7 @@ import ir.ac.kntu.library.EBook;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.library.Magazine;
+import ir.ac.kntu.util.Validator;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -35,8 +36,6 @@ public class ItemManagementPanel extends VBox {
 
     private final TableView<LibraryItem> table = new TableView<>();
 
-    private static final String TITLE_LABEL = "Title";
-
     private final ComboBox<String> typeBox = new ComboBox<>(
             FXCollections.observableArrayList("BOOK", "MAGAZINE", "EBOOK", "AUDIOBOOK"));
     private final TextField idField = new TextField();
@@ -45,9 +44,13 @@ public class ItemManagementPanel extends VBox {
     private final TextField yearField = new TextField();
     private final TextField copiesField = new TextField();
     private final TextField priceField = new TextField();
+    private final TextField extraField = new TextField();
 
+    private static final String TITLE_LABEL = "Title";
     private static final String GHOST_STYLE = "ghost";
-    private static final String NO_SELECTION = "No selection";
+    private static final String STR_MAGAZINE = "MAGAZINE";
+    private static final String STR_EBOOK = "EBOOK";
+    private static final String STR_AUDIOBOOK = "AUDIOBOOK";
 
     public ItemManagementPanel() {
         super(16);
@@ -92,16 +95,36 @@ public class ItemManagementPanel extends VBox {
         yearField.setPromptText("Year");
         copiesField.setPromptText("Total copies");
         priceField.setPromptText("Unit price");
-        for (TextField f : List.of(idField, titleField, categoryField, yearField, copiesField, priceField)) {
+        extraField.setPromptText("ISBN");
+        for (TextField f : List.of(idField, titleField, categoryField, yearField, copiesField, priceField, extraField)) {
             f.getStyleClass().add("field");
         }
+
+        typeBox.valueProperty().addListener((obs, old, val) -> {
+            String prompt;
+            switch (val) {
+                case STR_MAGAZINE:
+                    prompt = "ISSN";
+                    break;
+                case STR_EBOOK:
+                    prompt = "Download URL";
+                    break;
+                case STR_AUDIOBOOK:
+                    prompt = "Download URL";
+                    break;
+                default:
+                    prompt = "ISBN";
+                    break;
+            }
+            extraField.setPromptText(prompt);
+        });
 
         Button add = new Button("Add item");
         add.getStyleClass().add("primary");
         add.setOnAction(event -> handleAdd());
 
         FlowPane form = new FlowPane(10, 10, typeBox, idField, titleField, categoryField,
-                yearField, copiesField, priceField, add);
+                yearField, copiesField, priceField, extraField, add);
         form.getStyleClass().add("card");
         form.setPadding(new Insets(16));
         return form;
@@ -131,23 +154,67 @@ public class ItemManagementPanel extends VBox {
 
     private void handleAdd() {
         try {
+            String type = typeBox.getValue();
             String id = required(idField, "ID");
-            String title = required(titleField, TITLE_LABEL);
+            String title = required(titleField, "Title");
             String category = categoryField.getText() == null ? "" : categoryField.getText().trim();
             int year = parseInt(yearField, "Year");
+            if (!Validator.isValidPublishYear(year)) {
+                Dialogs.warn("Invalid year", "Year must be between 1450 and current year.");
+                return;
+            }
             int copies = parseInt(copiesField, "Total copies");
             int price = parseInt(priceField, "Unit price");
+            String extra = extraField.getText() == null ? "" : extraField.getText().trim();
 
-            LibraryItem item = buildItem(id, title, category, year);
+            LibraryItem item = buildItem(new ItemParams(type, id, title, category, year));
             item.setTotalCopies(copies);
             item.setAvailableCopies(copies);
             item.setUnitPrice(price);
+
+            if (!applyTypeSpecifics(item, extra)) {
+                return;
+            }
 
             runMutation(() -> LibraryService.addItem(item), "Item added.");
             clearForm();
         } catch (IllegalArgumentException ex) {
             Dialogs.warn("Invalid input", ex.getMessage());
         }
+    }
+
+    private boolean applyTypeSpecifics(LibraryItem item, String extra) {
+        if (item instanceof Book book) {
+            return applyBookSpecifics(book, extra);
+        }
+        if (item instanceof Magazine mag) {
+            return applyMagazineSpecifics(mag, extra);
+        }
+        if (item instanceof EBook ebook && !extra.isEmpty()) {
+            ebook.setDownloadUrl(extra);
+        }
+        if (item instanceof AudioBook audio && !extra.isEmpty()) {
+            audio.setDownloadUrl(extra);
+        }
+        return true;
+    }
+
+    private boolean applyBookSpecifics(Book book, String extra) {
+        if (!extra.isEmpty() && !Validator.isValidISBN13(extra)) {
+            Dialogs.warn("Invalid ISBN", "ISBN-13 must be 13 digits starting with 978 or 979.");
+            return false;
+        }
+        book.setIsbn(extra);
+        return true;
+    }
+
+    private boolean applyMagazineSpecifics(Magazine mag, String extra) {
+        if (!extra.isEmpty() && !Validator.isValidISSN(extra)) {
+            Dialogs.warn("Invalid ISSN", "ISSN must be in format xxxx-xxxx.");
+            return false;
+        }
+        mag.setIssueNumber(0);
+        return true;
     }
 
     private void handleEditPrice() {
@@ -167,7 +234,7 @@ public class ItemManagementPanel extends VBox {
         if (selected == null) {
             return;
         }
-        Integer value = promptInt("New total copies for " + selected.getTitle());
+        Integer value = promptInt("How many additional copies for " + selected.getTitle() + "? (use negative to remove)");
         if (value != null) {
             runMutation(() ->
                     LibraryService.updateItemQuantityFromCallCenter(selected.getItemId(), value),
@@ -201,20 +268,21 @@ public class ItemManagementPanel extends VBox {
                 error -> Dialogs.error("Could not load items", error));
     }
 
-    private LibraryItem buildItem(String id, String title, String category, int year) {
-        String type = typeBox.getValue();
-        switch (type) {
-            case "MAGAZINE": return new Magazine(id, title, category, year);
-            case "EBOOK": return new EBook(id, title, category, year);
-            case "AUDIOBOOK": return new AudioBook(id, title, category, year);
-            default: return new Book(id, title, category, year);
+    private record ItemParams(String type, String id, String title, String category, int year) {}
+
+    private LibraryItem buildItem(ItemParams params) {
+        switch (params.type()) {
+            case STR_MAGAZINE: return new Magazine(params.id(), params.title(), params.category(), params.year());
+            case STR_EBOOK: return new EBook(params.id(), params.title(), params.category(), params.year());
+            case STR_AUDIOBOOK: return new AudioBook(params.id(), params.title(), params.category(), params.year());
+            default: return new Book(params.id(), params.title(), params.category(), params.year());
         }
     }
 
     private LibraryItem selected() {
         LibraryItem item = table.getSelectionModel().getSelectedItem();
         if (item == null) {
-            Dialogs.warn(NO_SELECTION, "Please select an item in the table first.");
+            Dialogs.warn("No selection", "Please select an item in the table first.");
         }
         return item;
     }
@@ -235,7 +303,7 @@ public class ItemManagementPanel extends VBox {
     }
 
     private void clearForm() {
-        for (TextField f : List.of(idField, titleField, categoryField, yearField, copiesField, priceField)) {
+        for (TextField f : List.of(idField, titleField, categoryField, yearField, copiesField, priceField, extraField)) {
             f.clear();
         }
     }

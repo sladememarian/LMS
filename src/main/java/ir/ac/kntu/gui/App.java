@@ -15,6 +15,10 @@ import javafx.stage.Stage;
 @SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.UnnecessaryConstructor"})
 public class App extends Application {
 
+    public App() {
+        super();
+    }
+
     @Override
     public void start(Stage primaryStage) {
         // The initial view needs the navigator, and the navigator needs an

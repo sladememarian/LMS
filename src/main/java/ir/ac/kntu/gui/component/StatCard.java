@@ -10,6 +10,8 @@ import javafx.scene.layout.VBox;
  */
 public class StatCard extends VBox {
 
+    private final Label valueLabel;
+
     public StatCard(String caption, String value, String sub) {
         super(6);
         getStyleClass().add("stat-card");
@@ -19,7 +21,7 @@ public class StatCard extends VBox {
         Label captionLabel = new Label(caption);
         captionLabel.getStyleClass().add("stat-caption");
 
-        Label valueLabel = new Label(value);
+        valueLabel = new Label(value);
         valueLabel.getStyleClass().add("stat-value");
 
         getChildren().addAll(captionLabel, valueLabel);
@@ -28,5 +30,10 @@ public class StatCard extends VBox {
             subLabel.getStyleClass().add("muted");
             getChildren().add(subLabel);
         }
+    }
+
+    /** Updates the large value shown on the card. */
+    public void setValue(String value) {
+        valueLabel.setText(value);
     }
 }

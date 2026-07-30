@@ -3,6 +3,8 @@ package ir.ac.kntu.gui.view.loans;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import ir.ac.kntu.exception.InsufficientFundsException;
+import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
@@ -26,15 +28,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Regular-user Loans &amp; Reservations screen: active loans (with due day and
- * overdue status computed via the simulation clock) plus the user's reservations.
- * Return and extend actions reuse the existing services and run off the FX thread.
- */
 public class LoansReservationsPanel extends VBox {
 
+    private static final int EXTENSION_FEE = 25_000;
     private static final int EXTENSION_DAYS = 7;
-    private static final String GHOST_CLASS = "ghost";
+    private static final String GHOST_STYLE = "ghost";
     private static final String NO_SELECTION = "No selection";
 
     private final Persona persona;
@@ -88,7 +86,13 @@ public class LoansReservationsPanel extends VBox {
         status.setCellValueFactory(cell ->
                 new javafx.beans.property.SimpleStringProperty(
                         String.valueOf(cell.getValue().getStatus())));
-        reservationTable.getColumns().addAll(item, reserved, expires, status);
+        TableColumn<Reservation, Number> queue = new TableColumn<>("Queue #");
+        queue.setCellValueFactory(cell -> {
+            Reservation reservation = cell.getValue();
+            int pos = ReservationService.getQueuePosition(reservation.getReservationId(), reservation.getItemId());
+            return new javafx.beans.property.SimpleIntegerProperty(pos < 0 ? 0 : pos + 1);
+        });
+        reservationTable.getColumns().addAll(item, reserved, expires, queue, status);
         reservationTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         reservationTable.setPlaceholder(new Label("No reservations."));
         reservationTable.setPrefHeight(180);
@@ -96,11 +100,11 @@ public class LoansReservationsPanel extends VBox {
 
     private HBox loanActions() {
         Button returnBtn = new Button("Return selected");
-        returnBtn.getStyleClass().add(GHOST_CLASS);
+        returnBtn.getStyleClass().add(GHOST_STYLE);
         returnBtn.setOnAction(event -> handleReturn());
 
-        Button extendBtn = new Button("Extend (+" + EXTENSION_DAYS + " days)");
-        extendBtn.getStyleClass().add(GHOST_CLASS);
+        Button extendBtn = new Button("Extend (+" + EXTENSION_DAYS + " days, fee " + (EXTENSION_FEE + (int)(EXTENSION_FEE * 0.10)) + ")");
+        extendBtn.getStyleClass().add(GHOST_STYLE);
         extendBtn.setOnAction(event -> handleExtend());
 
         HBox box = new HBox(10, returnBtn, extendBtn);
@@ -110,7 +114,7 @@ public class LoansReservationsPanel extends VBox {
 
     private HBox reservationActions() {
         Button cancelBtn = new Button("Cancel reservation");
-        cancelBtn.getStyleClass().add(GHOST_CLASS);
+        cancelBtn.getStyleClass().add(GHOST_STYLE);
         cancelBtn.setOnAction(event -> handleCancelReservation());
         HBox box = new HBox(10, cancelBtn);
         box.setAlignment(Pos.CENTER_LEFT);
@@ -125,6 +129,17 @@ public class LoansReservationsPanel extends VBox {
         }
         String memberId = persona.getMemberId();
         String email = persona.getEmail();
+
+        if (!persona.hasBorrowed(row.getItemId())) {
+            Dialogs.warn("Not borrowed", "You have not borrowed that item.");
+            return;
+        }
+        LibraryItem item = LibraryService.getItemById(row.getItemId());
+        if (item == null) {
+            Dialogs.warn("Not found", "Item does not exist.");
+            return;
+        }
+
         BackgroundJobs.runAction(
                 () -> {
                     LibraryService.executeReturn(row.getItemId());
@@ -146,17 +161,57 @@ public class LoansReservationsPanel extends VBox {
             return;
         }
         String memberId = persona.getMemberId();
+        String extendError = extendValidationError(row);
+        if (extendError != null) {
+            Dialogs.warn("Cannot extend", extendError);
+            return;
+        }
+        int fee = EXTENSION_FEE;
+        int tax = (int) (fee * 0.10);
+        int total = fee + tax;
+        if (persona.getWalletBalance() < total) {
+            Dialogs.warn("Insufficient funds",
+                    "Insufficient funds. Required: " + total
+                    + ", available: " + persona.getWalletBalance());
+            return;
+        }
+        doExtendLoan(row, memberId, fee, total);
+    }
+
+    private String extendValidationError(LoanRow row) {
+        if (!persona.getUserProfile().canExtend()) {
+            return persona.getRole() + " cannot extend return dates.";
+        }
+        if (!persona.hasBorrowed(row.getItemId())) {
+            return "You have not borrowed that item.";
+        }
+        return null;
+    }
+
+    private void doExtendLoan(LoanRow row, String memberId, int fee, int total) {
         BackgroundJobs.run(
-                () -> LoanService.extendLoan(memberId, row.getItemId(), EXTENSION_DAYS),
+                () -> {
+                    FinanceService.proccessExtentionPayment(persona, fee);
+                    return LoanService.extendLoan(memberId, row.getItemId(), EXTENSION_DAYS);
+                },
                 ok -> {
                     if (Boolean.TRUE.equals(ok)) {
-                        Dialogs.info("Extended", "Loan extended by " + EXTENSION_DAYS + " days.");
+                        Dialogs.info("Extended",
+                                "Loan extended by " + EXTENSION_DAYS + " days (fee " + total + " charged).");
                         refresh();
                     } else {
                         Dialogs.warn("Not extended", "The loan could not be extended.");
                     }
                 },
-                error -> Dialogs.error("Extend failed", error));
+                error -> {
+                    if (error instanceof InsufficientFundsException) {
+                        Dialogs.warn("Insufficient funds",
+                                "Insufficient funds. Required: " + total
+                                + ", available: " + persona.getWalletBalance());
+                    } else {
+                        Dialogs.error("Extend failed", error);
+                    }
+                });
     }
 
     private void handleCancelReservation() {
@@ -203,7 +258,6 @@ public class LoansReservationsPanel extends VBox {
         return new LoanRow(loan.getItemId(), title, loan.getBorrowDay(), loan.getDueDay(), status);
     }
 
-    /** Row view-model for the loan table (public getters for PropertyValueFactory). */
     public static class LoanRow {
         private final String itemId;
         private final String itemTitle;

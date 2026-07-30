@@ -10,6 +10,13 @@ import ir.ac.kntu.gui.view.dashboard.DashboardPanel;
 import ir.ac.kntu.gui.view.library.LibrarySearchPanel;
 import ir.ac.kntu.gui.view.library.ItemManagementPanel;
 import ir.ac.kntu.gui.view.loans.LoansReservationsPanel;
+import ir.ac.kntu.gui.view.wallet.WalletPanel;
+import ir.ac.kntu.gui.view.support.SupportUserPanel;
+import ir.ac.kntu.gui.view.support.SupportInboxPanel;
+import ir.ac.kntu.gui.view.admin.UserManagementPanel;
+import ir.ac.kntu.gui.view.admin.SupportStaffPanel;
+import ir.ac.kntu.gui.view.admin.SystemSettingsPanel;
+import ir.ac.kntu.gui.view.admin.FinesPanel;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.sso.SessionManager;
@@ -127,32 +134,24 @@ public class AppShell implements View {
             items.add(new NavItem(DASHBOARD, () -> new DashboardPanel(persona)));
             items.add(new NavItem("Library / Search", LibrarySearchPanel::new));
             items.add(new NavItem(ITEM_MGMT, ItemManagementPanel::new));
-            items.add(new NavItem("User Management", () -> Placeholder.build("User Management",
-                    "List, search, edit and enable/disable users.")));
-            items.add(new NavItem("Support Staff", () -> Placeholder.build("Support-Staff Management",
-                    "Create, edit and assign responsibility areas for support staff.")));
-            items.add(new NavItem(FINES, () -> Placeholder.build(FINES,
-                    "Sorted, filterable TableView of indebted users (Streams-based).")));
+            items.add(new NavItem("User Management", () -> new UserManagementPanel(persona)));
+            items.add(new NavItem("Support Staff", () -> new SupportStaffPanel(persona)));
+            items.add(new NavItem(FINES, FinesPanel::new));
             items.add(new NavItem("Analytics", () -> Placeholder.build("Analytics",
                     "Top-10 borrowed items (BarChart) and monthly fine revenue (LineChart).")));
-            items.add(new NavItem("System Settings", () -> Placeholder.build("System Settings",
-                    "Modify core system parameters.")));
+            items.add(new NavItem("System Settings", () -> new SystemSettingsPanel(persona)));
         } else if (role == UserRole.CALLCENTER) {
             items.add(new NavItem(DASHBOARD, () -> new DashboardPanel(persona)));
-            items.add(new NavItem("Support Inbox", () -> Placeholder.build("Support Inbox",
-                    "View, reply to and close support tickets.")));
+            items.add(new NavItem("Support Inbox", () -> new SupportInboxPanel(persona)));
             items.add(new NavItem(ITEM_MGMT, ItemManagementPanel::new));
-            items.add(new NavItem(FINES, () -> Placeholder.build(FINES,
-                    "Indebted users in a sortable, date-filterable TableView (Streams-based).")));
+            items.add(new NavItem(FINES, FinesPanel::new));
         } else {
             // Regular users: STUDENT, TEACHER, GUEST
             items.add(new NavItem(DASHBOARD, () -> new DashboardPanel(persona)));
             items.add(new NavItem("Library / Search", LibrarySearchPanel::new));
             items.add(new NavItem("Loans & Reservations", () -> new LoansReservationsPanel(persona)));
-            items.add(new NavItem("Wallet", () -> Placeholder.build("Wallet & Transactions",
-                    "Balance, top-ups, paying debt and full transaction history.")));
-            items.add(new NavItem("Support", () -> Placeholder.build("Support",
-                    "Create support tickets and track their status.")));
+            items.add(new NavItem("Wallet", () -> new WalletPanel(persona)));
+            items.add(new NavItem("Support", () -> new SupportUserPanel(persona)));
         }
 
         // Shared for every role:

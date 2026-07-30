@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.finance.Transaction;
 import ir.ac.kntu.gui.component.StatCard;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
@@ -18,16 +19,21 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.support.SupportService;
 import ir.ac.kntu.support.SupportTicket;
+import ir.ac.kntu.support.rolerequest.RoleRequest;
+import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import ir.ac.kntu.util.PersonaRepository;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -140,7 +146,47 @@ public class DashboardPanel extends StackPane {
                 new StatCard("Fine revenue", taxRevenue + " ", "collected"),
                 new StatCard("Outstanding debt", outstanding + " ", "unpaid across users"));
 
-        // Top-10 most-borrowed items, extracted from loan history via Streams.
+        HBox clockRow = buildClockRow();
+        VBox requestsBox = buildRequestsBox();
+        BarChart<String, Number> chart = buildTopBorrowedChart();
+
+        return page("Admin Dashboard", cards, clockRow, requestsBox, chart);
+    }
+
+    private HBox buildClockRow() {
+        Button advanceBtn = new Button("Advance one simulated day");
+        advanceBtn.getStyleClass().add("btn-primary");
+        Label clockLabel = new Label("Day " + SimulationClock.getCurrentDay()
+                + " (" + SimulationClock.formatCurrentDate() + ")");
+        clockLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14;");
+        advanceBtn.setOnAction(e -> advanceDay());
+        HBox clockRow = new HBox(12, clockLabel, advanceBtn);
+        clockRow.setAlignment(Pos.CENTER_LEFT);
+        return clockRow;
+    }
+
+    private VBox buildRequestsBox() {
+        VBox requestsBox = new VBox(8);
+        requestsBox.setPadding(new Insets(12, 0, 0, 0));
+        Label requestsHeading = new Label("Pending Role Requests");
+        requestsHeading.getStyleClass().add("h3");
+        List<RoleRequest> pending = RoleRequestService.getPending();
+        if (pending.isEmpty()) {
+            requestsBox.getChildren().add(new Label("No pending requests."));
+        } else {
+            for (RoleRequest req : pending) {
+                Label reqLabel = new Label(req.getRequestId() + " | "
+                        + req.getRequesterEmail() + " -> " + req.getRequestedRole());
+                if (req.getMessage() != null && !req.getMessage().isBlank()) {
+                    reqLabel.setText(reqLabel.getText() + " : " + req.getMessage());
+                }
+                requestsBox.getChildren().add(reqLabel);
+            }
+        }
+        return requestsBox;
+    }
+
+    private BarChart<String, Number> buildTopBorrowedChart() {
         Map<String, Long> borrowCounts = LoanService.getLoans().stream()
                 .collect(Collectors.groupingBy(Loan::getItemId, Collectors.counting()));
 
@@ -157,8 +203,7 @@ public class DashboardPanel extends StackPane {
             series.getData().add(new XYChart.Data<>(label, entry.getValue()));
         });
         chart.getData().add(series);
-
-        return page("Admin Dashboard", cards, chart);
+        return chart;
     }
 
     // -------------------------------------------------------------- Helpers --
@@ -189,12 +234,23 @@ public class DashboardPanel extends StackPane {
         return box;
     }
 
-    private static boolean isResolved(String status) {
-        String normalized = normalise(status);
+    private static boolean isResolved(String rawStatus) {
+        String normalized = normalise(rawStatus);
         return normalized.equals("resolved") || normalized.equals("closed") || normalized.equals("done");
     }
 
     private static String normalise(String status) {
         return status == null ? "unknown" : status.trim().toLowerCase();
+    }
+
+    private void advanceDay() {
+        BackgroundJobs.runAction(
+                () -> {
+                    int newDay = SimulationClock.advanceDay();
+                    LoanService.accrueOverdueDebts(newDay);
+                    ReservationService.expireReservations(newDay);
+                },
+                this::loadAsync,
+                error -> Dialogs.error("Advance day failed", error));
     }
 }

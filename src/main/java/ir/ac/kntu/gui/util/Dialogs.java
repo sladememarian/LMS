@@ -3,9 +3,11 @@ package ir.ac.kntu.gui.util;
 import java.util.Optional;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 
 /**
  * Small helper for user-facing notifications. Phase-3 requires that errors,
@@ -44,6 +46,15 @@ public final class Dialogs {
         alert.setHeaderText(header);
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && ButtonType.YES.equals(result.get());
+    }
+
+    public static Optional<ButtonType> custom(String title, String header, Node content) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(title);
+        dialog.setHeaderText(header);
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        return dialog.showAndWait();
     }
 
     private static void show(AlertType type, String title, String header, String message) {

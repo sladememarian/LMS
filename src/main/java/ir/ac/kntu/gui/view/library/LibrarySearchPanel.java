@@ -13,6 +13,8 @@ import ir.ac.kntu.library.LibraryService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserProfile;
+import ir.ac.kntu.reservation.ReservationService;
+import ir.ac.kntu.util.SystemSettingsService;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -44,8 +46,6 @@ import javafx.util.Duration;
 public class LibrarySearchPanel extends BorderPane {
 
     private static final int PAGE_SIZE = 10;
-    private static final String TITLE_COL = "Title";
-    private static final String NO_SELECTION = "No selection";
 
     private final TextField searchField = new TextField();
     private final ProgressIndicator spinner = new ProgressIndicator();
@@ -105,7 +105,7 @@ public class LibrarySearchPanel extends BorderPane {
     private void buildTable() {
         TableColumn<LibraryItem, String> id = new TableColumn<>("ID");
         id.setCellValueFactory(new PropertyValueFactory<>("itemId"));
-        TableColumn<LibraryItem, String> title = new TableColumn<>(TITLE_COL);
+        TableColumn<LibraryItem, String> title = new TableColumn<>("Title");
         title.setCellValueFactory(new PropertyValueFactory<>("title"));
         title.setPrefWidth(260);
         TableColumn<LibraryItem, String> type = new TableColumn<>("Type");
@@ -128,7 +128,7 @@ public class LibrarySearchPanel extends BorderPane {
     private void handleBorrow() {
         LibraryItem item = table.getSelectionModel().getSelectedItem();
         if (item == null) {
-            Dialogs.warn(NO_SELECTION, "Select an item to borrow.");
+            Dialogs.warn("No selection", "Select an item to borrow.");
             return;
         }
         Persona user = Persona.getCurrentUser();
@@ -136,31 +136,68 @@ public class LibrarySearchPanel extends BorderPane {
             Dialogs.warn("Not signed in", "You must be signed in to borrow.");
             return;
         }
-        // Role-based borrow permission & limit (mirrors LibraryMemberConsole.canBorrow)
+        String error = borrowValidationError(user, item);
+        if (error != null) {
+            Dialogs.warn("Cannot borrow", error);
+            return;
+        }
+        String itemId = item.getItemId();
+        LibraryItem freshItem = LibraryService.getItemById(itemId);
+        if (freshItem == null) {
+            Dialogs.warn("Not found", "Item not found.");
+            return;
+        }
+        int walkInAvailable = ReservationService.getWalkInAvailableCopies(
+                itemId, user.getMemberId(), freshItem.getAvailableCopies());
+        if (walkInAvailable <= 0) {
+            showUnavailable(itemId);
+            return;
+        }
+        doBorrowLoan(user, freshItem, itemId);
+    }
+
+    private String borrowValidationError(Persona user, LibraryItem item) {
         UserProfile profile = user.getUserProfile();
         if (!profile.canBorrow()) {
-            Dialogs.warn("Borrowing not allowed", "Your role (" + profile.dashboardLabel() + ") cannot borrow items.");
-            return;
+            return "Your role (" + profile.dashboardLabel() + ") cannot borrow items.";
         }
         if (user.getBorrowCount() >= profile.borrowLimit()) {
-            Dialogs.warn("Borrow limit reached", "Borrow limit reached for role " + profile.dashboardLabel() + ".");
-            return;
+            return "Borrow limit reached for role " + profile.dashboardLabel() + ".";
         }
+        if (user.hasBorrowed(item.getItemId())) {
+            return "You already have this item.";
+        }
+        return null;
+    }
+
+    private void showUnavailable(String itemId) {
+        java.util.List<String> holders = ReservationService.getActiveReservationHolders(itemId);
+        if (holders.isEmpty()) {
+            Dialogs.warn("Unavailable", "All copies are currently checked out.");
+        } else {
+            Dialogs.warn("Unavailable",
+                    "This copy is being held for " + holders.size() + " reservation(s).");
+        }
+    }
+
+    private void doBorrowLoan(Persona user, LibraryItem freshItem, String itemId) {
         String memberId = user.getMemberId();
         String email = user.getEmail();
         int today = SimulationClock.getCurrentDay();
+        int loanPeriodDays = Math.min(freshItem.borrowPeriod(), SystemSettingsService.getBorrowDays());
         BackgroundJobs.runAction(
                 () -> {
                     if (!FinanceService.checkBorrowingPermission(memberId)) {
                         throw new IllegalStateException(
                                 "Borrowing blocked: settle outstanding debt first.");
                     }
-                    LibraryService.executeBorrow(item.getItemId());
-                    PersonaService.recordBorrow(email, item.getItemId());
-                    LoanService.recordLoan(memberId, item.getItemId(), today, item.borrowPeriod());
+                    LibraryService.executeBorrow(itemId);
+                    PersonaService.recordBorrow(email, itemId);
+                    LoanService.recordLoan(memberId, itemId, today, loanPeriodDays);
+                    ReservationService.completeReservation(memberId, itemId);
                 },
                 () -> {
-                    Dialogs.info("Borrowed", "\"" + item.getTitle() + "\" borrowed successfully.");
+                    Dialogs.info("Borrowed", "\"" + freshItem.getTitle() + "\" borrowed successfully.");
                     runSearch(searchField.getText());
                 },
                 error -> Dialogs.error("Borrow failed", error));
