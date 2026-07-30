@@ -1,11 +1,16 @@
+stages:
+  - test
+
 java:
   stage: test
+  image: openjdk:17
   tags:
     - local
   script:
-    - ./gradlew clean test -Dtestfx.headless=true -Dtestfx.robot=glass -Dprism.order=sw -Dprism.text=t2k -Djava.awt.headless=true
+    - ./gradlew clean test
   artifacts:
     when: always
+    reports:
+      junit: build/test-results/test/TEST-*.xml
     paths:
-      - "build/test-results/test/TEST-*.xml"
-      - "build/reports/tests/test"
+      - build/reports/tests/test
