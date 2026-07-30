@@ -1,11 +1,18 @@
+stages:
+  - test
+
 java:
   stage: test
+  image: openjdk:17
   tags:
     - local
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq xvfb libgtk-3-0 libx11-xcb1 libxcb-dri3-0 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libgdk-pixbuf2.0-0
   script:
-    - ./gradlew clean test
+    - xvfb-run -a -s "-screen 0 1920x1080x24" ./gradlew clean test
   artifacts:
     when: always
+    reports:
+      junit: build/test-results/test/TEST-*.xml
     paths:
-      - "build/test-results/test/TEST-*.xml"
-      - "build/reports/tests/test"
+      - build/reports/tests/test
