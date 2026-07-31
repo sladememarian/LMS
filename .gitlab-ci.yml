@@ -7,7 +7,9 @@ java:
   tags:
     - local
   script:
-    - ./gradlew clean test
+    # GUI (TestFX) tests need a display and fail on the shared shell runner;
+    # -PskipGuiTests excludes them so only unit + style tests run here.
+    - ./gradlew clean test -PskipGuiTests
   artifacts:
     when: always
     reports:

@@ -71,9 +71,12 @@ test {
     environment 'JDBC_URL', 'jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1'
     environment 'JDBC_USER', 'sa'
     environment 'JDBC_PASSWORD', ''
-    systemProperty 'testfx.headless', 'true'
-    systemProperty 'testfx.robot', 'glass'
-    systemProperty 'prism.order', 'sw'
-    systemProperty 'prism.text', 't2k'
-    systemProperty 'java.awt.headless', 'true'
+    // CI (university GitLab shell runner) cannot run TestFX GUI tests, so they
+    // are skipped there via `-PskipGuiTests`. Locally, `./gradlew clean test`
+    // still runs everything including the GUI tests (headed).
+    if (project.hasProperty('skipGuiTests')) {
+        filter {
+            excludeTestsMatching 'ir.ac.kntu.gui.*'
+        }
+    }
 }
