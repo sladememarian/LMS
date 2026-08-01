@@ -1,7 +1,9 @@
 package ir.ac.kntu.finance;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.exception.InsufficientFundsException;
 import ir.ac.kntu.exception.ValidationException;
@@ -27,17 +29,10 @@ public class FinanceService {
 
     public static int getOutstandingDebt(String memberId) {
         ensureLoaded();
-        int debt = 0;
-        for (Transaction tx : TX_LOGS) {
-            if (tx.getMemberId().equals(memberId)) {
-                if (TYPE_DEBT.equals(tx.getType())) {
-                    debt += tx.getAmount();
-                } else if (TYPE_DEBT_PAYMENT.equals(tx.getType())) {
-                    debt -= tx.getAmount();
-                }
-            }
-        }
-        return debt;
+        return TX_LOGS.stream()
+                .filter(tx -> tx.getMemberId() != null && tx.getMemberId().equals(memberId))
+                .mapToInt(FinanceService::signedDebt)
+                .sum();
     }
 
     public static void proccessWalletCharge(Persona persona, int amount) {
@@ -76,67 +71,58 @@ public class FinanceService {
 
     public static List<Transaction> getTransactionsForMember(String memberId) {
         ensureLoaded();
-        List<Transaction> result = new ArrayList<>();
-        for (Transaction tx : TX_LOGS) {
-            if (tx.getMemberId() != null && tx.getMemberId().equals(memberId)) {
-                result.add(tx);
-            }
-        }
-        result.sort((left, right) -> Long.compare(left.getTimestamp(), right.getTimestamp()));
-        return result;
+        return TX_LOGS.stream()
+                .filter(tx -> tx.getMemberId() != null && tx.getMemberId().equals(memberId))
+                .sorted(Comparator.comparingLong(Transaction::getTimestamp))
+                .collect(Collectors.toList());
     }
 
     public static List<Transaction> getAllTransactions() {
         ensureLoaded();
-        List<Transaction> all = new ArrayList<>(TX_LOGS);
-        all.sort((left, right) -> Long.compare(left.getTimestamp(), right.getTimestamp()));
-        return all;
+        return TX_LOGS.stream()
+                .sorted(Comparator.comparingLong(Transaction::getTimestamp))
+                .collect(Collectors.toList());
     }
 
     public static int getTotalOutstandingDebt() {
         ensureLoaded();
-        int total = 0;
-        for (Transaction tx : TX_LOGS) {
-            if (TYPE_DEBT.equals(tx.getType())) {
-                total += tx.getAmount();
-            } else if (TYPE_DEBT_PAYMENT.equals(tx.getType())) {
-                total -= tx.getAmount();
-            }
-        }
-        return total;
+        return TX_LOGS.stream()
+                .mapToInt(FinanceService::signedDebt)
+                .sum();
     }
 
     public static List<Transaction> getDebtAndPaymentTransactions() {
         ensureLoaded();
-        List<Transaction> result = new ArrayList<>();
-        for (Transaction tx : TX_LOGS) {
-            if (TYPE_DEBT.equals(tx.getType()) || TYPE_DEBT_PAYMENT.equals(tx.getType())) {
-                result.add(tx);
-            }
-        }
-        return result;
+        return TX_LOGS.stream()
+                .filter(tx -> TYPE_DEBT.equals(tx.getType()) || TYPE_DEBT_PAYMENT.equals(tx.getType()))
+                .collect(Collectors.toList());
     }
 
     public static List<Transaction> getOpenDebtTransactions() {
         ensureLoaded();
-        List<Transaction> result = new ArrayList<>();
-        for (Transaction tx : TX_LOGS) {
-            if (TYPE_DEBT.equals(tx.getType())) {
-                result.add(tx);
-            }
-        }
-        return result;
+        return TX_LOGS.stream()
+                .filter(tx -> TYPE_DEBT.equals(tx.getType()))
+                .collect(Collectors.toList());
     }
 
     public static int getTaxRevenueCollected() {
         ensureLoaded();
-        int total = 0;
-        for (Transaction tx : TX_LOGS) {
-            if (TYPE_TAX.equals(tx.getType())) {
-                total += tx.getAmount();
-            }
+        return TX_LOGS.stream()
+                .filter(tx -> TYPE_TAX.equals(tx.getType()))
+                .mapToInt(Transaction::getAmount)
+                .sum();
+    }
+
+    // Signed contribution of a transaction to outstanding debt: DEBT adds,
+    // DEBT_PAYMENT subtracts, everything else is neutral.
+    private static int signedDebt(Transaction tx) {
+        if (TYPE_DEBT.equals(tx.getType())) {
+            return tx.getAmount();
         }
-        return total;
+        if (TYPE_DEBT_PAYMENT.equals(tx.getType())) {
+            return -tx.getAmount();
+        }
+        return 0;
     }
 
     public static void recordDebt(Persona persona, int amount, String description) {
