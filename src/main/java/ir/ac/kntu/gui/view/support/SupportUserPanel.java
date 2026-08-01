@@ -133,7 +133,9 @@ public class SupportUserPanel extends VBox {
         requestBtn.getStyleClass().add("primary");
         requestBtn.setOnAction(e -> handleRoleRequest(targetRoleBox.getValue(), messageArea));
 
-        VBox section = new VBox(8, new Label("Request Role Upgrade"),
+        Label sectionTitle = new Label("Request Role Upgrade");
+        sectionTitle.getStyleClass().add("h2");
+        VBox section = new VBox(8, sectionTitle,
                 targetRoleBox, messageArea, requestBtn);
         section.getStyleClass().add("card");
         section.setPadding(new Insets(16));
