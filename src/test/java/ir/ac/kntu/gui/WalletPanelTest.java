@@ -37,9 +37,7 @@ public class WalletPanelTest extends ApplicationTest {
     }
 
     private void loginAsStudent() {
-        clickOn("#emailField").write("student1@system.local");
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
+        GuiTestSupport.signIn(this, "student1@system.local");
     }
 
     @BeforeEach

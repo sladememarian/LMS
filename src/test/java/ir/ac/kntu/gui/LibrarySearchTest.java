@@ -16,9 +16,7 @@ import org.testfx.framework.junit5.Start;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(ApplicationExtension.class)
 public class LibrarySearchTest extends ApplicationTest {
@@ -50,16 +48,6 @@ public class LibrarySearchTest extends ApplicationTest {
         assertNotNull(all);
     }
 
-    @Test
-    public void testSignInOpensSearchAfterLogin() {
-        clickOn("#emailField").write("admin@system.local");
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
-        // AppShell sidebar should be visible after login
-        assertNotNull(lookup(".sidebar").query());
-        // Navigate to Library / Search
-        clickOn("Library / Search");
-        // The search heading should appear
-        assertNotNull(lookup("Library & Search").query());
-    }
+    // The admin-login smoke path (sign in → open Library / Search) is covered by
+    // AdminTabsSmokeTest, which signs in once and sweeps every admin tab.
 }

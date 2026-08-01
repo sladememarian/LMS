@@ -43,9 +43,7 @@ public class SupportInboxPanelTest extends ApplicationTest {
     }
 
     private void loginAsCallCenter() {
-        clickOn("#emailField").write("callcenter@system.local");
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
+        GuiTestSupport.signIn(this, "callcenter@system.local");
     }
 
     @Test

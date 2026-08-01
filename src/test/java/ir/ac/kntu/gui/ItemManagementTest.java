@@ -50,14 +50,6 @@ public class ItemManagementTest extends ApplicationTest {
         assertNotNull(panel);
     }
 
-    @Test
-    public void testAdminCanAccessItemManagement() {
-        clickOn("#emailField").write("admin@system.local");
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
-        // Click on Item Management in sidebar
-        clickOn("Item Management");
-        // The panel should render (heading or table)
-        assertNotNull(lookup("Item Management").query());
-    }
+    // The admin-login smoke path (sign in → open Item Management) is covered by
+    // AdminTabsSmokeTest, which signs in once and sweeps every admin tab.
 }

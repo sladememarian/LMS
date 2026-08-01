@@ -71,8 +71,6 @@ public class ShellNavigationTest extends ApplicationTest {
     }
 
     private void signInWithMasterKey(String email) {
-        clickOn("#emailField").write(email);
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
+        GuiTestSupport.signIn(this, email);
     }
 }

@@ -64,10 +64,9 @@ public class AuthFlowTest extends ApplicationTest {
 
     @Test
     public void testMasterKeyLoginNavigatesToHome() {
-        clickOn("#emailField").write("admin@system.local");
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
-        // After successful login, the login screen is replaced by the AppShell sidebar
+        // Full flow: master-key credentials, then the 2FA dialog answered with
+        // the master OTP. Only after verification does the AppShell appear.
+        GuiTestSupport.signIn(this, "admin@system.local");
         verifyThat(".sidebar", NodeMatchers.isVisible());
     }
 }

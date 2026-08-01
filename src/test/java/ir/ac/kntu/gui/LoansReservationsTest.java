@@ -45,13 +45,6 @@ public class LoansReservationsTest extends ApplicationTest {
         assertNotNull(panel);
     }
 
-    @Test
-    public void testUserCanAccessLoansReservationsAfterLogin() {
-        clickOn("#emailField").write("admin@system.local");
-        clickOn("#passwordField").write("bid");
-        clickOn("#loginButton");
-        // Admin has "Item Management" in sidebar
-        clickOn("Item Management");
-        assertNotNull(lookup("Item Management").query());
-    }
+    // The admin-login smoke path (sign in → open a tab) is covered by
+    // AdminTabsSmokeTest, which signs in once and sweeps every admin tab.
 }
