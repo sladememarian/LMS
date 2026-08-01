@@ -9,6 +9,7 @@ import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.Transaction;
 import ir.ac.kntu.gui.component.StatCard;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
+import ir.ac.kntu.gui.util.CardValidator;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
@@ -19,6 +20,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -48,6 +50,9 @@ public class WalletPanel extends VBox {
     private final PasswordField cvvField = new PasswordField();
     private final TextField expiryField = new TextField();
     private final TableView<Transaction> table = new TableView<>();
+    private final Button topUp = new Button("Top up");
+    private final Button payDebt = new Button("Pay debt");
+    private final ProgressIndicator actionProgress = new ProgressIndicator();
 
     public WalletPanel(Persona persona) {
         super(16);
@@ -97,19 +102,29 @@ public class WalletPanel extends VBox {
         expiryField.setPromptText("Expiry (MM/YY)");
         expiryField.getStyleClass().add(FIELD_STYLE);
 
-        Button topUp = new Button("Top up");
+        Button topUp = this.topUp;
         topUp.getStyleClass().add("primary");
         topUp.setOnAction(event -> handleTopUp());
 
-        Button payDebt = new Button("Pay debt");
+        Button payDebt = this.payDebt;
         payDebt.getStyleClass().add("ghost");
         payDebt.setOnAction(event -> handlePayDebt());
 
+        actionProgress.setMaxSize(18, 18);
+        actionProgress.setVisible(false);
+
         HBox row1 = new HBox(10, amountField, cardField, holderField);
         row1.setAlignment(Pos.CENTER_LEFT);
-        HBox row2 = new HBox(10, cvvField, expiryField, topUp, payDebt);
+        HBox row2 = new HBox(10, cvvField, expiryField, topUp, payDebt, actionProgress);
         row2.setAlignment(Pos.CENTER_LEFT);
         return new VBox(8, row1, row2);
+    }
+
+    /** Toggles the small inline spinner and disables the action buttons. */
+    private void setActionBusy(boolean busy) {
+        actionProgress.setVisible(busy);
+        topUp.setDisable(busy);
+        payDebt.setDisable(busy);
     }
 
     private void handleTopUp() {
@@ -125,14 +140,19 @@ public class WalletPanel extends VBox {
             return;
         }
         String card = cardField.getText() == null ? "" : cardField.getText().trim();
+        String holder = holderField.getText() == null ? "" : holderField.getText().trim();
         String cvv = cvvField.getText() == null ? "" : cvvField.getText().trim();
-        if (!validCard(card, cvv)) {
-            Dialogs.warn("Invalid card", "Card must have at least 12 digits and CVV must be 3 digits.");
+        String expiry = expiryField.getText() == null ? "" : expiryField.getText().trim();
+        if (!CardValidator.isValidCard(card, holder, cvv, expiry)) {
+            Dialogs.warn("Invalid card",
+                    "Enter a 16-digit card number, card holder, 3–4 digit CVV and MM/YY expiry.");
             return;
         }
+        setActionBusy(true);
         BackgroundJobs.runAction(
                 () -> FinanceService.proccessWalletCharge(persona, amount),
                 () -> {
+                    setActionBusy(false);
                     amountField.clear();
                     cardField.clear();
                     holderField.clear();
@@ -141,22 +161,25 @@ public class WalletPanel extends VBox {
                     Dialogs.info("Top up complete", "Wallet charged by " + amount + ".");
                     refresh();
                 },
-                error -> Dialogs.error("Top up failed", error));
-    }
-
-    private static boolean validCard(String card, String cvv) {
-        String digits = card == null ? "" : card.replace("-", "");
-        return digits.length() >= 12 && digits.matches("\\d+") && cvv != null && cvv.length() == 3;
+                error -> {
+                    setActionBusy(false);
+                    Dialogs.error("Top up failed", error);
+                });
     }
 
     private void handlePayDebt() {
+        setActionBusy(true);
         BackgroundJobs.runAction(
                 () -> FinanceService.payDebt(persona),
                 () -> {
+                    setActionBusy(false);
                     Dialogs.info("Debt paid", "Your outstanding debt has been cleared.");
                     refresh();
                 },
-                error -> Dialogs.error("Payment failed", error));
+                error -> {
+                    setActionBusy(false);
+                    Dialogs.error("Payment failed", error);
+                });
     }
 
     private void refresh() {
