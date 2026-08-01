@@ -12,6 +12,13 @@ java {
     sourceCompatibility = '17'
 }
 
+// Force UTF-8 for compilation. Without this, javac uses the platform default
+// (Cp1252 on Windows), which mangles non-ASCII source characters (e.g. the
+// em-dash in window titles) into mojibake at compile time.
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 javafx {
     version = '21.0.2'
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.graphics', 'javafx.base']
