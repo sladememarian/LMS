@@ -22,6 +22,14 @@ communicate for every flow of the application.
 | [util.md](util.md) | ConsoleColor, ConsoleMenu, EnvConfig, Validator |
 | [db.md](db.md) | Database schema, connection flow, Docker integration |
 
+## Phase 3 — JavaFX GUI
+| Doc | Topic |
+|-----|-------|
+| [gui.md](gui.md) | GUI walkthrough, theming, and the backend-unchanged proof |
+| [signup_queue.md](signup_queue.md) | Async sign-up: disk-backed producer/consumer message queue |
+| [threads.md](threads.md) | Background-threading model (`BackgroundJobs`) |
+| [reports.md](reports.md) | Admin/callcenter report tables and their backend sources |
+
 ## Data
 - [mock_data.md](mock_data.md) — seeded suppliers, items, and default accounts.
 
