@@ -86,7 +86,11 @@ public class LibrarySearchPanel extends BorderPane {
         borrowBtn.getStyleClass().add("primary");
         borrowBtn.setOnAction(event -> handleBorrow());
 
-        HBox searchRow = new HBox(10, searchField, borrowBtn, spinner);
+        Button reserveBtn = new Button("Reserve selected");
+        reserveBtn.getStyleClass().add("ghost");
+        reserveBtn.setOnAction(event -> handleReserve());
+
+        HBox searchRow = new HBox(10, searchField, borrowBtn, reserveBtn, spinner);
         searchRow.setAlignment(Pos.CENTER_LEFT);
 
         VBox header = new VBox(12, heading, searchRow, resultCount);
@@ -154,6 +158,47 @@ public class LibrarySearchPanel extends BorderPane {
             return;
         }
         doBorrowLoan(user, freshItem, itemId);
+    }
+
+    /** Reserves the selected item for the signed-in user (background thread). */
+    private void handleReserve() {
+        LibraryItem item = table.getSelectionModel().getSelectedItem();
+        if (item == null) {
+            Dialogs.warn("No selection", "Select an item to reserve.");
+            return;
+        }
+        Persona user = Persona.getCurrentUser();
+        if (user == null) {
+            Dialogs.warn("Not signed in", "You must be signed in to reserve.");
+            return;
+        }
+        String memberId = user.getMemberId();
+        String itemId = item.getItemId();
+        String title = item.getTitle();
+        int today = SimulationClock.getCurrentDay();
+        BackgroundJobs.run(
+                () -> ReservationService.reserve(memberId, itemId, today),
+                reservation -> {
+                    announceReservation(title, reservation);
+                    runSearch(searchField.getText());
+                },
+                error -> Dialogs.error("Reservation failed", error));
+    }
+
+    /** Reports whether the reservation is ready now (ACTIVE) or queued (WAITING). */
+    private void announceReservation(String title, ir.ac.kntu.reservation.Reservation reservation) {
+        if (reservation.isActive()) {
+            Dialogs.info("Reserved",
+                    "\"" + title + "\" is ready for pickup. Pick up by day "
+                            + reservation.getExpiresOnDay() + ".");
+            return;
+        }
+        int position = ReservationService.getQueuePosition(
+                reservation.getReservationId(), reservation.getItemId());
+        String place = position > 0 ? " You are #" + position + " in the queue." : "";
+        Dialogs.info("Reserved",
+                "\"" + title + "\" is currently out. You have been added to the waiting list."
+                        + place);
     }
 
     private String borrowValidationError(Persona user, LibraryItem item) {

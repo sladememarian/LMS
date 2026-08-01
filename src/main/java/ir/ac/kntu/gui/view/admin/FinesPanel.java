@@ -2,12 +2,12 @@ package ir.ac.kntu.gui.view.admin;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
+import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.finance.Transaction;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
@@ -108,19 +108,9 @@ public class FinesPanel extends VBox {
 
     private void handleOverdue() {
         BackgroundJobs.run(
-                () -> {
-                    List<Loan> allLoans = LoanService.getLoans();
-                    int today = ir.ac.kntu.finance.SimulationClock.getCurrentDay();
-                    List<Loan> overdueList = new ArrayList<>();
-                    if (allLoans != null) {
-                        for (Loan l : allLoans) {
-                            if (l.getDueDay() < today) {
-                                overdueList.add(l);
-                            }
-                        }
-                    }
-                    return overdueList;
-                },
+                // Delegate to the backend's canonical overdue check instead of
+                // re-implementing the day comparison in the GUI.
+                () -> LoanService.getOverdueLoans(SimulationClock.getCurrentDay()),
                 list -> {
                     StringBuilder sb = new StringBuilder();
                     if (list == null || list.isEmpty()) {

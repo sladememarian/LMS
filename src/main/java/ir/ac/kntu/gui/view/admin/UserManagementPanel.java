@@ -4,16 +4,15 @@ import java.util.ArrayList;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
+import ir.ac.kntu.util.Validator;
 import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
-import ir.ac.kntu.util.Validator;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -30,16 +29,16 @@ import javafx.scene.layout.VBox;
  */
 public class UserManagementPanel extends VBox {
 
-    private final Persona actor;
-    private final TextField searchField = new TextField();
-    private final TableView<Persona> table = new TableView<>();
-    private final TextField createEmailField = new TextField();
-    private final TextField createPasswordField = new TextField();
-
     private static final String GHOST_STYLE = "ghost";
     private static final String FIELD_STYLE = "field";
     private static final String LABEL_EDIT_PROFILE = "Edit profile";
     private static final String LABEL_INVALID_ROLE = "Invalid role";
+
+    private final Persona actor;
+    private final TextField searchField = new TextField();
+    private final TextField createEmailField = new TextField();
+    private final TextField createPasswordField = new TextField();
+    private final TableView<Persona> table = new TableView<>();
 
     public UserManagementPanel(Persona actor) {
         super(16);
@@ -51,11 +50,11 @@ public class UserManagementPanel extends VBox {
         heading.getStyleClass().add("h1");
 
         searchField.setPromptText("Search users…");
-        searchField.getStyleClass().add(FIELD_STYLE);
+        searchField.getStyleClass().add("field");
         searchField.textProperty().addListener((obs, old, val) -> refresh(val));
 
         buildTable();
-        getChildren().addAll(heading, buildCreateForm(), searchField, actions(), table);
+        getChildren().addAll(heading, searchField, actions(), buildCreateForm(), table);
         VBox.setVgrow(table, Priority.ALWAYS);
         refresh("");
     }
@@ -79,53 +78,19 @@ public class UserManagementPanel extends VBox {
         table.setPlaceholder(new Label("No users."));
     }
 
-    private HBox actions() {
-        Button toggle = new Button("Toggle active");
-        toggle.getStyleClass().add(GHOST_STYLE);
-        toggle.setOnAction(event -> handleToggle());
-
-        Button resetPw = new Button("Reset password");
-        resetPw.getStyleClass().add(GHOST_STYLE);
-        resetPw.setOnAction(event -> handleResetPassword());
-
-        Button delete = new Button("Delete");
-        delete.getStyleClass().add(GHOST_STYLE);
-        delete.setOnAction(event -> handleDelete());
-
-        Button promote = new Button("Promote");
-        promote.getStyleClass().add(GHOST_STYLE);
-        promote.setOnAction(event -> handlePromote());
-
-        Button demote = new Button("Demote");
-        demote.getStyleClass().add(GHOST_STYLE);
-        demote.setOnAction(event -> handleDemote());
-
-        Button editProfile = new Button("Edit profile");
-        editProfile.getStyleClass().add(GHOST_STYLE);
-        editProfile.setOnAction(event -> handleEditProfile());
-
-        HBox box = new HBox(10, toggle, resetPw, delete, promote, demote, editProfile);
-        box.setAlignment(Pos.CENTER_LEFT);
-        return box;
-    }
-
     private HBox buildCreateForm() {
-        createEmailField.setPromptText("New user email");
+        createEmailField.setPromptText("New admin email");
         createEmailField.getStyleClass().add(FIELD_STYLE);
         createPasswordField.setPromptText("Temp password");
         createPasswordField.getStyleClass().add(FIELD_STYLE);
 
-        ComboBox<UserRole> roleBox = new ComboBox<>(
-                FXCollections.observableArrayList(UserRole.ADMIN, UserRole.CALLCENTER));
-        roleBox.getSelectionModel().selectFirst();
-
-        Button createBtn = new Button("Create " + roleBox.getValue());
-        roleBox.valueProperty().addListener((obs, old, val) ->
-                createBtn.setText("Create " + val));
+        // Callcenter agents are created in the dedicated Callcenter panel, so
+        // this form only creates admins (no role picker / "make callcenter").
+        Button createBtn = new Button("Create admin");
         createBtn.getStyleClass().add("primary");
-        createBtn.setOnAction(e -> handleCreateUser(roleBox.getValue()));
+        createBtn.setOnAction(e -> handleCreateUser(UserRole.ADMIN));
 
-        HBox box = new HBox(10, createEmailField, createPasswordField, roleBox, createBtn);
+        HBox box = new HBox(10, createEmailField, createPasswordField, createBtn);
         box.getStyleClass().add("card");
         box.setPadding(new Insets(14));
         box.setAlignment(Pos.CENTER_LEFT);
@@ -149,13 +114,7 @@ public class UserManagementPanel extends VBox {
             return;
         }
         BackgroundJobs.runAction(
-                () -> {
-                    if (role == UserRole.ADMIN) {
-                        AdminManagementService.createAdmin(actor, email, pw);
-                    } else {
-                        AdminManagementService.createCallCenter(actor, email, pw);
-                    }
-                },
+                () -> AdminManagementService.createAdmin(actor, email, pw),
                 () -> {
                     createEmailField.clear();
                     createPasswordField.clear();
@@ -163,6 +122,36 @@ public class UserManagementPanel extends VBox {
                     refresh(searchField.getText());
                 },
                 error -> Dialogs.error("Create failed", error));
+    }
+
+    private HBox actions() {
+        Button toggle = new Button("Toggle active");
+        toggle.getStyleClass().add(GHOST_STYLE);
+        toggle.setOnAction(event -> handleToggle());
+
+        Button resetPw = new Button("Reset password");
+        resetPw.getStyleClass().add(GHOST_STYLE);
+        resetPw.setOnAction(event -> handleResetPassword());
+
+        Button promote = new Button("Promote role");
+        promote.getStyleClass().add(GHOST_STYLE);
+        promote.setOnAction(event -> handlePromote());
+
+        Button demote = new Button("Demote role");
+        demote.getStyleClass().add(GHOST_STYLE);
+        demote.setOnAction(event -> handleDemote());
+
+        Button editProfile = new Button(LABEL_EDIT_PROFILE);
+        editProfile.getStyleClass().add(GHOST_STYLE);
+        editProfile.setOnAction(event -> handleEditProfile());
+
+        Button delete = new Button("Delete");
+        delete.getStyleClass().add(GHOST_STYLE);
+        delete.setOnAction(event -> handleDelete());
+
+        HBox box = new HBox(10, toggle, resetPw, promote, demote, editProfile, delete);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
     }
 
     private void handlePromote() {
@@ -313,11 +302,11 @@ public class UserManagementPanel extends VBox {
     }
 
     private void refresh(String keyword) {
-        String query = keyword == null ? "" : keyword.trim();
+        String search = keyword == null ? "" : keyword.trim();
         BackgroundJobs.run(
-                () -> query.isEmpty()
+                () -> search.isEmpty()
                         ? AdminManagementService.listAllUsers()
-                        : AdminManagementService.searchUsers(query),
+                        : AdminManagementService.searchUsers(search),
                 list -> table.setItems(FXCollections.observableArrayList(
                         list != null ? list : new ArrayList<>())),
                 error -> Dialogs.error("Could not load users", error));

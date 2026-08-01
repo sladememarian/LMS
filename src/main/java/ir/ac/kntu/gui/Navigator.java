@@ -1,8 +1,10 @@
 package ir.ac.kntu.gui;
 
 import ir.ac.kntu.gui.util.UiTheme;
+import javafx.animation.FadeTransition;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  * Owns the primary {@link Stage} and performs multi-scene navigation by swapping
@@ -28,10 +30,15 @@ public final class Navigator {
         stage.setMinHeight(600);
     }
 
-    /** Replaces the current screen with {@code view}. */
+    /** Replaces the current screen with {@code view}, with a short fade-in. */
     public void switchTo(View view) {
-        scene.setRoot(view.getRoot());
+        javafx.scene.Parent root = view.getRoot();
+        scene.setRoot(root);
         stage.setTitle(title(view));
+        FadeTransition fade = new FadeTransition(Duration.millis(220), root);
+        fade.setFromValue(0.0);
+        fade.setToValue(1.0);
+        fade.play();
     }
 
     public void setTheme(UiTheme newTheme) {

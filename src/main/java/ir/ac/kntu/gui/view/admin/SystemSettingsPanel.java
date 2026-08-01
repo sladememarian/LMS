@@ -33,11 +33,6 @@ public class SystemSettingsPanel extends VBox {
         Label heading = new Label("System Settings");
         heading.getStyleClass().add("h1");
 
-        borrowDays.setId("borrowDays");
-        fineRate.setId("fineRate");
-        reservationDays.setId("reservationDays");
-        maxReservations.setId("maxReservations");
-
         GridPane grid = new GridPane();
         grid.setHgap(12);
         grid.setVgap(12);
@@ -52,6 +47,11 @@ public class SystemSettingsPanel extends VBox {
                 v -> SystemSettingsService.updateReservationDays(actor, v)));
         addRow(grid, 3, new RowConfig("Max reservations", maxReservations,
                 v -> SystemSettingsService.updateMaxReservations(actor, v)));
+
+        borrowDays.setId("borrowDays");
+        fineRate.setId("fineRate");
+        reservationDays.setId("reservationDays");
+        maxReservations.setId("maxReservations");
 
         getChildren().addAll(heading, grid);
         load();

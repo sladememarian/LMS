@@ -2,6 +2,7 @@ package ir.ac.kntu.gui.view;
 
 import ir.ac.kntu.gui.Navigator;
 import ir.ac.kntu.gui.View;
+import ir.ac.kntu.gui.component.PasswordBox;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.gui.util.UiTheme;
@@ -14,7 +15,6 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
@@ -27,9 +27,11 @@ import javafx.scene.layout.VBox;
  */
 public class LoginView implements View {
 
+    private static final String SIGN_IN_FAILED = "Sign-in failed";
+
     private final StackPane root = new StackPane();
     private final TextField emailField = new TextField();
-    private final PasswordField passwordField = new PasswordField();
+    private final PasswordBox passwordField = new PasswordBox();
     private final Button loginButton = new Button("Sign in");
     private final ProgressIndicator spinner = new ProgressIndicator();
     private Navigator navigator;
@@ -58,10 +60,9 @@ public class LoginView implements View {
     private void initFields() {
         emailField.setPromptText("Email");
         emailField.setId("emailField");
-        emailField.getStyleClass().add("field");
         passwordField.setPromptText("Password");
-        passwordField.setId("passwordField");
-        passwordField.getStyleClass().add("field");
+        passwordField.setFieldId("passwordField");
+        emailField.getStyleClass().add("field");
     }
 
     private void initLoginButton() {
@@ -89,8 +90,6 @@ public class LoginView implements View {
             }
         });
 
-        spinner.setMaxSize(22, 22);
-        spinner.setVisible(false);
         HBox buttonRow = new HBox(10, loginButton, spinner);
         buttonRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -122,17 +121,82 @@ public class LoginView implements View {
                 },
                 persona -> {
                     setBusy(false);
-                    onAuthenticated(persona);
+                    startTwoFactor(persona);
                 },
                 error -> {
                     setBusy(false);
-                    Dialogs.error("Sign-in failed", error);
+                    Dialogs.error(SIGN_IN_FAILED, error);
+                });
+    }
+
+    /**
+     * Second login factor: deliver a 2FA code to the user's simulated mailbox,
+     * pop the inbox window so they can read it, then verify the entered code
+     * before a session is created. The master OTP (.env {@code MASTER_OTP=123})
+     * still passes via {@code MailService.verifyCode}, so testers can skip the
+     * inbox. All mail work runs on a background thread.
+     */
+    private void startTwoFactor(Persona persona) {
+        if (persona == null) {
+            Dialogs.error(SIGN_IN_FAILED, "Account could not be loaded.");
+            return;
+        }
+        String email = persona.getEmail();
+        setBusy(true);
+        BackgroundJobs.run(
+                () -> ir.ac.kntu.mail.MailService.deliver2FACode(email),
+                code -> {
+                    setBusy(false);
+                    UiTheme theme = navigator != null ? navigator.getTheme() : UiTheme.LIGHT;
+                    InboxWindow inbox = new InboxWindow(email, theme);
+                    inbox.show();
+                    promptForCode(persona, inbox);
+                },
+                error -> {
+                    setBusy(false);
+                    Dialogs.error("Could not send 2FA code", error);
+                });
+    }
+
+    private void promptForCode(Persona persona, InboxWindow inbox) {
+        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog();
+        dialog.setTitle("Two-factor authentication");
+        dialog.setHeaderText("Enter the verification code sent to your inbox.");
+        dialog.setContentText("Code:");
+        dialog.showAndWait().ifPresentOrElse(
+                entered -> verifyCode(persona, inbox, entered.trim()),
+                inbox::close);
+    }
+
+    private void verifyCode(Persona persona, InboxWindow inbox, String code) {
+        if (code.isEmpty()) {
+            Dialogs.warn("Missing code", "Please enter the verification code.");
+            promptForCode(persona, inbox);
+            return;
+        }
+        setBusy(true);
+        BackgroundJobs.run(
+                () -> ir.ac.kntu.mail.MailService.verifyCode(persona.getEmail(), code),
+                valid -> {
+                    setBusy(false);
+                    if (Boolean.TRUE.equals(valid)) {
+                        inbox.close();
+                        onAuthenticated(persona);
+                    } else {
+                        Dialogs.warn("Invalid code", "That code is incorrect or expired. Try again.");
+                        promptForCode(persona, inbox);
+                    }
+                },
+                error -> {
+                    setBusy(false);
+                    Dialogs.error("Verification failed", error);
+                    promptForCode(persona, inbox);
                 });
     }
 
     private void onAuthenticated(Persona persona) {
         if (persona == null) {
-            Dialogs.error("Sign-in failed", "Account could not be loaded.");
+            Dialogs.error(SIGN_IN_FAILED, "Account could not be loaded.");
             return;
         }
         SessionManager.createSession(persona);
@@ -142,6 +206,8 @@ public class LoginView implements View {
         if (navigator != null) {
             navigator.setTheme(UiTheme.from(persona.getTheme()));
             navigator.switchTo(new ir.ac.kntu.gui.shell.AppShell(navigator, persona));
+            // Background notification check at login (due-soon loans, ready reservations).
+            ir.ac.kntu.gui.notification.NotificationChecker.checkAndNotify(persona);
         }
         passwordField.clear();
     }

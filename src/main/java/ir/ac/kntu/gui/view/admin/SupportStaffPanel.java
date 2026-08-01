@@ -29,7 +29,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /**
- * Admin Support-Staff Management: create CallCenter agents and assign their
+ * Admin Callcenter Management: create Callcenter agents and assign their
  * support responsibility areas ({@link SupportSection}). All work runs off the
  * FX thread.
  */
@@ -46,12 +46,12 @@ public class SupportStaffPanel extends VBox {
         getStyleClass().add("content-area");
         setPadding(new Insets(24));
 
-        Label heading = new Label("Support-Staff Management");
+        Label heading = new Label("Callcenter Management");
         heading.getStyleClass().add("h1");
 
         buildTable();
         getChildren().addAll(heading, buildCreateForm(),
-                buildAssignRow(), new Label("Support staff"), table);
+                buildAssignRow(), new Label("Callcenter agents"), table);
         VBox.setVgrow(table, Priority.ALWAYS);
         refresh();
     }
@@ -70,7 +70,7 @@ public class SupportStaffPanel extends VBox {
 
         table.getColumns().addAll(email, sections);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setPlaceholder(new Label("No support staff."));
+        table.setPlaceholder(new Label("No callcenter agents."));
     }
 
     private HBox buildCreateForm() {
@@ -130,7 +130,7 @@ public class SupportStaffPanel extends VBox {
                 () -> {
                     emailField.clear();
                     passwordField.clear();
-                    Dialogs.info("Created", "Support agent created.");
+                    Dialogs.info("Created", "Callcenter agent created.");
                     refresh();
                 },
                 error -> Dialogs.error("Create failed", error));

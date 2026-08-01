@@ -28,6 +28,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+/**
+ * Regular-user Loans &amp; Reservations screen: active loans (with due day and
+ * overdue status computed via the simulation clock) plus the user's reservations.
+ * Return and extend actions reuse the existing services and run off the FX thread.
+ */
 public class LoansReservationsPanel extends VBox {
 
     private static final int EXTENSION_FEE = 25_000;
@@ -103,7 +108,7 @@ public class LoansReservationsPanel extends VBox {
         returnBtn.getStyleClass().add(GHOST_STYLE);
         returnBtn.setOnAction(event -> handleReturn());
 
-        Button extendBtn = new Button("Extend (+" + EXTENSION_DAYS + " days, fee " + (EXTENSION_FEE + (int)(EXTENSION_FEE * 0.10)) + ")");
+        Button extendBtn = new Button("Extend (+" + EXTENSION_DAYS + " days, fee " + EXTENSION_FEE + " + tax)");
         extendBtn.getStyleClass().add(GHOST_STYLE);
         extendBtn.setOnAction(event -> handleExtend());
 
@@ -166,16 +171,9 @@ public class LoansReservationsPanel extends VBox {
             Dialogs.warn("Cannot extend", extendError);
             return;
         }
-        int fee = EXTENSION_FEE;
-        int tax = (int) (fee * 0.10);
-        int total = fee + tax;
-        if (persona.getWalletBalance() < total) {
-            Dialogs.warn("Insufficient funds",
-                    "Insufficient funds. Required: " + total
-                    + ", available: " + persona.getWalletBalance());
-            return;
-        }
-        doExtendLoan(row, memberId, fee, total);
+        // Fee + tax computation and the funds guard live in
+        // FinanceService.proccessExtentionPayment; the GUI does not duplicate them.
+        doExtendLoan(row, memberId);
     }
 
     private String extendValidationError(LoanRow row) {
@@ -188,16 +186,16 @@ public class LoansReservationsPanel extends VBox {
         return null;
     }
 
-    private void doExtendLoan(LoanRow row, String memberId, int fee, int total) {
+    private void doExtendLoan(LoanRow row, String memberId) {
         BackgroundJobs.run(
                 () -> {
-                    FinanceService.proccessExtentionPayment(persona, fee);
+                    FinanceService.proccessExtentionPayment(persona, EXTENSION_FEE);
                     return LoanService.extendLoan(memberId, row.getItemId(), EXTENSION_DAYS);
                 },
                 ok -> {
                     if (Boolean.TRUE.equals(ok)) {
                         Dialogs.info("Extended",
-                                "Loan extended by " + EXTENSION_DAYS + " days (fee " + total + " charged).");
+                                "Loan extended by " + EXTENSION_DAYS + " days.");
                         refresh();
                     } else {
                         Dialogs.warn("Not extended", "The loan could not be extended.");
@@ -205,9 +203,8 @@ public class LoansReservationsPanel extends VBox {
                 },
                 error -> {
                     if (error instanceof InsufficientFundsException) {
-                        Dialogs.warn("Insufficient funds",
-                                "Insufficient funds. Required: " + total
-                                + ", available: " + persona.getWalletBalance());
+                        // Surface the service's own accurate message.
+                        Dialogs.warn("Insufficient funds", error.getMessage());
                     } else {
                         Dialogs.error("Extend failed", error);
                     }
@@ -258,6 +255,7 @@ public class LoansReservationsPanel extends VBox {
         return new LoanRow(loan.getItemId(), title, loan.getBorrowDay(), loan.getDueDay(), status);
     }
 
+    /** Row view-model for the loan table (public getters for PropertyValueFactory). */
     public static class LoanRow {
         private final String itemId;
         private final String itemTitle;

@@ -3,11 +3,18 @@ package ir.ac.kntu.gui.util;
 import java.util.Optional;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
-import javafx.scene.Node;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
+import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Popup;
+import javafx.stage.Window;
+import javafx.util.Duration;
 
 /**
  * Small helper for user-facing notifications. Phase-3 requires that errors,
@@ -16,6 +23,9 @@ import javafx.scene.control.Dialog;
  * thread when needed).
  */
 public final class Dialogs {
+
+    private static final Duration FADE = Duration.millis(220);
+    private static final Duration HOLD = Duration.seconds(4);
 
     private Dialogs() {
         // utility class
@@ -38,6 +48,64 @@ public final class Dialogs {
         show(AlertType.WARNING, "Warning", header, message);
     }
 
+    /**
+     * Shows a non-modal toast that fades in, holds, then fades out — used for
+     * ambient notifications that must not interrupt the user with a dialog.
+     */
+    public static void toast(String title, String message) {
+        BackgroundJobs.onFxThread(() -> showToast(title, message));
+    }
+
+    private static void showToast(String title, String message) {
+        Window owner = focusedWindow();
+        if (owner == null) {
+            return;
+        }
+        Label heading = new Label(title);
+        heading.getStyleClass().add("toast-title");
+        Label body = new Label(message);
+        body.getStyleClass().add("toast-body");
+        body.setWrapText(true);
+
+        StackPane card = new StackPane(new javafx.scene.layout.VBox(4, heading, body));
+        card.getStyleClass().add("toast");
+        card.setPadding(new Insets(14, 18, 14, 18));
+        card.setMaxWidth(360);
+
+        Popup popup = new Popup();
+        popup.getContent().add(card);
+        popup.setAutoFix(true);
+        card.setOpacity(0);
+        popup.show(owner,
+                owner.getX() + owner.getWidth() - 400,
+                owner.getY() + owner.getHeight() - 120);
+
+        FadeTransition in = new FadeTransition(FADE, card);
+        in.setFromValue(0);
+        in.setToValue(1);
+        PauseTransition hold = new PauseTransition(HOLD);
+        FadeTransition out = new FadeTransition(FADE, card);
+        out.setFromValue(1);
+        out.setToValue(0);
+        SequentialTransition seq = new SequentialTransition(in, hold, out);
+        seq.setOnFinished(event -> popup.hide());
+        seq.play();
+    }
+
+    private static Window focusedWindow() {
+        for (Window window : Window.getWindows()) {
+            if (window.isShowing() && window.isFocused()) {
+                return window;
+            }
+        }
+        for (Window window : Window.getWindows()) {
+            if (window.isShowing()) {
+                return window;
+            }
+        }
+        return null;
+    }
+
     /** Yes/No confirmation. Returns true if the user confirmed. */
     public static boolean confirm(String header, String message) {
         Alert alert = new Alert(AlertType.CONFIRMATION, message,
@@ -46,15 +114,6 @@ public final class Dialogs {
         alert.setHeaderText(header);
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && ButtonType.YES.equals(result.get());
-    }
-
-    public static Optional<ButtonType> custom(String title, String header, Node content) {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle(title);
-        dialog.setHeaderText(header);
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        return dialog.showAndWait();
     }
 
     private static void show(AlertType type, String title, String header, String message) {

@@ -16,7 +16,7 @@ public final class Placeholder {
     private Placeholder() {
     }
 
-    public static Node build(String title, String description) {
+    public static Node createPlaceholder(String title, String description) {
         Label heading = new Label(title);
         heading.getStyleClass().add("h1");
 
