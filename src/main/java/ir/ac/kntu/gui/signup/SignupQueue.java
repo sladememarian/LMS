@@ -7,9 +7,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Durable producer/consumer queue for sign-up profile envelopes.
@@ -26,6 +29,16 @@ import java.util.concurrent.LinkedBlockingQueue;
  *       #markProcessed(SignupEnvelope)} to drop that line from the spool.</li>
  * </ul>
  *
+ * <p><b>Performance:</b> the previous implementation rewrote the <em>entire</em>
+ * spool file on every {@link #markProcessed} call, all under {@code diskLock} —
+ * which also serialised producers appending in {@link #enqueue}. With a burst of
+ * <var>N</var> concurrent sign-ups that is O(N&sup2;) disk work, so opening many
+ * sign-up windows at once made the whole flow crawl. It now uses <em>deferred
+ * compaction</em>: processed envelopes are buffered in memory and the spool is
+ * rewritten only when the buffer crosses a threshold or the queue drains, turning
+ * the hot path back into O(1) amortised. Progress is logged to the terminal so the
+ * queue/worker state is observable.</p>
+ *
  * <p>Everything here lives in the GUI layer and only ever calls existing backend
  * services from the worker — no phase-1/2 code is modified.</p>
  */
@@ -33,9 +46,19 @@ public final class SignupQueue {
 
     private static final SignupQueue INSTANCE = new SignupQueue();
 
+    /** Rewrite the spool after this many processed envelopes accumulate. */
+    private static final int COMPACT_THRESHOLD = 50;
+
     private final BlockingQueue<SignupEnvelope> memory = new LinkedBlockingQueue<>();
     private final Path spoolFile;
     private final Object diskLock = new Object();
+
+    /** Lines already handled by the worker, buffered until the next compaction. */
+    private final Set<String> processedBuffer = new HashSet<>();
+
+    // Lifetime counters for observability (logged to the terminal).
+    private final AtomicLong enqueued = new AtomicLong();
+    private final AtomicLong processed = new AtomicLong();
 
     private SignupQueue() {
         this.spoolFile = Paths.get(System.getProperty("user.dir"), "signup_queue", "pending.jsonl");
@@ -57,6 +80,9 @@ public final class SignupQueue {
         }
         appendToSpool(envelope);
         memory.add(envelope);
+        long total = enqueued.incrementAndGet();
+        log("enqueue", "email=" + envelope.getEmail()
+                + " pending=" + memory.size() + " totalEnqueued=" + total);
     }
 
     /** Consumer side. Blocks until an envelope is available. */
@@ -65,24 +91,35 @@ public final class SignupQueue {
     }
 
     /**
-     * Marks an envelope as done by rewriting the spool without the first line
-     * that matches it. Called by the worker after the profile has been persisted.
+     * Marks an envelope as done. Instead of rewriting the whole spool on every
+     * call, the line is buffered and the spool is compacted only when the buffer
+     * crosses {@link #COMPACT_THRESHOLD} or the in-memory queue has drained. This
+     * keeps the worker's hot path O(1) amortised even under a burst of sign-ups.
      */
     public void markProcessed(SignupEnvelope envelope) {
         if (envelope == null) {
             return;
         }
+        long total = processed.incrementAndGet();
         synchronized (diskLock) {
-            List<String> remaining = readSpoolLines();
-            String target = envelope.toJsonLine();
-            remaining.remove(target);
-            writeSpoolLines(remaining);
+            processedBuffer.add(envelope.toJsonLine());
+            boolean drained = memory.isEmpty();
+            if (processedBuffer.size() >= COMPACT_THRESHOLD || drained) {
+                compact();
+            }
         }
+        log("processed", "email=" + envelope.getEmail()
+                + " pending=" + memory.size() + " totalProcessed=" + total);
     }
 
     /** Number of envelopes still waiting in memory (diagnostics/tests). */
     public int pendingCount() {
         return memory.size();
+    }
+
+    /** Total envelopes handed to the worker so far (diagnostics/tests). */
+    public long processedCount() {
+        return processed.get();
     }
 
     // --- disk helpers -----------------------------------------------------
@@ -111,6 +148,22 @@ public final class SignupQueue {
                 System.err.println("SignupQueue: could not append to spool: " + e.getMessage());
             }
         }
+    }
+
+    /** Rewrites the spool without any buffered-processed lines. Caller holds diskLock. */
+    private void compact() {
+        if (processedBuffer.isEmpty()) {
+            return;
+        }
+        List<String> remaining = new ArrayList<>();
+        for (String line : readSpoolLines()) {
+            if (!processedBuffer.contains(line)) {
+                remaining.add(line);
+            }
+        }
+        writeSpoolLines(remaining);
+        log("compact", "removed=" + processedBuffer.size() + " remainingOnDisk=" + remaining.size());
+        processedBuffer.clear();
     }
 
     private List<String> readSpoolLines() {
@@ -143,5 +196,10 @@ public final class SignupQueue {
         } catch (IOException e) {
             System.err.println("SignupQueue: could not rewrite spool: " + e.getMessage());
         }
+    }
+
+    private static void log(String event, String detail) {
+        System.out.println("[SignupQueue] " + event + " | " + detail
+                + " | thread=" + Thread.currentThread().getName());
     }
 }

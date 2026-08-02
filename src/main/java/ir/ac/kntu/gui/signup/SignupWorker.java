@@ -21,7 +21,10 @@ import ir.ac.kntu.persona.PersonaService;
 public final class SignupWorker {
 
     private static final int MAX_ATTEMPTS = 20;
-    private static final long RETRY_DELAY_MILLIS = 150L;
+    // Short back-off: the register thread is usually done within a few
+    // milliseconds, so a tight retry keeps profile persistence snappy while
+    // still tolerating the brief window where the account row isn't visible yet.
+    private static final long RETRY_DELAY_MILLIS = 50L;
 
     private static volatile boolean started;
 
@@ -44,6 +47,8 @@ public final class SignupWorker {
     }
 
     private void runLoop() {
+        System.out.println("[SignupWorker] consumer started on thread="
+                + Thread.currentThread().getName());
         while (true) {
             SignupEnvelope envelope;
             try {
@@ -56,7 +61,7 @@ public final class SignupWorker {
                 process(envelope);
             } catch (BaseException e) {
                 // Never let one envelope kill the consumer loop.
-                System.err.println("SignupWorker: dropping envelope for "
+                System.err.println("[SignupWorker] dropping envelope for "
                         + envelope.getEmail() + ": " + e.getMessage());
                 queue.markProcessed(envelope);
             }
@@ -64,6 +69,7 @@ public final class SignupWorker {
     }
 
     private void process(SignupEnvelope envelope) {
+        long start = System.nanoTime();
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
                 PersonaService.updateProfile(
@@ -72,6 +78,10 @@ public final class SignupWorker {
                         envelope.getLastName(),
                         envelope.getPhoneNumber());
                 queue.markProcessed(envelope);
+                long millis = (System.nanoTime() - start) / 1_000_000L;
+                System.out.println("[SignupWorker] persisted profile for "
+                        + envelope.getEmail() + " in " + millis + "ms (attempt " + attempt
+                        + ", pending=" + queue.pendingCount() + ")");
                 return;
             } catch (BaseException e) {
                 // Most likely the account row is not visible yet (the register
