@@ -10,27 +10,45 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.notification.NotificationService;
+import ir.ac.kntu.util.PersonaRepository;
 import ir.ac.kntu.util.RoleRequestRepository;
 
 public class RoleRequestService {
     private static final List<RoleRequest> REQUESTS = new ArrayList<>();
     private static final String SUBJECT = "Role Request Update";
+    private static final String ADMIN_SUBJECT = "New Role Request";
 
     static {
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
     }
 
-    public static RoleRequest submit(Persona requester, String requestedRole, String message) {
+    public static synchronized RoleRequest submit(Persona requester, String requestedRole, String message) {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         String id = "RR-" + ((int) (Math.random() * 900_000) + 100_000);
         RoleRequest request = new RoleRequest(id, requester.getEmail(), requestedRole, message);
         REQUESTS.add(request);
         RoleRequestRepository.insertRoleRequest(request);
+        // Notify every admin so the request shows up in their Notifications tab,
+        // not only on the dashboard. Previously submit() notified nobody, so
+        // admins had no inbox record of pending requests.
+        notifyAdmins(request);
         return request;
     }
 
-    public static List<RoleRequest> getPending() {
+    private static void notifyAdmins(RoleRequest request) {
+        String body = request.getRequesterEmail() + " requested the "
+                + request.getRequestedRole() + " role"
+                + (request.getMessage() == null || request.getMessage().isBlank()
+                        ? "." : ": " + request.getMessage());
+        for (Persona persona : PersonaRepository.getAllPersonas()) {
+            if (persona.getRole() == UserRole.ADMIN && persona.getEmail() != null) {
+                NotificationService.notifyAddress(persona.getEmail(), ADMIN_SUBJECT, body);
+            }
+        }
+    }
+
+    public static synchronized List<RoleRequest> getPending() {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         return REQUESTS.stream()
@@ -39,13 +57,13 @@ public class RoleRequestService {
                 .collect(Collectors.toList());
     }
 
-    public static List<RoleRequest> getAll() {
+    public static synchronized List<RoleRequest> getAll() {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         return new ArrayList<>(REQUESTS);
     }
 
-    public static void approve(String requestId) {
+    public static synchronized void approve(String requestId) {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         RoleRequest request = find(requestId);
@@ -62,7 +80,7 @@ public class RoleRequestService {
                 "Approved: you are now " + request.getRequestedRole());
     }
 
-    public static void reject(String requestId) {
+    public static synchronized void reject(String requestId) {
         REQUESTS.clear();
         REQUESTS.addAll(RoleRequestRepository.getAllRoleRequests());
         RoleRequest request = find(requestId);
