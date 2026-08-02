@@ -1,7 +1,9 @@
 package ir.ac.kntu.gui.view.library;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
@@ -58,6 +60,14 @@ public class ItemManagementPanel extends VBox {
     private static final String STR_EBOOK = "EBOOK";
     private static final String STR_AUDIOBOOK = "AUDIOBOOK";
 
+    /**
+     * GUI-local, relaxed item-id rule: a plain {@code ITEM-<number>} (e.g.
+     * {@code ITEM-12}). The stricter backend {@code Validator.isValidItemId}
+     * (typed prefix + 8 digits) is left untouched — it is shared with the CLI
+     * and its own tests — so this only loosens what the add-item form accepts.
+     */
+    private static final Pattern GUI_ITEM_ID = Pattern.compile("^ITEM-\\d+$");
+
     public ItemManagementPanel() {
         super(16);
         getStyleClass().add("content-area");
@@ -97,16 +107,15 @@ public class ItemManagementPanel extends VBox {
 
     private FlowPane buildAddForm() {
         typeBox.getSelectionModel().selectFirst();
-        idField.setPromptText("ID");
+        idField.setPromptText("ID (e.g. ITEM-12)");
         titleField.setPromptText(TITLE_LABEL);
         categoryField.setPromptText("Category");
         yearField.setPromptText("Year");
         copiesField.setPromptText("Total copies");
         priceField.setPromptText("Unit price");
         extraField.setPromptText("ISBN");
-        for (TextField f : List.of(idField, titleField, categoryField, yearField, copiesField, priceField, extraField)) {
-            f.getStyleClass().add("field");
-        }
+        List.of(idField, titleField, categoryField, yearField, copiesField, priceField, extraField)
+                .forEach(f -> f.getStyleClass().add("field"));
 
         typeBox.valueProperty().addListener((obs, old, val) -> {
             String prompt;
@@ -164,8 +173,8 @@ public class ItemManagementPanel extends VBox {
         try {
             String type = typeBox.getValue();
             String id = required(idField, "ID");
-            if (!Validator.isValidItemId(id)) {
-                Dialogs.warn("Invalid ID", "Item ID must look like BOK-, MAG-, EBK- or AUD- followed by 8 digits.");
+            if (!GUI_ITEM_ID.matcher(id).matches()) {
+                Dialogs.warn("Invalid ID", "Item ID must look like ITEM-<number>, e.g. ITEM-12.");
                 return;
             }
             String title = required(titleField, "Title");
@@ -283,7 +292,11 @@ public class ItemManagementPanel extends VBox {
 
     private void refresh() {
         loadProgress.setVisible(true);
-        BackgroundJobs.run(LibraryService::getAllItems,
+        BackgroundJobs.run(
+                () -> LibraryService.getAllItems().stream()
+                        .sorted(Comparator.comparing(LibraryItem::getItemId,
+                                String.CASE_INSENSITIVE_ORDER))
+                        .collect(java.util.stream.Collectors.toList()),
                 items -> {
                     loadProgress.setVisible(false);
                     pagedTable.setItems(items != null ? items : new ArrayList<>());
@@ -329,9 +342,8 @@ public class ItemManagementPanel extends VBox {
     }
 
     private void clearForm() {
-        for (TextField f : List.of(idField, titleField, categoryField, yearField, copiesField, priceField, extraField)) {
-            f.clear();
-        }
+        List.of(idField, titleField, categoryField, yearField, copiesField, priceField, extraField)
+                .forEach(TextField::clear);
     }
 
     private static String required(TextField field, String name) {
