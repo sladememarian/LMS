@@ -7,6 +7,7 @@ import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.gui.util.UiTheme;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.sso.SsoService;
+import ir.ac.kntu.util.Validator;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -123,6 +124,12 @@ public class ProfilePanel extends VBox {
         String first = trimmed(firstNameField.getText());
         String last = trimmed(lastNameField.getText());
         String phone = trimmed(phoneField.getText());
+        // Validate the phone against the shared Validator regex before saving so
+        // the GUI enforces the same format as the rest of the system.
+        if (!phone.isEmpty() && !Validator.isValidPhoneNumber(phone)) {
+            Dialogs.warn("Invalid phone", "Enter a valid Iranian mobile number, e.g. 09123456789.");
+            return;
+        }
         String email = persona.getEmail();
         BackgroundJobs.runAction(
                 () -> SsoService.editProfile(email, first, last, phone),

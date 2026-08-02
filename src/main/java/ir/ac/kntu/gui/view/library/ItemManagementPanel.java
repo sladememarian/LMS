@@ -3,6 +3,7 @@ package ir.ac.kntu.gui.view.library;
 import java.util.ArrayList;
 import java.util.List;
 
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.library.AudioBook;
@@ -18,6 +19,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -25,6 +27,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /**
@@ -35,6 +38,9 @@ import javafx.scene.layout.VBox;
 public class ItemManagementPanel extends VBox {
 
     private final TableView<LibraryItem> table = new TableView<>();
+    private final PagedTable<LibraryItem> pagedTable = new PagedTable<>(table);
+    private final ProgressIndicator loadProgress = new ProgressIndicator();
+    private final StackPane tableStack = new StackPane(pagedTable, loadProgress);
 
     private final ComboBox<String> typeBox = new ComboBox<>(
             FXCollections.observableArrayList("BOOK", "MAGAZINE", "EBOOK", "AUDIOBOOK"));
@@ -61,8 +67,10 @@ public class ItemManagementPanel extends VBox {
         heading.getStyleClass().add("h1");
 
         buildTable();
-        getChildren().addAll(heading, buildAddForm(), buildRowActions(), table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        loadProgress.setMaxSize(48, 48);
+        loadProgress.setVisible(false);
+        getChildren().addAll(heading, buildAddForm(), buildRowActions(), tableStack);
+        VBox.setVgrow(tableStack, Priority.ALWAYS);
         refresh();
     }
 
@@ -156,6 +164,10 @@ public class ItemManagementPanel extends VBox {
         try {
             String type = typeBox.getValue();
             String id = required(idField, "ID");
+            if (!Validator.isValidItemId(id)) {
+                Dialogs.warn("Invalid ID", "Item ID must look like BOK-, MAG-, EBK- or AUD- followed by 8 digits.");
+                return;
+            }
             String title = required(titleField, "Title");
             String category = categoryField.getText() == null ? "" : categoryField.getText().trim();
             int year = parseInt(yearField, "Year");
@@ -191,9 +203,17 @@ public class ItemManagementPanel extends VBox {
             return applyMagazineSpecifics(mag, extra);
         }
         if (item instanceof EBook ebook && !extra.isEmpty()) {
+            if (!Validator.isValidDownloadUrl(extra)) {
+                Dialogs.warn("Invalid URL", "Download URL must start with https://.");
+                return false;
+            }
             ebook.setDownloadUrl(extra);
         }
         if (item instanceof AudioBook audio && !extra.isEmpty()) {
+            if (!Validator.isValidDownloadUrl(extra)) {
+                Dialogs.warn("Invalid URL", "Download URL must start with https://.");
+                return false;
+            }
             audio.setDownloadUrl(extra);
         }
         return true;
@@ -262,10 +282,16 @@ public class ItemManagementPanel extends VBox {
     }
 
     private void refresh() {
+        loadProgress.setVisible(true);
         BackgroundJobs.run(LibraryService::getAllItems,
-                items -> table.setItems(FXCollections.observableArrayList(
-                        items != null ? items : new ArrayList<>())),
-                error -> Dialogs.error("Could not load items", error));
+                items -> {
+                    loadProgress.setVisible(false);
+                    pagedTable.setItems(items != null ? items : new ArrayList<>());
+                },
+                error -> {
+                    loadProgress.setVisible(false);
+                    Dialogs.error("Could not load items", error);
+                });
     }
 
     private record ItemParams(String type, String id, String title, String category, int year) {}
