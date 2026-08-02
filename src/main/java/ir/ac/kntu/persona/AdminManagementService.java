@@ -48,19 +48,39 @@ public final class AdminManagementService {
         Validator.requireValidPassword(password);
     }
 
-    // Only the Owner, or the Admin who personally created the target admin,
-    // may manage (delete/promote/demote/reset password of) that admin. Nobody
-    // may manage the Owner.
+    // The Owner may manage any admin, and any admin may manage those they
+    // created directly *or indirectly* (a descendant in the creation tree).
+    // Nobody may manage the Owner, and an admin can never manage an ancestor
+    // (their own creator or any higher-level admin), since walking up from an
+    // ancestor never reaches the manager.
     private static void requireCanManageAdmin(Persona manager, Persona target) {
         if (target.isOwner()) {
             throw new AuthorizationException("The Owner cannot be managed by another Admin.", null);
         }
-        boolean isOwner = manager.isOwner();
-        boolean createdTarget = manager.getEmail() != null
-                && manager.getEmail().equalsIgnoreCase(target.getCreatedBy());
-        if (!isOwner && !createdTarget) {
-            throw new AuthorizationException("You are not authorized to manage this admin.", null);
+        if (manager.isOwner() || isAncestorOf(manager, target)) {
+            return;
         }
+        throw new AuthorizationException("You are not authorized to manage this admin.", null);
+    }
+
+    // Walks the createdBy chain up from `target`: returns true if `manager` is
+    // the direct or transitive creator of `target`. A visited-set guards against
+    // a corrupted cycle in the createdBy links so the walk always terminates.
+    private static boolean isAncestorOf(Persona manager, Persona target) {
+        String managerEmail = manager.getEmail();
+        if (managerEmail == null) {
+            return false;
+        }
+        Set<String> visited = new java.util.HashSet<>();
+        String currentCreator = target.getCreatedBy();
+        while (currentCreator != null && visited.add(currentCreator.toLowerCase())) {
+            if (managerEmail.equalsIgnoreCase(currentCreator)) {
+                return true;
+            }
+            Persona parent = PersonaService.getProfile(currentCreator);
+            currentCreator = parent == null ? null : parent.getCreatedBy();
+        }
+        return false;
     }
 
     // Authorizes acting on `target`: if the target is an Admin, only their
