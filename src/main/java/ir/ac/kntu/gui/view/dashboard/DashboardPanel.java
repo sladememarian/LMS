@@ -156,7 +156,7 @@ public class DashboardPanel extends StackPane {
         top10.forEach(entry -> {
             LibraryItem item = LibraryService.getItemById(entry.getKey());
             String label = item != null ? item.getTitle() : entry.getKey();
-            series.getData().add(new XYChart.Data<>(label, entry.getValue()));
+            series.getData().add(new XYChart.Data<>(truncateLabel(label), entry.getValue()));
         });
         chart.getData().add(series);
 
@@ -197,6 +197,10 @@ public class DashboardPanel extends StackPane {
     private BarChart<String, Number> barChart(String title, String xLabel, String yLabel) {
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setLabel(xLabel);
+        // Long item titles used to overflow and break the chart layout; rotating
+        // the category tick labels keeps them inside the plot area (they are also
+        // truncated at the data level, see truncateLabel).
+        xAxis.setTickLabelRotation(30);
         NumberAxis yAxis = new NumberAxis();
         yAxis.setLabel(yLabel);
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
@@ -204,6 +208,16 @@ public class DashboardPanel extends StackPane {
         chart.setLegendVisible(false);
         chart.setPrefHeight(340);
         return chart;
+    }
+
+    /** Shortens overly long item titles so bar-chart category labels don't
+     *  overflow and break the chart's layout. */
+    private static String truncateLabel(String label) {
+        if (label == null) {
+            return "";
+        }
+        int max = 18;
+        return label.length() <= max ? label : label.substring(0, max - 1) + "…";
     }
 
     private Node page(String title, Node... content) {

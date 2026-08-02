@@ -67,13 +67,14 @@ public class AnalyticsPanel extends StackPane {
     private Node buildReportBar() {
         javafx.scene.control.Button generate = new javafx.scene.control.Button("Generate HTML report");
         generate.getStyleClass().add("primary");
-        ProgressIndicator progress = new ProgressIndicator();
-        progress.setMaxSize(20, 20);
-        progress.setVisible(false);
 
         generate.setOnAction(event -> {
             generate.setDisable(true);
-            progress.setVisible(true);
+            // Show a large spinner centered over the whole analytics area while
+            // the report is generated, then remove it when done (item 3).
+            ProgressIndicator overlay = new ProgressIndicator();
+            overlay.setMaxSize(64, 64);
+            getChildren().add(overlay);
             // Reports live in the project source folder (./reports), not the
             // user's home directory, so they ship with the project.
             java.io.File reportsDir = new java.io.File(
@@ -85,17 +86,17 @@ public class AnalyticsPanel extends StackPane {
                     () -> ir.ac.kntu.report.ReportService.exportReport(path),
                     savedPath -> {
                         generate.setDisable(false);
-                        progress.setVisible(false);
+                        getChildren().remove(overlay);
                         Dialogs.info("Report generated", "Saved to:\n" + savedPath);
                     },
                     error -> {
                         generate.setDisable(false);
-                        progress.setVisible(false);
+                        getChildren().remove(overlay);
                         Dialogs.error("Report failed", error);
                     });
         });
 
-        javafx.scene.layout.HBox bar = new javafx.scene.layout.HBox(10, generate, progress);
+        javafx.scene.layout.HBox bar = new javafx.scene.layout.HBox(10, generate);
         bar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         return bar;
     }
@@ -103,6 +104,10 @@ public class AnalyticsPanel extends StackPane {
     private BarChart<String, Number> topBorrowedChart() {
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setLabel("Item");
+        // Rotate ticks so long item titles stay inside the plot area instead of
+        // overflowing and breaking the chart layout (titles are also truncated
+        // at the data level via truncateLabel).
+        xAxis.setTickLabelRotation(30);
         NumberAxis yAxis = new NumberAxis();
         yAxis.setLabel("Borrows");
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
@@ -122,10 +127,20 @@ public class AnalyticsPanel extends StackPane {
         top10.forEach(entry -> {
             LibraryItem item = LibraryService.getItemById(entry.getKey());
             String label = item != null ? item.getTitle() : entry.getKey();
-            series.getData().add(new XYChart.Data<>(label, entry.getValue()));
+            series.getData().add(new XYChart.Data<>(truncateLabel(label), entry.getValue()));
         });
         chart.getData().add(series);
         return chart;
+    }
+
+    /** Shortens overly long item titles so bar-chart category labels don't
+     *  overflow and break the chart's layout. */
+    private static String truncateLabel(String label) {
+        if (label == null) {
+            return "";
+        }
+        int max = 18;
+        return label.length() <= max ? label : label.substring(0, max - 1) + "…";
     }
 
     private LineChart<String, Number> monthlyRevenueChart() {
