@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
+import ir.ac.kntu.gui.util.GuiValidation;
 import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.SupportSection;
-import ir.ac.kntu.util.Validator;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -116,17 +116,7 @@ public class SupportStaffPanel extends VBox {
     private void handleCreate() {
         String email = emailField.getText() == null ? "" : emailField.getText().trim();
         String pw = passwordField.getText() == null ? "" : passwordField.getText().trim();
-        if (email.isEmpty() || pw.isEmpty()) {
-            Dialogs.warn("Missing information", "Email and password are required.");
-            return;
-        }
-        if (!Validator.isValidEmail(email)) {
-            Dialogs.warn("Invalid email", "Please enter a valid email address.");
-            return;
-        }
-        if (!Validator.isValidPassword(pw)) {
-            Dialogs.warn("Weak password",
-                    "Password must be at least 8 characters with uppercase, lowercase, digit, and special character.");
+        if (!GuiValidation.requireValidEmailAndPassword(email, pw)) {
             return;
         }
         BackgroundJobs.runAction(
