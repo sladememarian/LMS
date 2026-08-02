@@ -61,7 +61,10 @@ public class LoansReservationsPanel extends VBox {
         getChildren().addAll(heading,
                 new Label("Active loans"), loanActions(), pagedLoans,
                 new Label("My reservations"), reservationActions(), pagedReservations);
+        // Let both tables share the vertical space so "My reservations" no longer
+        // collapses to a sliver under the loans table.
         VBox.setVgrow(pagedLoans, Priority.ALWAYS);
+        VBox.setVgrow(pagedReservations, Priority.ALWAYS);
         refresh();
     }
 
@@ -102,7 +105,9 @@ public class LoansReservationsPanel extends VBox {
         reservationTable.getColumns().addAll(item, reserved, expires, queue, status);
         reservationTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         reservationTable.setPlaceholder(new Label("No reservations."));
-        reservationTable.setPrefHeight(180);
+        // A gentle floor so the table stays usable; it grows to share the space
+        // via VBox.setVgrow rather than being pinned to a fixed height.
+        reservationTable.setMinHeight(160);
     }
 
     private HBox loanActions() {
@@ -240,12 +245,15 @@ public class LoansReservationsPanel extends VBox {
                 () -> LoanService.getLoans().stream()
                         .filter(loan -> memberId != null && memberId.equals(loan.getMemberId()))
                         .map(loan -> toRow(loan, today))
+                        .sorted(java.util.Comparator.comparingInt(LoanRow::getDueDay))
                         .collect(Collectors.toList()),
                 rows -> pagedLoans.setItems(rows != null ? rows : new ArrayList<>()),
                 error -> Dialogs.error("Could not load loans", error));
 
         BackgroundJobs.run(
-                () -> ReservationService.getMemberReservations(memberId),
+                () -> ReservationService.getMemberReservations(memberId).stream()
+                        .sorted(java.util.Comparator.comparingInt(Reservation::getReservedOnDay))
+                        .collect(Collectors.toList()),
                 list -> pagedReservations.setItems(list != null ? list : new ArrayList<>()),
                 error -> Dialogs.error("Could not load reservations", error));
     }
