@@ -1,9 +1,11 @@
 package ir.ac.kntu.gui;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
+import ir.ac.kntu.gui.util.BrandAssets;
 import ir.ac.kntu.gui.view.LoginView;
 import ir.ac.kntu.gui.view.SplashView;
 import javafx.application.Application;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 /**
@@ -33,6 +35,13 @@ public class App extends Application {
         Navigator navigator = new Navigator(primaryStage, splash);
         login.attachNavigator(navigator);
         splash.attachNavigator(navigator, login);
+
+        // Brand the window/taskbar with the Collaberry icon instead of the
+        // JavaFX default. Skipped silently if the asset is missing.
+        Image icon = BrandAssets.loadIcon();
+        if (icon != null) {
+            primaryStage.getIcons().add(icon);
+        }
 
         primaryStage.setOnCloseRequest(event -> BackgroundJobs.shutdown());
         primaryStage.show();

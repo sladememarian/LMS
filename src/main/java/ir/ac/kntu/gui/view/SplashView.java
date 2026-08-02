@@ -1,11 +1,8 @@
 package ir.ac.kntu.gui.view;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import ir.ac.kntu.gui.Navigator;
 import ir.ac.kntu.gui.View;
+import ir.ac.kntu.gui.util.BrandAssets;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -77,9 +74,9 @@ public class SplashView implements View {
      */
     private ImageView buildLogo() {
         ImageView view = new ImageView();
-        Path iconPath = Paths.get(System.getProperty("user.dir"), "icon", "Collaberry_groups.png");
-        if (Files.exists(iconPath)) {
-            view.setImage(new Image(iconPath.toUri().toString()));
+        Image icon = BrandAssets.loadIcon();
+        if (icon != null) {
+            view.setImage(icon);
         }
         view.setPreserveRatio(true);
         view.setFitHeight(180);
