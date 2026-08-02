@@ -13,6 +13,7 @@ import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.Transaction;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
+import ir.ac.kntu.gui.util.ChartFactory;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.library.LibraryItem;
 import ir.ac.kntu.library.LibraryService;
@@ -102,18 +103,8 @@ public class AnalyticsPanel extends StackPane {
     }
 
     private BarChart<String, Number> topBorrowedChart() {
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Item");
-        // Rotate ticks so long item titles stay inside the plot area instead of
-        // overflowing and breaking the chart layout (titles are also truncated
-        // at the data level via truncateLabel).
-        xAxis.setTickLabelRotation(30);
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Borrows");
-        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
-        chart.setTitle("Top 10 borrowed items");
-        chart.setLegendVisible(false);
-        chart.setPrefHeight(320);
+        BarChart<String, Number> chart = ChartFactory.barChart(
+                "Top 10 borrowed items", "Item", "Borrows", 320);
 
         Map<String, Long> counts = LoanService.getLoans().stream()
                 .collect(Collectors.groupingBy(Loan::getItemId, Collectors.counting()));
@@ -127,20 +118,10 @@ public class AnalyticsPanel extends StackPane {
         top10.forEach(entry -> {
             LibraryItem item = LibraryService.getItemById(entry.getKey());
             String label = item != null ? item.getTitle() : entry.getKey();
-            series.getData().add(new XYChart.Data<>(truncateLabel(label), entry.getValue()));
+            series.getData().add(new XYChart.Data<>(ChartFactory.truncateLabel(label), entry.getValue()));
         });
         chart.getData().add(series);
         return chart;
-    }
-
-    /** Shortens overly long item titles so bar-chart category labels don't
-     *  overflow and break the chart's layout. */
-    private static String truncateLabel(String label) {
-        if (label == null) {
-            return "";
-        }
-        int max = 18;
-        return label.length() <= max ? label : label.substring(0, max - 1) + "…";
     }
 
     private LineChart<String, Number> monthlyRevenueChart() {

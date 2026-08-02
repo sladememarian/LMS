@@ -108,11 +108,9 @@ public class WalletPanel extends VBox {
         expiryField.setPromptText("Expiry (MM/YY)");
         expiryField.getStyleClass().add(FIELD_STYLE);
 
-        Button topUp = this.topUp;
         topUp.getStyleClass().add("primary");
         topUp.setOnAction(event -> handleTopUp());
 
-        Button payDebt = this.payDebt;
         payDebt.getStyleClass().add("ghost");
         payDebt.setOnAction(event -> handlePayDebt());
 

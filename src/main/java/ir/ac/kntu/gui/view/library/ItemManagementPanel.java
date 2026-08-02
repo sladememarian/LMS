@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
+import ir.ac.kntu.gui.util.LibraryColumns;
 import ir.ac.kntu.library.AudioBook;
 import ir.ac.kntu.library.Book;
 import ir.ac.kntu.library.EBook;
@@ -25,7 +26,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -86,19 +86,13 @@ public class ItemManagementPanel extends VBox {
 
     @SuppressWarnings("unchecked")
     private void buildTable() {
-        TableColumn<LibraryItem, String> id = new TableColumn<>("ID");
-        id.setCellValueFactory(new PropertyValueFactory<>("itemId"));
-        TableColumn<LibraryItem, String> title = new TableColumn<>(TITLE_LABEL);
-        title.setCellValueFactory(new PropertyValueFactory<>("title"));
+        TableColumn<LibraryItem, String> id = LibraryColumns.text("ID", "itemId");
+        TableColumn<LibraryItem, String> title = LibraryColumns.text(TITLE_LABEL, "title");
         title.setPrefWidth(220);
-        TableColumn<LibraryItem, String> type = new TableColumn<>("Type");
-        type.setCellValueFactory(new PropertyValueFactory<>("itemType"));
-        TableColumn<LibraryItem, Number> avail = new TableColumn<>("Available");
-        avail.setCellValueFactory(new PropertyValueFactory<>("availableCopies"));
-        TableColumn<LibraryItem, Number> total = new TableColumn<>("Total");
-        total.setCellValueFactory(new PropertyValueFactory<>("totalCopies"));
-        TableColumn<LibraryItem, Number> price = new TableColumn<>("Price");
-        price.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+        TableColumn<LibraryItem, String> type = LibraryColumns.text("Type", "itemType");
+        TableColumn<LibraryItem, Number> avail = LibraryColumns.number("Available", "availableCopies");
+        TableColumn<LibraryItem, Number> total = LibraryColumns.number("Total", "totalCopies");
+        TableColumn<LibraryItem, Number> price = LibraryColumns.number("Price", "unitPrice");
 
         table.getColumns().addAll(id, title, type, avail, total, price);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
