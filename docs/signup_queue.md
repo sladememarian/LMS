@@ -222,6 +222,39 @@ concurrently instead of trickling in.
 - `signup_queue/pending.jsonl` is created under the project directory while an
   envelope is in flight and is emptied once the worker finishes.
 
+### The terminal narration
+
+Every stage prints a tagged line via `SignupLog`, and each line ends with
+`on=<real-thread>` so the story stays honest even though the labels are
+stage-oriented. A clean sign-up reads top-to-bottom like this:
+
+```
+[signup] thread-A: validating email/password in iam (a@b.com)   | on=lms-bg-worker-1
+[signup] thread-A: iam accepted -> user initialized in persona  | on=lms-bg-worker-1
+[signup] thread-A: account saved in db                          | on=lms-bg-worker-1
+[signup] thread-B: Account created window box opened            | on=JavaFX Application Thread
+[signup] thread-C: building data envelope for a@b.com           | on=JavaFX Application Thread
+[signup] thread-C: envelope made for a@b.com                    | on=JavaFX Application Thread
+[signup] thread-C: envelope injected in queue (pending=1, …)    | on=JavaFX Application Thread
+[signup] thread-C: worker is working on queue for a@b.com       | on=signup-profile-worker
+[signup] thread-C: envelope data successfully saved in db for … | on=signup-profile-worker
+[signup] thread-C: envelope removed from queue for a@b.com (…)  | on=signup-profile-worker
+```
+
+- **thread-A** (`lms-bg-worker`) is the fast path: create the account. There is
+  no separate IAM service on the self-signup path, so "iam accepted" marks the
+  duplicate-email guard passing.
+- **thread-B** (FX thread) fires the moment credentials are accepted — the
+  "Account created" window opens without waiting for the profile.
+- **thread-C** is the producer (on the FX thread: build/enqueue the envelope)
+  handing off to the `signup-profile-worker` consumer (pick up, persist, drop).
+
+Negative paths narrate on the same tags via `SignupLog.fail(...)` to stderr:
+a duplicate email logs `thread-A FAILED: could not create account …`; an
+enqueue/disk hiccup logs `thread-C FAILED: profile enqueue failed …`; and an
+envelope the worker can't persist after its bounded retries logs
+`thread-C FAILED: dropping envelope … after retries`.
+
 ## Files
 
 | File | Role |
