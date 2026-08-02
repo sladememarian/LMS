@@ -174,16 +174,21 @@ public class DashboardPanel extends StackPane {
         if (pending.isEmpty()) {
             requestsBox.getChildren().add(new Label("No pending requests."));
         } else {
-            for (RoleRequest req : pending) {
-                Label reqLabel = new Label(req.getRequestId() + " | "
-                        + req.getRequesterEmail() + " -> " + req.getRequestedRole());
-                if (req.getMessage() != null && !req.getMessage().isBlank()) {
-                    reqLabel.setText(reqLabel.getText() + " : " + req.getMessage());
-                }
-                requestsBox.getChildren().add(reqLabel);
-            }
+            pending.stream()
+                    .map(DashboardPanel::roleRequestLabel)
+                    .forEach(requestsBox.getChildren()::add);
         }
         return requestsBox;
+    }
+
+    /** Renders one pending role-request as a label, appending its optional note. */
+    private static Label roleRequestLabel(RoleRequest req) {
+        String text = req.getRequestId() + " | "
+                + req.getRequesterEmail() + " -> " + req.getRequestedRole();
+        if (req.getMessage() != null && !req.getMessage().isBlank()) {
+            text = text + " : " + req.getMessage();
+        }
+        return new Label(text);
     }
 
     // -------------------------------------------------------------- Helpers --

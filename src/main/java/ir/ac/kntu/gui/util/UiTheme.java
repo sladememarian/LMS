@@ -35,12 +35,10 @@ public enum UiTheme {
         if (scene == null) {
             return;
         }
-        for (UiTheme theme : values()) {
-            URL url = UiTheme.class.getResource(theme.path);
-            if (url != null) {
-                scene.getStylesheets().remove(url.toExternalForm());
-            }
-        }
+        java.util.Arrays.stream(values())
+                .map(theme -> UiTheme.class.getResource(theme.path))
+                .filter(Objects::nonNull)
+                .forEach(url -> scene.getStylesheets().remove(url.toExternalForm()));
         URL url = UiTheme.class.getResource(path);
         scene.getStylesheets().add(
                 Objects.requireNonNull(url, "Missing stylesheet: " + path).toExternalForm());

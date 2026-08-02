@@ -93,17 +93,14 @@ public final class Dialogs {
     }
 
     private static Window focusedWindow() {
-        for (Window window : Window.getWindows()) {
-            if (window.isShowing() && window.isFocused()) {
-                return window;
-            }
-        }
-        for (Window window : Window.getWindows()) {
-            if (window.isShowing()) {
-                return window;
-            }
-        }
-        return null;
+        // Prefer the showing+focused window; fall back to any showing window.
+        return Window.getWindows().stream()
+                .filter(w -> w.isShowing() && w.isFocused())
+                .findFirst()
+                .orElseGet(() -> Window.getWindows().stream()
+                        .filter(Window::isShowing)
+                        .findFirst()
+                        .orElse(null));
     }
 
     /** Yes/No confirmation. Returns true if the user confirmed. */

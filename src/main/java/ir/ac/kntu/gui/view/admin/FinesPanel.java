@@ -5,10 +5,8 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import ir.ac.kntu.finance.FinanceService;
-import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
-import ir.ac.kntu.finance.Transaction;
 import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
@@ -97,16 +95,13 @@ public class FinesPanel extends VBox {
         BackgroundJobs.run(
                 () -> FinanceService.getTransactionsForMember(memberId),
                 list -> {
-                    StringBuilder sb = new StringBuilder();
-                    if (list == null || list.isEmpty()) {
-                        sb.append("No transactions.");
-                    } else {
-                        for (Transaction t : list) {
-                            sb.append(t.getType()).append(": ").append(t.getAmount())
-                                    .append(" (").append(t.getDescription()).append(")\n");
-                        }
-                    }
-                    Dialogs.info("Transactions for " + row.getEmail(), sb.toString().trim());
+                    String body = list == null || list.isEmpty()
+                            ? "No transactions."
+                            : list.stream()
+                                    .map(t -> t.getType() + ": " + t.getAmount()
+                                            + " (" + t.getDescription() + ")")
+                                    .collect(Collectors.joining("\n"));
+                    Dialogs.info("Transactions for " + row.getEmail(), body.trim());
                 },
                 error -> Dialogs.error("Could not load transactions", error));
     }
@@ -117,16 +112,13 @@ public class FinesPanel extends VBox {
                 // re-implementing the day comparison in the GUI.
                 () -> LoanService.getOverdueLoans(SimulationClock.getCurrentDay()),
                 list -> {
-                    StringBuilder sb = new StringBuilder();
-                    if (list == null || list.isEmpty()) {
-                        sb.append("No overdue loans.");
-                    } else {
-                        for (Loan l : list) {
-                            sb.append(l.getMemberId()).append(" / ").append(l.getItemId())
-                                    .append(" due day ").append(l.getDueDay()).append("\n");
-                        }
-                    }
-                    Dialogs.info("Overdue Loans", sb.toString().trim());
+                    String body = list == null || list.isEmpty()
+                            ? "No overdue loans."
+                            : list.stream()
+                                    .map(l -> l.getMemberId() + " / " + l.getItemId()
+                                            + " due day " + l.getDueDay())
+                                    .collect(Collectors.joining("\n"));
+                    Dialogs.info("Overdue Loans", body.trim());
                 },
                 error -> Dialogs.error("Could not load loans", error));
     }

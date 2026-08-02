@@ -2,6 +2,7 @@ package ir.ac.kntu.gui.view.support;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
@@ -52,9 +53,9 @@ public class SupportInboxPanel extends VBox {
 
         buildTable();
         sectionFilter.getItems().add("All sections");
-        for (SupportSection s : SupportSection.values()) {
-            sectionFilter.getItems().add(s.name());
-        }
+        java.util.Arrays.stream(SupportSection.values())
+                .map(Enum::name)
+                .forEach(sectionFilter.getItems()::add);
         sectionFilter.getSelectionModel().selectFirst();
         sectionFilter.setOnAction(e -> refresh());
 
@@ -193,26 +194,20 @@ public class SupportInboxPanel extends VBox {
         BackgroundJobs.run(
                 () -> {
                     List<MailMessage> allMessages = MailService.getInbox(email).getMessages();
-                    List<MailMessage> notifs = new ArrayList<>();
-                    if (allMessages != null) {
-                        for (MailMessage m : allMessages) {
-                            if (m.getMessageType() == MessageType.SYSTEM_NOTIFICATION) {
-                                notifs.add(m);
-                            }
-                        }
+                    if (allMessages == null) {
+                        return new ArrayList<MailMessage>();
                     }
-                    return notifs;
+                    return allMessages.stream()
+                            .filter(m -> m.getMessageType() == MessageType.SYSTEM_NOTIFICATION)
+                            .collect(Collectors.toList());
                 },
                 list -> {
-                    StringBuilder sb = new StringBuilder();
-                    if (list == null || list.isEmpty()) {
-                        sb.append("No notifications.");
-                    } else {
-                        for (MailMessage n : list) {
-                            sb.append(n.getSubject()).append(": ").append(n.getBody()).append("\n");
-                        }
-                    }
-                    Dialogs.info("Notifications", sb.toString().trim());
+                    String body = list == null || list.isEmpty()
+                            ? "No notifications."
+                            : list.stream()
+                                    .map(n -> n.getSubject() + ": " + n.getBody())
+                                    .collect(Collectors.joining("\n"));
+                    Dialogs.info("Notifications", body.trim());
                 },
                 error -> Dialogs.error("Could not load notifications", error));
     }
@@ -225,13 +220,9 @@ public class SupportInboxPanel extends VBox {
                     if (filter == null || "All sections".equals(filter)) {
                         return allTickets;
                     }
-                    List<SupportTicket> filtered = new ArrayList<>();
-                    for (SupportTicket t : allTickets) {
-                        if (t.getSection() != null && t.getSection().name().equals(filter)) {
-                            filtered.add(t);
-                        }
-                    }
-                    return filtered;
+                    return allTickets.stream()
+                            .filter(t -> t.getSection() != null && t.getSection().name().equals(filter))
+                            .collect(Collectors.toList());
                 },
                 list -> table.setItems(FXCollections.observableArrayList(
                         list != null ? list : new ArrayList<>())),
