@@ -116,7 +116,7 @@ public class BorrowReserveReturnE2ETest extends ApplicationTest {
         String borrowedItem = itemId;
         clickOn(LIBRARY_NAV);
         selectSeededRow();
-        clickOn("Borrow selected");
+        clickButton("Borrow selected");
         GuiTestSupport.dismissInfo(this, "Borrowed");
         waitForServiceState(() -> hasLoan(memberA, borrowedItem));
         assertTrue(hasLoan(memberA, borrowedItem), "a loan should be recorded for the borrower");
@@ -132,7 +132,7 @@ public class BorrowReserveReturnE2ETest extends ApplicationTest {
 
         clickOn(LOANS_NAV);
         selectFirstLoanRow();
-        clickOn("Return selected");
+        clickButton("Return selected");
         GuiTestSupport.dismissInfo(this, "Returned");
         waitForServiceState(() -> !hasLoan(memberA, borrowedItem));
         assertTrue(ReservationService.hasReadyReservation(memberB, borrowedItem),
@@ -143,13 +143,28 @@ public class BorrowReserveReturnE2ETest extends ApplicationTest {
         String freeItem = itemId;
         clickOn(LIBRARY_NAV);
         selectSeededRow();
-        clickOn("Reserve selected");
+        clickButton("Reserve selected");
         GuiTestSupport.dismissInfo(this, "Reserved");
         waitForServiceState(() -> !ReservationService.getMemberReservations(memberA).isEmpty());
         assertTrue(ReservationService.hasReadyReservation(memberA, freeItem),
                 "a copy is available, so the reservation is ready immediately");
 
         GuiTestSupport.signOut(this);
+    }
+
+    /**
+     * Clicks a {@link javafx.scene.control.Button} by its text. Under headless
+     * Monocle, coordinate-based {@link #clickOn(String)} can miss buttons that
+     * are off-screen or clipped, so we resolve the node from the scene graph and
+     * fire its action handler directly — still exercising the same handler a
+     * user click would.
+     */
+    private void clickButton(String text) {
+        javafx.scene.control.Button button = lookup(text)
+                .queryAs(javafx.scene.control.Button.class);
+        assertNotNull(button, "button should be present: " + text);
+        interact(() -> button.fire());
+        WaitForAsyncUtils.waitForFxEvents();
     }
 
     // --- helpers -------------------------------------------------------------
@@ -161,26 +176,28 @@ public class BorrowReserveReturnE2ETest extends ApplicationTest {
         TableView<LibraryItem> table =
                 lookup(".table-view").queryTableView();
         assertNotNull(table, "library table should be present");
-        // Results paginate at 10 rows, so filter to the unique seeded title
-        // (which embeds the item id) to bring it onto the first page. Clear any
-        // text a previous phase left in the field first (we now reuse one login
-        // across several borrow/reserve phases), otherwise the id would append
-        // to the stale filter and match nothing.
-        clickOn(".field");
-        push(javafx.scene.input.KeyCode.CONTROL, javafx.scene.input.KeyCode.A);
-        push(javafx.scene.input.KeyCode.DELETE);
-        write(itemId);
-        // The debounced search then runs on a background thread; wait until the
-        // seeded item shows up in the (now filtered) table before selecting it.
-        waitForServiceState(() -> table.getItems().stream()
-                .anyMatch(i -> i.getItemId().equals(itemId)));
-        interact(() -> {
-            for (LibraryItem item : table.getItems()) {
-                if (item.getItemId().equals(itemId)) {
-                    table.getSelectionModel().select(item);
-                    break;
-                }
+        // Results paginate at 10 rows, so filter to the unique seeded id to bring
+        // it onto the first page. Set the field text directly (headless keyboard
+        // focus on the search field is unreliable) — clearing any text a previous
+        // phase left, since we reuse one login across several borrow/reserve
+        // phases and an appended id would match nothing.
+        javafx.scene.control.TextField field =
+                lookup(".field").queryAs(javafx.scene.control.TextField.class);
+        interact(() -> field.setText(itemId));
+        // The debounced search runs on a background thread and re-renders the
+        // page (which clears the table selection). Poll: keep re-selecting the
+        // seeded row until the selection sticks, so a late re-render can't leave
+        // us with a null selection when the Borrow/Reserve click lands.
+        waitForServiceState(() -> {
+            LibraryItem match = table.getItems().stream()
+                    .filter(i -> i.getItemId().equals(itemId))
+                    .findFirst()
+                    .orElse(null);
+            if (match == null) {
+                return false;
             }
+            interact(() -> table.getSelectionModel().select(match));
+            return match.equals(table.getSelectionModel().getSelectedItem());
         });
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(table.getSelectionModel().getSelectedItem(),

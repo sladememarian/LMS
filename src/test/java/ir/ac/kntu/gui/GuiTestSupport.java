@@ -62,10 +62,17 @@ final class GuiTestSupport {
                     + dumpWindows());
         }
 
-        // The TextInputDialog's editor is the focused field; type the master OTP
-        // straight into it, then confirm. The dialog runs its own nested event
-        // loop, so clicking OK returns control once verification is dispatched.
-        robot.write(MASTER_OTP);
+        // The TextInputDialog's editor is the focused field in a headed run, but
+        // under headless Monocle keyboard focus on a freshly-shown modal isn't
+        // guaranteed, so a blind write() can be dropped. Set the editor text
+        // directly (deterministic, no OS keyboard) then confirm. The dialog runs
+        // its own nested event loop, so clicking OK returns control once
+        // verification is dispatched.
+        WaitForAsyncUtils.waitForFxEvents();
+        javafx.scene.control.TextField codeField =
+                robot.lookup(".text-input-dialog .text-field")
+                        .queryAs(javafx.scene.control.TextField.class);
+        robot.interact(() -> codeField.setText(MASTER_OTP));
         robot.clickOn(OK_BUTTON);
 
         // Verification runs on a background thread and, on success, swaps in the

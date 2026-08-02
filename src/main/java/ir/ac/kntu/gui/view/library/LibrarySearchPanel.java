@@ -258,7 +258,11 @@ public class LibrarySearchPanel extends BorderPane {
                         : LibraryService.searchItems(query),
                 results -> {
                     spinner.setVisible(false);
+                    // Deterministic order (by item ID) so the browse/search table
+                    // isn't at the mercy of the store's row order.
                     currentResults = results != null ? results : new ArrayList<>();
+                    currentResults.sort(java.util.Comparator.comparing(
+                            LibraryItem::getItemId, String.CASE_INSENSITIVE_ORDER));
                     resultCount.setText(currentResults.size() + " item(s) found");
                     int pages = Math.max(1,
                             (int) Math.ceil(currentResults.size() / (double) PAGE_SIZE));
@@ -282,7 +286,15 @@ public class LibrarySearchPanel extends BorderPane {
                 ? currentResults.subList(from, to)
                 : new ArrayList<>();
         ObservableList<LibraryItem> pageData = FXCollections.observableArrayList(slice);
+        // setItems clears the selection. A debounced search can re-render this
+        // page moments after the user picked a row, silently dropping their
+        // selection out from under a Borrow/Reserve click; capture it first and
+        // restore it if the same item is still on this page.
+        LibraryItem previouslySelected = table.getSelectionModel().getSelectedItem();
         table.setItems(pageData);
+        if (previouslySelected != null && pageData.contains(previouslySelected)) {
+            table.getSelectionModel().select(previouslySelected);
+        }
         return table;
     }
 }
