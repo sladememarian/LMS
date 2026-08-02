@@ -49,6 +49,8 @@ public final class SignupWorker {
     private void runLoop() {
         System.out.println("[SignupWorker] consumer started on thread="
                 + Thread.currentThread().getName());
+        // Control-flow loop: the consumer must live for the whole app, blocking
+        // in take() between envelopes. Not a collection to stream over.
         while (true) {
             SignupEnvelope envelope;
             try {
@@ -57,12 +59,14 @@ public final class SignupWorker {
                 Thread.currentThread().interrupt();
                 return;
             }
+            SignupLog.step(SignupLog.THREAD_C, "worker is working on queue for "
+                    + envelope.getEmail());
             try {
                 process(envelope);
             } catch (BaseException e) {
                 // Never let one envelope kill the consumer loop.
-                System.err.println("[SignupWorker] dropping envelope for "
-                        + envelope.getEmail() + ": " + e.getMessage());
+                SignupLog.fail(SignupLog.THREAD_C, "dropping envelope for "
+                        + envelope.getEmail() + " after retries: " + e.getMessage());
                 queue.markProcessed(envelope);
             }
         }
@@ -70,6 +74,8 @@ public final class SignupWorker {
 
     private void process(SignupEnvelope envelope) {
         long start = System.nanoTime();
+        // Control-flow loop: bounded retry while the account row becomes visible;
+        // this is back-off logic, not a collection traversal.
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
                 PersonaService.updateProfile(
@@ -79,8 +85,8 @@ public final class SignupWorker {
                         envelope.getPhoneNumber());
                 queue.markProcessed(envelope);
                 long millis = (System.nanoTime() - start) / 1_000_000L;
-                System.out.println("[SignupWorker] persisted profile for "
-                        + envelope.getEmail() + " in " + millis + "ms (attempt " + attempt
+                SignupLog.step(SignupLog.THREAD_C, "envelope data successfully saved in db for "
+                        + envelope.getEmail() + " (" + millis + "ms, attempt " + attempt
                         + ", pending=" + queue.pendingCount() + ")");
                 return;
             } catch (BaseException e) {

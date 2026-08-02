@@ -82,6 +82,8 @@ public final class SignupEnvelope {
             return "";
         }
         StringBuilder sb = new StringBuilder(value.length());
+        // Control-flow loop: a char-by-char JSON escaper; each character maps to a
+        // variable-length replacement, so it isn't a plain collection transform.
         for (int index = 0; index < value.length(); index++) {
             char ch = value.charAt(index);
             if (ch == '\\') {
@@ -106,6 +108,8 @@ public final class SignupEnvelope {
         Map<String, String> out = new HashMap<>();
         int cursor = 0;
         int length = line.length();
+        // Control-flow loop: a hand-rolled scanning parser that advances a cursor
+        // through the line; stateful position tracking, not a stream pipeline.
         while (cursor < length) {
             int keyStart = line.indexOf('"', cursor);
             if (keyStart < 0) {
@@ -132,6 +136,8 @@ public final class SignupEnvelope {
     // appends the unescaped contents to `sink`, returns the index after the close quote.
     private static int readString(String line, int from, StringBuilder sink) {
         int index = from;
+        // Control-flow loop: consumes an escaped JSON string char-by-char until
+        // the closing quote; index jumps by 2 on escapes, so no stream fits.
         while (index < line.length()) {
             char ch = line.charAt(index);
             if (ch == '\\' && index + 1 < line.length()) {

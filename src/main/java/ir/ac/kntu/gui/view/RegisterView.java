@@ -4,6 +4,7 @@ import ir.ac.kntu.gui.Navigator;
 import ir.ac.kntu.gui.View;
 import ir.ac.kntu.gui.component.PasswordBox;
 import ir.ac.kntu.gui.signup.SignupEnvelope;
+import ir.ac.kntu.gui.signup.SignupLog;
 import ir.ac.kntu.gui.signup.SignupService;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.util.Validator;
@@ -116,6 +117,7 @@ public class RegisterView implements View {
                 password,
                 () -> {
                     setBusy(false);
+                    SignupLog.step(SignupLog.THREAD_B, "Account created window box opened");
                     Dialogs.info("Account created",
                             "You can sign in now. Your profile details are being saved in the background.");
                     goToLogin();

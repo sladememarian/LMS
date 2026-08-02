@@ -60,32 +60,60 @@ public final class SignupService {
 
         String email = profile.getEmail();
         BackgroundJobs.runAction(
-                // Stage A — create the account with just email + password.
-                () -> PersonaService.registerPersona(email, password),
+                // Stage A (thread-A / lms-bg-worker) — create the account with
+                // just email + password, narrating each real sub-step.
+                () -> createAccount(email, password),
                 () -> {
                     // Credentials accepted. Stage C: hand the profile off for
                     // deferred persistence, independently of the GUI trigger, so
                     // enqueue work never delays the "account created" window and
                     // a queue failure never masks the successful registration.
+                    // (Kept before onAccountReady: the success dialog blocks the
+                    // FX thread in showAndWait, so enqueuing first stops the queue
+                    // write from waiting behind the modal.)
                     enqueueProfile(profile);
-                    // Stage B — GUI trigger: login is now possible.
+                    // Stage B — GUI trigger: login is now possible. The window
+                    // itself is opened (and logged) by the onAccountReady body.
                     if (onAccountReady != null) {
                         onAccountReady.run();
                     }
                 },
-                onError);
+                error -> {
+                    SignupLog.fail(SignupLog.THREAD_A,
+                            "could not create account for " + email + ": "
+                                    + (error == null ? "unknown" : error.getMessage()));
+                    if (onError != null) {
+                        onError.accept(error);
+                    }
+                });
+    }
+
+    /**
+     * Stage A body, run on {@code lms-bg-worker}. Narrates the real sub-steps of
+     * {@code PersonaService.registerPersona} (there is no separate IAM call on
+     * the self-signup path; the "iam accepted" line marks the credentials being
+     * accepted, i.e. the duplicate-email guard passing).
+     */
+    private static void createAccount(String email, String password) {
+        SignupLog.step(SignupLog.THREAD_A, "validating email/password in iam (" + email + ")");
+        PersonaService.registerPersona(email, password);
+        SignupLog.step(SignupLog.THREAD_A, "iam accepted -> user initialized in persona");
+        SignupLog.step(SignupLog.THREAD_A, "account saved in db");
     }
 
     /**
      * Stage C producer. Enqueues the profile envelope for the worker to persist,
      * swallowing (and logging) any failure: the account already exists, so a
-     * queue problem must not be reported as a sign-up failure.
+     * queue problem must not be reported as a sign-up failure. The broad
+     * {@code RuntimeException} catch is deliberate for exactly that reason.
      */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private static void enqueueProfile(SignupEnvelope profile) {
         try {
+            SignupLog.step(SignupLog.THREAD_C, "building data envelope for " + profile.getEmail());
             SignupQueue.getInstance().enqueue(profile);
         } catch (RuntimeException e) {
-            System.err.println("[SignupService] profile enqueue failed for "
+            SignupLog.fail(SignupLog.THREAD_C, "profile enqueue failed for "
                     + profile.getEmail() + "; account exists, profile deferred: " + e.getMessage());
         }
     }

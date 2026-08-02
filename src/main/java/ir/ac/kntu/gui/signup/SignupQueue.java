@@ -79,10 +79,11 @@ public final class SignupQueue {
             return;
         }
         appendToSpool(envelope);
+        SignupLog.step(SignupLog.THREAD_C, "envelope made for " + envelope.getEmail());
         memory.add(envelope);
         long total = enqueued.incrementAndGet();
-        log("enqueue", "email=" + envelope.getEmail()
-                + " pending=" + memory.size() + " totalEnqueued=" + total);
+        SignupLog.step(SignupLog.THREAD_C, "envelope injected in queue (pending="
+                + memory.size() + ", totalEnqueued=" + total + ")");
     }
 
     /** Consumer side. Blocks until an envelope is available. */
@@ -108,8 +109,9 @@ public final class SignupQueue {
                 compact();
             }
         }
-        log("processed", "email=" + envelope.getEmail()
-                + " pending=" + memory.size() + " totalProcessed=" + total);
+        SignupLog.step(SignupLog.THREAD_C, "envelope removed from queue for "
+                + envelope.getEmail() + " (pending=" + memory.size()
+                + ", totalProcessed=" + total + ")");
     }
 
     /** Number of envelopes still waiting in memory (diagnostics/tests). */
@@ -126,12 +128,10 @@ public final class SignupQueue {
 
     private void recoverFromDisk() {
         synchronized (diskLock) {
-            for (String line : readSpoolLines()) {
-                SignupEnvelope env = SignupEnvelope.fromJsonLine(line);
-                if (env != null) {
-                    memory.add(env);
-                }
-            }
+            readSpoolLines().stream()
+                    .map(SignupEnvelope::fromJsonLine)
+                    .filter(java.util.Objects::nonNull)
+                    .forEach(memory::add);
         }
     }
 
@@ -155,14 +155,12 @@ public final class SignupQueue {
         if (processedBuffer.isEmpty()) {
             return;
         }
-        List<String> remaining = new ArrayList<>();
-        for (String line : readSpoolLines()) {
-            if (!processedBuffer.contains(line)) {
-                remaining.add(line);
-            }
-        }
+        List<String> remaining = readSpoolLines().stream()
+                .filter(line -> !processedBuffer.contains(line))
+                .collect(java.util.stream.Collectors.toList());
         writeSpoolLines(remaining);
-        log("compact", "removed=" + processedBuffer.size() + " remainingOnDisk=" + remaining.size());
+        SignupLog.step(SignupLog.THREAD_C, "spool compacted (removed="
+                + processedBuffer.size() + ", remainingOnDisk=" + remaining.size() + ")");
         processedBuffer.clear();
     }
 
@@ -171,13 +169,9 @@ public final class SignupQueue {
             return new ArrayList<>();
         }
         try {
-            List<String> lines = new ArrayList<>();
-            for (String line : Files.readAllLines(spoolFile, StandardCharsets.UTF_8)) {
-                if (!line.trim().isEmpty()) {
-                    lines.add(line);
-                }
-            }
-            return lines;
+            return Files.readAllLines(spoolFile, StandardCharsets.UTF_8).stream()
+                    .filter(line -> !line.trim().isEmpty())
+                    .collect(java.util.stream.Collectors.toList());
         } catch (IOException e) {
             System.err.println("SignupQueue: could not read spool: " + e.getMessage());
             return new ArrayList<>();
@@ -187,19 +181,13 @@ public final class SignupQueue {
     private void writeSpoolLines(List<String> lines) {
         try {
             Files.createDirectories(spoolFile.getParent());
-            StringBuilder sb = new StringBuilder();
-            for (String line : lines) {
-                sb.append(line).append(System.lineSeparator());
-            }
-            Files.write(spoolFile, sb.toString().getBytes(StandardCharsets.UTF_8),
+            String content = lines.stream()
+                    .collect(java.util.stream.Collectors.joining(System.lineSeparator(), "",
+                            lines.isEmpty() ? "" : System.lineSeparator()));
+            Files.write(spoolFile, content.getBytes(StandardCharsets.UTF_8),
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             System.err.println("SignupQueue: could not rewrite spool: " + e.getMessage());
         }
-    }
-
-    private static void log(String event, String detail) {
-        System.out.println("[SignupQueue] " + event + " | " + detail
-                + " | thread=" + Thread.currentThread().getName());
     }
 }
