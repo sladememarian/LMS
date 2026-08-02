@@ -49,6 +49,11 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.testfx:testfx-junit5:4.0.16-alpha'
     testImplementation 'org.testfx:testfx-core:4.0.16-alpha'
+    // Headless rendering backend for TestFX. The 17.0.x line is compiled for
+    // Java 17 (this project's toolchain); the 21.x jar is Java-21 bytecode and
+    // fails to load here. It renders GUI tests to an offscreen Monocle screen
+    // instead of a real window — no stolen focus, no cursor movement.
+    testImplementation 'org.testfx:openjfx-monocle:17.0.10'
     testImplementation 'net.sourceforge.pmd:pmd-java:6.55.0'
     testImplementation 'com.puppycrawl.tools:checkstyle:10.12.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -78,6 +83,19 @@ test {
     environment 'JDBC_URL', 'jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1'
     environment 'JDBC_USER', 'sa'
     environment 'JDBC_PASSWORD', ''
+
+    // Run TestFX headless via Monocle: JavaFX renders to a virtual offscreen
+    // screen and TestFX uses the in-JVM Glass/Monocle robot instead of the real
+    // OS mouse/keyboard. This stops the GUI tests from opening a window behind
+    // the editor, moving the developer's cursor, or stealing focus — which was
+    // also the source of the focus-contention flakiness on Windows.
+    systemProperty 'testfx.robot', 'glass'
+    systemProperty 'testfx.headless', 'true'
+    systemProperty 'glass.platform', 'Monocle'
+    systemProperty 'monocle.platform', 'Headless'
+    systemProperty 'prism.order', 'sw'
+    systemProperty 'prism.text', 't2k'
+    systemProperty 'java.awt.headless', 'true'
     // CI (university GitLab shell runner) cannot run TestFX GUI tests, so they
     // are skipped there via `-PskipGuiTests`. Locally, `./gradlew clean test`
     // still runs everything including the GUI tests (headed).
