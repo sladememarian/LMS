@@ -2,24 +2,30 @@ package ir.ac.kntu.gui.view.admin;
 
 import java.util.ArrayList;
 
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.util.Validator;
 import ir.ac.kntu.persona.AdminManagementService;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.UserRole;
+import ir.ac.kntu.support.rolerequest.RoleRequest;
+import ir.ac.kntu.support.rolerequest.RoleRequestService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /**
@@ -39,6 +45,10 @@ public class UserManagementPanel extends VBox {
     private final TextField createEmailField = new TextField();
     private final TextField createPasswordField = new TextField();
     private final TableView<Persona> table = new TableView<>();
+    private final PagedTable<Persona> pagedTable = new PagedTable<>(table);
+    private final ProgressIndicator loadProgress = new ProgressIndicator();
+    private final StackPane tableStack = new StackPane(pagedTable, loadProgress);
+    private final ListView<RoleRequest> requestList = new ListView<>();
 
     public UserManagementPanel(Persona actor) {
         super(16);
@@ -53,9 +63,13 @@ public class UserManagementPanel extends VBox {
         searchField.getStyleClass().add("field");
         searchField.textProperty().addListener((obs, old, val) -> refresh(val));
 
+        loadProgress.setMaxSize(48, 48);
+        loadProgress.setVisible(false);
+
         buildTable();
-        getChildren().addAll(heading, searchField, actions(), buildCreateForm(), table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        getChildren().addAll(heading, searchField, actions(), buildCreateForm(),
+                buildRoleRequestSection(), tableStack);
+        VBox.setVgrow(tableStack, Priority.ALWAYS);
         refresh("");
     }
 
@@ -72,8 +86,18 @@ public class UserManagementPanel extends VBox {
         TableColumn<Persona, String> active = new TableColumn<>("Active");
         active.setCellValueFactory(cell -> new SimpleStringProperty(
                 cell.getValue().isActive() ? "Yes" : "No"));
+        // Admin-hierarchy columns (item: expose the backend Owner/createdBy
+        // model in the GUI). Owner is the root admin; "Created by" shows which
+        // admin provisioned this account, which drives who may manage it.
+        TableColumn<Persona, String> owner = new TableColumn<>("Owner");
+        owner.setCellValueFactory(cell -> new SimpleStringProperty(
+                cell.getValue().isOwner() ? "Yes" : ""));
+        TableColumn<Persona, String> createdBy = new TableColumn<>("Created by");
+        createdBy.setCellValueFactory(cell -> new SimpleStringProperty(
+                cell.getValue().getCreatedBy() == null ? "" : cell.getValue().getCreatedBy()));
+        createdBy.setPrefWidth(200);
 
-        table.getColumns().addAll(email, role, member, active);
+        table.getColumns().addAll(email, role, member, active, owner, createdBy);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPlaceholder(new Label("No users."));
     }
@@ -149,7 +173,11 @@ public class UserManagementPanel extends VBox {
         delete.getStyleClass().add(GHOST_STYLE);
         delete.setOnAction(event -> handleDelete());
 
-        HBox box = new HBox(10, toggle, resetPw, promote, demote, editProfile, delete);
+        Button refresh = new Button("Refresh");
+        refresh.getStyleClass().add(GHOST_STYLE);
+        refresh.setOnAction(event -> refresh(searchField.getText()));
+
+        HBox box = new HBox(10, toggle, resetPw, promote, demote, editProfile, delete, refresh);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -301,14 +329,97 @@ public class UserManagementPanel extends VBox {
         return user;
     }
 
+    /** Builds the pending role-request approval section (item: admins can now
+     *  accept/reject role upgrade requests directly from User Management). */
+    private VBox buildRoleRequestSection() {
+        Label title = new Label("Pending Role Requests");
+        title.getStyleClass().add("h2");
+
+        requestList.setPrefHeight(120);
+        requestList.setPlaceholder(new Label("No pending requests."));
+        requestList.setCellFactory(view -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(RoleRequest req, boolean empty) {
+                super.updateItem(req, empty);
+                if (empty || req == null) {
+                    setText(null);
+                } else {
+                    String msg = req.getMessage() == null || req.getMessage().isBlank()
+                            ? "" : " — " + req.getMessage();
+                    setText(req.getRequesterEmail() + "  ->  " + req.getRequestedRole() + msg);
+                }
+            }
+        });
+
+        Button approve = new Button("Approve");
+        approve.getStyleClass().add("primary");
+        approve.setOnAction(e -> handleRequestDecision(true));
+
+        Button reject = new Button("Reject");
+        reject.getStyleClass().add(GHOST_STYLE);
+        reject.setOnAction(e -> handleRequestDecision(false));
+
+        Button reload = new Button("Refresh requests");
+        reload.getStyleClass().add(GHOST_STYLE);
+        reload.setOnAction(e -> refreshRequests());
+
+        HBox buttons = new HBox(10, approve, reject, reload);
+        buttons.setAlignment(Pos.CENTER_LEFT);
+
+        VBox box = new VBox(10, title, requestList, buttons);
+        box.getStyleClass().add("card");
+        box.setPadding(new Insets(14));
+        refreshRequests();
+        return box;
+    }
+
+    private void handleRequestDecision(boolean approve) {
+        RoleRequest req = requestList.getSelectionModel().getSelectedItem();
+        if (req == null) {
+            Dialogs.warn("No selection", "Select a pending request first.");
+            return;
+        }
+        String id = req.getRequestId();
+        BackgroundJobs.runAction(
+                () -> {
+                    if (approve) {
+                        RoleRequestService.approve(id);
+                    } else {
+                        RoleRequestService.reject(id);
+                    }
+                },
+                () -> {
+                    Dialogs.info(approve ? "Approved" : "Rejected",
+                            "Request for " + req.getRequesterEmail() + " was "
+                                    + (approve ? "approved." : "rejected."));
+                    refreshRequests();
+                    refresh(searchField.getText());
+                },
+                error -> Dialogs.error("Could not update request", error));
+    }
+
+    private void refreshRequests() {
+        BackgroundJobs.run(
+                RoleRequestService::getPending,
+                list -> requestList.setItems(FXCollections.observableArrayList(
+                        list != null ? list : new ArrayList<>())),
+                error -> Dialogs.error("Could not load requests", error));
+    }
+
     private void refresh(String keyword) {
         String search = keyword == null ? "" : keyword.trim();
+        loadProgress.setVisible(true);
         BackgroundJobs.run(
                 () -> search.isEmpty()
                         ? AdminManagementService.listAllUsers()
                         : AdminManagementService.searchUsers(search),
-                list -> table.setItems(FXCollections.observableArrayList(
-                        list != null ? list : new ArrayList<>())),
-                error -> Dialogs.error("Could not load users", error));
+                list -> {
+                    loadProgress.setVisible(false);
+                    pagedTable.setItems(list != null ? list : new ArrayList<>());
+                },
+                error -> {
+                    loadProgress.setVisible(false);
+                    Dialogs.error("Could not load users", error);
+                });
     }
 }
