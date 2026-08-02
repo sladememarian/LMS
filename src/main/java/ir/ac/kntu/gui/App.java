@@ -2,6 +2,7 @@ package ir.ac.kntu.gui;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.view.LoginView;
+import ir.ac.kntu.gui.view.SplashView;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -21,14 +22,21 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // The initial view needs the navigator, and the navigator needs an
-        // initial view, so we create the login view with a lazy navigator ref.
+        // The login view and navigator have a circular dependency, so the view
+        // is created first and the navigator ref is injected afterwards.
         LoginView login = new LoginView();
-        Navigator navigator = new Navigator(primaryStage, login);
+
+        // Boot on the splash: it simulates loading from postgres, then hands off
+        // to the login screen. The navigator starts on the splash so the very
+        // first thing shown is the brand loading bar.
+        SplashView splash = new SplashView();
+        Navigator navigator = new Navigator(primaryStage, splash);
         login.attachNavigator(navigator);
+        splash.attachNavigator(navigator, login);
 
         primaryStage.setOnCloseRequest(event -> BackgroundJobs.shutdown());
         primaryStage.show();
+        splash.start();
     }
 
     @Override
