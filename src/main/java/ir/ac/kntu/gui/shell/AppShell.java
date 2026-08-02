@@ -22,7 +22,6 @@ import ir.ac.kntu.gui.view.admin.AnalyticsPanel;
 import ir.ac.kntu.gui.notification.NotificationsPanel;
 import ir.ac.kntu.gui.notification.NotificationChecker;
 import ir.ac.kntu.mail.Inbox;
-import ir.ac.kntu.mail.MailMessage;
 import ir.ac.kntu.mail.MailService;
 import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.finance.LoanService;
@@ -38,6 +37,7 @@ import javafx.util.Duration;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
@@ -71,6 +71,10 @@ public class AppShell implements View {
 
     /** A tiny red dot shown beside "Notifications" when unread mail exists. */
     private final Circle unreadDot = new Circle(4);
+
+    /** Next-Day control + its busy spinner (admin top bar); locked while running. */
+    private final Button nextDayButton = new Button("Next Day");
+    private final ProgressIndicator nextDaySpinner = new ProgressIndicator();
 
     public AppShell(Navigator navigator, Persona persona) {
         this.navigator = navigator;
@@ -122,10 +126,12 @@ public class AppShell implements View {
 
         HBox bar = new HBox(14, appName, spacer, identity);
         if (persona.getRole() == UserRole.ADMIN) {
-            Button nextDay = new Button("Next Day");
-            nextDay.getStyleClass().add(GHOST_STYLE);
-            nextDay.setOnAction(event -> handleNextDay());
-            bar.getChildren().add(nextDay);
+            nextDayButton.getStyleClass().add(GHOST_STYLE);
+            nextDayButton.setOnAction(event -> handleNextDay());
+            nextDaySpinner.setMaxSize(18, 18);
+            nextDaySpinner.setVisible(false);
+            nextDaySpinner.setManaged(false);
+            bar.getChildren().addAll(nextDayButton, nextDaySpinner);
         }
         bar.getChildren().addAll(themeToggle, logout);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -141,6 +147,9 @@ public class AppShell implements View {
         sidebar.setPrefWidth(230);
 
         List<NavItem> items = buildNavItems();
+        // Control-flow loop: builds a toggle button per item with side effects on
+        // the sidebar and a stateful "select the first one" flag — not a value
+        // transformation, so it stays imperative.
         boolean first = true;
         for (NavItem item : items) {
             ToggleButton button = new ToggleButton(item.label());
@@ -243,12 +252,7 @@ public class AppShell implements View {
                     if (inbox == null) {
                         return Boolean.FALSE;
                     }
-                    for (MailMessage message : inbox.getMessages()) {
-                        if (!message.isRead()) {
-                            return Boolean.TRUE;
-                        }
-                    }
-                    return Boolean.FALSE;
+                    return inbox.getMessages().stream().anyMatch(m -> !m.isRead());
                 },
                 hasUnread -> {
                     boolean unread = Boolean.TRUE.equals(hasUnread);
@@ -259,8 +263,13 @@ public class AppShell implements View {
     }
 
     /** Advances the simulated day, accrues overdue debts, expires reservations,
-     *  then re-checks notifications — all on a background thread. */
+     *  then re-checks notifications — all on a background thread. The button is
+     *  locked and a spinner shown while it runs so the slow per-row DB writes
+     *  can't be re-triggered or appear frozen. */
     private void handleNextDay() {
+        nextDayButton.setDisable(true);
+        nextDaySpinner.setVisible(true);
+        nextDaySpinner.setManaged(true);
         BackgroundJobs.run(
                 () -> {
                     int day = SimulationClock.advanceDay();
@@ -269,12 +278,20 @@ public class AppShell implements View {
                     return day;
                 },
                 day -> {
+                    nextDayButton.setDisable(false);
+                    nextDaySpinner.setVisible(false);
+                    nextDaySpinner.setManaged(false);
                     ir.ac.kntu.gui.util.Dialogs.info("Day advanced",
                             "Simulated day is now " + day + ".");
                     NotificationChecker.checkAndNotify(persona);
                     refreshUnreadIndicator();
                 },
-                error -> ir.ac.kntu.gui.util.Dialogs.error("Could not advance day", error));
+                error -> {
+                    nextDayButton.setDisable(false);
+                    nextDaySpinner.setVisible(false);
+                    nextDaySpinner.setManaged(false);
+                    ir.ac.kntu.gui.util.Dialogs.error("Could not advance day", error);
+                });
     }
 
     private void handleLogout() {
