@@ -22,6 +22,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -51,10 +52,9 @@ public class UserManagementPanel extends VBox {
     private final ListView<RoleRequest> requestList = new ListView<>();
 
     public UserManagementPanel(Persona actor) {
-        super(16);
+        super();
         this.actor = actor;
         getStyleClass().add("content-area");
-        setPadding(new Insets(24));
 
         Label heading = new Label("User Management");
         heading.getStyleClass().add("h1");
@@ -67,9 +67,28 @@ public class UserManagementPanel extends VBox {
         loadProgress.setVisible(false);
 
         buildTable();
-        getChildren().addAll(heading, searchField, actions(), buildCreateForm(),
+        // Give the users table a real floor so it can't be crushed when the
+        // sub-sections stack up, and let the shell's scroll (or the mouse wheel)
+        // reveal what overflows — just like the Profile tab.
+        tableStack.setMinHeight(320);
+
+        // All the panel's sections live in an inner content box that is allowed
+        // to grow past the viewport; wrapping it in this panel's own ScrollPane
+        // (fit-to-width, never fit-to-height) is what makes User Management
+        // scroll instead of squashing its mini-tables.
+        VBox content = new VBox(16, heading, searchField, actions(), buildCreateForm(),
                 buildRoleRequestSection(), tableStack);
+        content.setPadding(new Insets(24));
         VBox.setVgrow(tableStack, Priority.ALWAYS);
+
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroll.getStyleClass().add("content-scroll");
+        getChildren().add(scroll);
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+
         refresh("");
     }
 
@@ -335,7 +354,8 @@ public class UserManagementPanel extends VBox {
         Label title = new Label("Pending Role Requests");
         title.getStyleClass().add("h2");
 
-        requestList.setPrefHeight(120);
+        requestList.setPrefHeight(160);
+        requestList.setMinHeight(160);
         requestList.setPlaceholder(new Label("No pending requests."));
         requestList.setCellFactory(view -> new javafx.scene.control.ListCell<>() {
             @Override
@@ -410,9 +430,12 @@ public class UserManagementPanel extends VBox {
         String search = keyword == null ? "" : keyword.trim();
         loadProgress.setVisible(true);
         BackgroundJobs.run(
-                () -> search.isEmpty()
+                () -> (search.isEmpty()
                         ? AdminManagementService.listAllUsers()
-                        : AdminManagementService.searchUsers(search),
+                        : AdminManagementService.searchUsers(search)).stream()
+                        .sorted(java.util.Comparator.comparing(Persona::getEmail,
+                                String.CASE_INSENSITIVE_ORDER))
+                        .collect(java.util.stream.Collectors.toList()),
                 list -> {
                     loadProgress.setVisible(false);
                     pagedTable.setItems(list != null ? list : new ArrayList<>());

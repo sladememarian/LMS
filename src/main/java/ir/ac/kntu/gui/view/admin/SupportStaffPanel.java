@@ -1,11 +1,13 @@
 package ir.ac.kntu.gui.view.admin;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.persona.AdminManagementService;
@@ -14,7 +16,6 @@ import ir.ac.kntu.persona.UserRole;
 import ir.ac.kntu.support.SupportSection;
 import ir.ac.kntu.util.Validator;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -37,6 +38,7 @@ public class SupportStaffPanel extends VBox {
 
     private final Persona actor;
     private final TableView<Persona> table = new TableView<>();
+    private final PagedTable<Persona> pagedTable = new PagedTable<>(table);
     private final TextField emailField = new TextField();
     private final TextField passwordField = new TextField();
 
@@ -51,8 +53,8 @@ public class SupportStaffPanel extends VBox {
 
         buildTable();
         getChildren().addAll(heading, buildCreateForm(),
-                buildAssignRow(), new Label("Callcenter agents"), table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+                buildAssignRow(), new Label("Callcenter agents"), pagedTable);
+        VBox.setVgrow(pagedTable, Priority.ALWAYS);
         refresh();
     }
 
@@ -94,6 +96,8 @@ public class SupportStaffPanel extends VBox {
         Label label = new Label("Assign sections to selected agent:");
         FlowPane checks = new FlowPane(12, 8);
         List<CheckBox> boxes = new ArrayList<>();
+        // Control-flow loop: each iteration adds to two targets (the boxes list
+        // we keep for reading state later, and the FlowPane's children).
         for (SupportSection section : SupportSection.values()) {
             CheckBox cb = new CheckBox(section.name());
             boxes.add(cb);
@@ -142,12 +146,10 @@ public class SupportStaffPanel extends VBox {
             Dialogs.warn("No selection", "Select an agent first.");
             return;
         }
-        Set<SupportSection> selected = EnumSet.noneOf(SupportSection.class);
-        for (CheckBox cb : boxes) {
-            if (cb.isSelected()) {
-                selected.add(SupportSection.valueOf(cb.getText()));
-            }
-        }
+        Set<SupportSection> selected = boxes.stream()
+                .filter(CheckBox::isSelected)
+                .map(cb -> SupportSection.valueOf(cb.getText()))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(SupportSection.class)));
         BackgroundJobs.runAction(
                 () -> AdminManagementService.assignSupportSections(actor, agent.getEmail(), selected),
                 () -> {
@@ -161,9 +163,10 @@ public class SupportStaffPanel extends VBox {
         BackgroundJobs.run(
                 () -> AdminManagementService.listAllUsers().stream()
                         .filter(p -> p.getRole() == UserRole.CALLCENTER)
+                        .sorted(Comparator.comparing(Persona::getEmail,
+                                String.CASE_INSENSITIVE_ORDER))
                         .collect(Collectors.toList()),
-                list -> table.setItems(FXCollections.observableArrayList(
-                        list != null ? list : new ArrayList<>())),
+                list -> pagedTable.setItems(list != null ? list : new ArrayList<>()),
                 error -> Dialogs.error("Could not load staff", error));
     }
 }
