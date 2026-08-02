@@ -27,12 +27,18 @@ public class MailService {
         return Integer.parseInt(EnvConfig.get("SIMULATED_2FA_EXPIRE_MINUTES", "5"));
     }
 
+    // ALL_MESSAGES is rebuilt from the DB on every read via a non-atomic
+    // clear()+addAll(). The GUI runs mail reads on a 4-thread pool (e.g. the
+    // Notifications "mark all read" refresh and the shell's unread-dot check
+    // fire at the same time), so two threads could interleave one's clear()
+    // with another's addAll() and double the inbox — every notification shown
+    // twice. Every public entry point is synchronized so load+read is atomic.
     private static void ensureLoaded() {
         ALL_MESSAGES.clear();
         ALL_MESSAGES.addAll(MailRepository.getAllMailMessages());
     }
 
-    public static MailMessage deliverMessage(String recipient, String subject, String body, MessageType type) {
+    public static synchronized MailMessage deliverMessage(String recipient, String subject, String body, MessageType type) {
         ensureLoaded();
         MailMessage message = new MailMessage(recipient, subject, body, type);
         ALL_MESSAGES.add(message);
@@ -104,7 +110,7 @@ public class MailService {
         deliverMessage(recipient, subject, body, MessageType.SYSTEM_NOTIFICATION);
     }
 
-    public static Inbox getInbox(String recipient) {
+    public static synchronized Inbox getInbox(String recipient) {
         ensureLoaded();
         Inbox inbox = new Inbox(recipient);
         int maxMessages = getMaxMessages();
@@ -116,12 +122,12 @@ public class MailService {
         return inbox;
     }
 
-    public static List<MailMessage> getAllMessages() {
+    public static synchronized List<MailMessage> getAllMessages() {
         ensureLoaded();
         return new ArrayList<>(ALL_MESSAGES);
     }
 
-    public static void markInboxRead(String recipient) {
+    public static synchronized void markInboxRead(String recipient) {
         ensureLoaded();
         for (MailMessage message : ALL_MESSAGES) {
             if (message.getRecipientEmail().equalsIgnoreCase(recipient)) {
@@ -131,7 +137,7 @@ public class MailService {
         MailRepository.markMailRead(recipient);
     }
 
-    public static int deleteInbox(String recipient) {
+    public static synchronized int deleteInbox(String recipient) {
         ensureLoaded();
         List<MailMessage> remaining = new ArrayList<>();
         int removed = 0;

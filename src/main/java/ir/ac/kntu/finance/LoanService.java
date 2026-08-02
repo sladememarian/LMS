@@ -6,6 +6,7 @@ import java.util.List;
 import ir.ac.kntu.exception.NotFoundException;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
+import ir.ac.kntu.support.notification.NotificationService;
 import ir.ac.kntu.util.LoanRepository;
 import ir.ac.kntu.util.SystemSettingsService;
 
@@ -16,19 +17,23 @@ public class LoanService {
         LOANS.addAll(LoanRepository.getAllLoans());
     }
 
+    // LOANS is rebuilt from the DB on every access via a non-atomic
+    // clear()+addAll(). Concurrent GUI reads on the 4-thread pool could
+    // interleave and double the list, so every public entry point below is
+    // synchronized to keep reload+read atomic.
     private static void reload() {
         LOANS.clear();
         LOANS.addAll(LoanRepository.getAllLoans());
     }
 
-    public static void recordLoan(String memberId, String itemId, int currentDay, int loanPeriodDays) {
+    public static synchronized void recordLoan(String memberId, String itemId, int currentDay, int loanPeriodDays) {
         reload();
         int dueDay = currentDay + loanPeriodDays;
         LOANS.add(new Loan(memberId, itemId, currentDay, dueDay));
         LoanRepository.insertLoan(new Loan(memberId, itemId, currentDay, dueDay));
     }
 
-    public static boolean clearLoan(String memberId, String itemId) {
+    public static synchronized boolean clearLoan(String memberId, String itemId) {
         reload();
         boolean removed = LOANS.removeIf(loan -> loan.getMemberId().equals(memberId)
                 && loan.getItemId().equals(itemId));
@@ -38,7 +43,7 @@ public class LoanService {
         return removed;
     }
 
-    public static boolean extendLoan(String memberId, String itemId, int extraDays) {
+    public static synchronized boolean extendLoan(String memberId, String itemId, int extraDays) {
         reload();
         for (Loan loan : LOANS) {
             if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
@@ -51,7 +56,7 @@ public class LoanService {
         return false;
     }
 
-    public static int getDueDay(String memberId, String itemId) {
+    public static synchronized int getDueDay(String memberId, String itemId) {
         reload();
         for (Loan loan : LOANS) {
             if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
@@ -63,7 +68,7 @@ public class LoanService {
         );
     }
 
-    public static boolean isOverdue(String memberId, String itemId, int currentDay) {
+    public static synchronized boolean isOverdue(String memberId, String itemId, int currentDay) {
         reload();
         for (Loan loan : LOANS) {
             if (loan.getMemberId().equals(memberId) && loan.getItemId().equals(itemId)) {
@@ -73,12 +78,12 @@ public class LoanService {
         return false;
     }
 
-    public static List<Loan> getLoans() {
+    public static synchronized List<Loan> getLoans() {
         reload();
         return new ArrayList<>(LOANS);
     }
 
-    public static List<Loan> getOverdueLoans(int currentDay) {
+    public static synchronized List<Loan> getOverdueLoans(int currentDay) {
         reload();
         List<Loan> overdue = new ArrayList<>();
         for (Loan loan : LOANS) {
@@ -102,11 +107,16 @@ public class LoanService {
         int fineRate = SystemSettingsService.getFineRate();
         FinanceService.recordDebt(borrower, fineRate,
                 "Overdue fine for " + loan.getItemId() + " (day " + currentDay + ")");
+        // Notify the borrower so the fine appears in their Notifications tab,
+        // not just as a silent debt entry.
+        NotificationService.notifyAddress(borrower.getEmail(), "Overdue Fine Charged",
+                "You were charged " + fineRate + " for the overdue item "
+                        + loan.getItemId() + " (day " + currentDay + ").");
         return borrower.getEmail() + " +" + fineRate
                 + " (" + loan.getItemId() + ")";
     }
 
-    public static List<String> accrueOverdueDebts(int currentDay) {
+    public static synchronized List<String> accrueOverdueDebts(int currentDay) {
         reload();
         List<String> charges = new ArrayList<>();
         for (Loan loan : LOANS) {

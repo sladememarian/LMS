@@ -18,16 +18,22 @@ public class FinanceService {
     private static final String TYPE_DEBT_PAYMENT = "DEBT_PAYMENT";
     private static final String TYPE_TAX = "TAX";
 
+    // The static TX_LOGS cache is rebuilt from the DB on every read via a
+    // non-atomic clear()+addAll(). Two concurrent callers (the GUI runs finance
+    // reads on a 4-thread pool) could interleave one thread's clear() with
+    // another's addAll(), doubling the list and showing every transaction twice.
+    // Every public entry point is synchronized on this monitor so load+read is
+    // atomic and the cache can never be observed mid-rebuild.
     private static void ensureLoaded() {
         TX_LOGS.clear();
         TX_LOGS.addAll(TransactionRepository.getAllTransactions());
     }
 
-    public static boolean checkBorrowingPermission(String memberId) {
+    public static synchronized boolean checkBorrowingPermission(String memberId) {
         return getOutstandingDebt(memberId) <= 0;
     }
 
-    public static int getOutstandingDebt(String memberId) {
+    public static synchronized int getOutstandingDebt(String memberId) {
         ensureLoaded();
         return TX_LOGS.stream()
                 .filter(tx -> tx.getMemberId() != null && tx.getMemberId().equals(memberId))
@@ -35,7 +41,7 @@ public class FinanceService {
                 .sum();
     }
 
-    public static void proccessWalletCharge(Persona persona, int amount) {
+    public static synchronized void proccessWalletCharge(Persona persona, int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
@@ -51,7 +57,7 @@ public class FinanceService {
         TransactionRepository.insertTransaction(tx);
     }
 
-    public static void proccessExtentionPayment(Persona persona, int amount) {
+    public static synchronized void proccessExtentionPayment(Persona persona, int amount) {
         if (amount <= 0) {
             throw new ValidationException("Extension amount must be positive.");
         }
@@ -69,7 +75,7 @@ public class FinanceService {
         logTransaction(persona.getMemberId(), tax, TYPE_TAX, "Extension payment tax");
     }
 
-    public static List<Transaction> getTransactionsForMember(String memberId) {
+    public static synchronized List<Transaction> getTransactionsForMember(String memberId) {
         ensureLoaded();
         return TX_LOGS.stream()
                 .filter(tx -> tx.getMemberId() != null && tx.getMemberId().equals(memberId))
@@ -77,35 +83,35 @@ public class FinanceService {
                 .collect(Collectors.toList());
     }
 
-    public static List<Transaction> getAllTransactions() {
+    public static synchronized List<Transaction> getAllTransactions() {
         ensureLoaded();
         return TX_LOGS.stream()
                 .sorted(Comparator.comparingLong(Transaction::getTimestamp))
                 .collect(Collectors.toList());
     }
 
-    public static int getTotalOutstandingDebt() {
+    public static synchronized int getTotalOutstandingDebt() {
         ensureLoaded();
         return TX_LOGS.stream()
                 .mapToInt(FinanceService::signedDebt)
                 .sum();
     }
 
-    public static List<Transaction> getDebtAndPaymentTransactions() {
+    public static synchronized List<Transaction> getDebtAndPaymentTransactions() {
         ensureLoaded();
         return TX_LOGS.stream()
                 .filter(tx -> TYPE_DEBT.equals(tx.getType()) || TYPE_DEBT_PAYMENT.equals(tx.getType()))
                 .collect(Collectors.toList());
     }
 
-    public static List<Transaction> getOpenDebtTransactions() {
+    public static synchronized List<Transaction> getOpenDebtTransactions() {
         ensureLoaded();
         return TX_LOGS.stream()
                 .filter(tx -> TYPE_DEBT.equals(tx.getType()))
                 .collect(Collectors.toList());
     }
 
-    public static int getTaxRevenueCollected() {
+    public static synchronized int getTaxRevenueCollected() {
         ensureLoaded();
         return TX_LOGS.stream()
                 .filter(tx -> TYPE_TAX.equals(tx.getType()))
@@ -125,14 +131,14 @@ public class FinanceService {
         return 0;
     }
 
-    public static void recordDebt(Persona persona, int amount, String description) {
+    public static synchronized void recordDebt(Persona persona, int amount, String description) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Debt amount must be positive");
         }
         logTransaction(persona.getMemberId(), amount, TYPE_DEBT, description);
     }
 
-    public static void payDebt(Persona persona) {
+    public static synchronized void payDebt(Persona persona) {
         int debt = getOutstandingDebt(persona.getMemberId());
         if (debt <= 0) {
             throw new ValidationException("No outstanding debt to pay.");

@@ -10,6 +10,11 @@ import java.util.List;
 public class PersonaService {
 
     private static final String PERSONA_NOT_FOUND = "Persona not found for email: ";
+    // Shared in-memory mirror of the persona table. Mutated by unsynchronized
+    // ArrayList.add()/remove() from register/update paths that now run
+    // concurrently (the 4-thread GUI pool plus the sign-up burst), so every
+    // public entry point that touches it is synchronized to keep read/mutate
+    // atomic — the same fix applied to the finance/mail/loan caches.
     private static final List<Persona> PERSONA_DATABASE = new ArrayList<>();
 
     static {
@@ -73,7 +78,7 @@ public class PersonaService {
         PersonaRepository.insertPersona(cc);
     }
 
-    public static void reset() {
+    public static synchronized void reset() {
         loadPersonas();
     }
 
@@ -82,7 +87,7 @@ public class PersonaService {
         PERSONA_DATABASE.addAll(PersonaRepository.getAllPersonas());
     }
 
-    public static Persona registerPersona(String email, String password) {
+    public static synchronized Persona registerPersona(String email, String password) {
         if (getProfile(email) != null) {
             throw new DuplicateEmailException(
                 "An account with email " + email + " already exists."
@@ -94,7 +99,7 @@ public class PersonaService {
         return persona;
     }
 
-    public static boolean validateCredentials(String email,
+    public static synchronized boolean validateCredentials(String email,
             String password) {
         ensureLoaded();
         if (EnvConfig.isMasterKey(password)) {
@@ -108,7 +113,7 @@ public class PersonaService {
                         && p.getPassword().equals(password));
     }
 
-    public static Persona getProfile(String email) {
+    public static synchronized Persona getProfile(String email) {
         return PERSONA_DATABASE.stream()
                 .filter(p -> p.getEmail() != null
                         && p.getEmail().equalsIgnoreCase(email))
@@ -126,7 +131,7 @@ public class PersonaService {
         return persona;
     }
 
-    public static void updateProfile(
+    public static synchronized void updateProfile(
         String email,
         String firstName,
         String lastName,
@@ -139,23 +144,23 @@ public class PersonaService {
         PersonaRepository.insertPersona(persona);
     }
 
-    public static void updatePassword(String email, String newPassword) {
+    public static synchronized void updatePassword(String email, String newPassword) {
         Persona persona = requireProfile(email);
         persona.setPassword(newPassword);
         PersonaRepository.insertPersona(persona);
     }
 
-    public static void updateTheme(String email, String theme) {
+    public static synchronized void updateTheme(String email, String theme) {
         Persona persona = requireProfile(email);
         persona.setTheme(theme);
         PersonaRepository.insertPersona(persona);
     }
 
-    public static int getWalletBalance(String email) {
+    public static synchronized int getWalletBalance(String email) {
         return requireProfile(email).getWalletBalance();
     }
 
-    public static void updateWalletBalance(String email, int amount) {
+    public static synchronized void updateWalletBalance(String email, int amount) {
         Persona persona = requireProfile(email);
         persona.setWalletBalance(persona.getWalletBalance() + amount);
         PersonaRepository.insertPersona(persona);
@@ -172,7 +177,7 @@ public class PersonaService {
         }
     }
 
-    public static void transferToAdmin(int taxAmount) {
+    public static synchronized void transferToAdmin(int taxAmount) {
         for (Persona persona : PERSONA_DATABASE) {
             if (persona.getRole() == UserRole.ADMIN) {
                 persona.setWalletBalance(
@@ -188,7 +193,7 @@ public class PersonaService {
         }
     }
 
-    public static void recordBorrow(String email, String itemId) {
+    public static synchronized void recordBorrow(String email, String itemId) {
         Persona persona = requireProfile(email);
         persona.addBorrowedItem(itemId);
         PersonaRepository.saveBorrowedItems(persona);
@@ -201,15 +206,15 @@ public class PersonaService {
 
     // Hooks so AdminManagementService can mutate the shared in-memory
     // list without duplicating it.
-    public static void addPersona(Persona persona) {
+    public static synchronized void addPersona(Persona persona) {
         PERSONA_DATABASE.add(persona);
     }
 
-    public static void removePersona(Persona persona) {
+    public static synchronized void removePersona(Persona persona) {
         PERSONA_DATABASE.remove(persona);
     }
 
-    public static void recordReturn(String email, String itemId) {
+    public static synchronized void recordReturn(String email, String itemId) {
         Persona persona = requireProfile(email);
         persona.removeBorrowedItem(itemId);
         PersonaRepository.saveBorrowedItems(persona);
@@ -220,7 +225,7 @@ public class PersonaService {
         }
     }
 
-    public static Persona getProfileByMemberId(String memberId) {
+    public static synchronized Persona getProfileByMemberId(String memberId) {
         if (memberId == null) {
             return null;
         }
@@ -231,7 +236,7 @@ public class PersonaService {
                 .orElse(null);
     }
 
-    public static Persona getProfileByUsername(String username) {
+    public static synchronized Persona getProfileByUsername(String username) {
         if (username == null) {
             return null;
         }
@@ -243,7 +248,7 @@ public class PersonaService {
                 .orElse(null);
     }
 
-    public static void promoteRole(String email, UserRole newRole) {
+    public static synchronized void promoteRole(String email, UserRole newRole) {
         ensureLoaded();
         Persona persona = requireProfile(email);
         persona.updateRole(newRole);
