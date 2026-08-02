@@ -89,68 +89,67 @@ public class BorrowReserveReturnE2ETest extends ApplicationTest {
         return id;
     }
 
+    /**
+     * One student-A session covering every borrow/reserve/return flow end-to-end,
+     * signing in through the 2FA flow once and signing out once (issue #7) rather
+     * than paying the heavy GUI login for each flow:
+     *
+     * <ol>
+     *   <li><b>Borrow</b> the seeded single copy → a loan exists and copies hit 0.</li>
+     *   <li><b>Reserve while full then activate on return</b>: B queues as WAITING on
+     *       that borrowed copy, A returns it through the GUI, B's reservation goes
+     *       ready.</li>
+     *   <li><b>Reserve when a copy is free</b>: a freshly seeded copy reserves as
+     *       ready immediately.</li>
+     * </ol>
+     *
+     * Each phase drives the real widgets and then asserts the backend state
+     * actually changed (loans, available copies, reservation status).
+     */
     @Test
-    public void borrowFromLibraryCreatesLoanAndDecrementsCopies() {
-        GuiTestSupport.signIn(this, STUDENT_A);
-        String memberId = PersonaService.getProfile(STUDENT_A).getMemberId();
-
-        clickOn(LIBRARY_NAV);
-        selectSeededRow();
-        clickOn("Borrow selected");
-        GuiTestSupport.dismissInfo(this, "Borrowed");
-
-        // Backend state actually changed: a loan exists and the copy is gone.
-        waitForServiceState(() -> hasLoan(memberId, itemId));
-        assertTrue(hasLoan(memberId, itemId), "a loan should be recorded for the borrower");
-        assertEquals(0, LibraryService.getItemById(itemId).getAvailableCopies(),
-                "the single copy should now be checked out");
-    }
-
-    @Test
-    public void reserveWaitsWhenNoCopiesAndActivatesOnReturn() {
-        // Student A borrows the only copy so B's reservation must queue as WAITING.
+    public void borrowReserveReturnEndToEnd() {
         GuiTestSupport.signIn(this, STUDENT_A);
         String memberA = PersonaService.getProfile(STUDENT_A).getMemberId();
         String memberB = PersonaService.getProfile(STUDENT_B).getMemberId();
 
+        // Phase 1 — borrow the only copy: a loan is recorded and availability -> 0.
+        String borrowedItem = itemId;
         clickOn(LIBRARY_NAV);
         selectSeededRow();
         clickOn("Borrow selected");
         GuiTestSupport.dismissInfo(this, "Borrowed");
-        waitForServiceState(() -> hasLoan(memberA, itemId));
+        waitForServiceState(() -> hasLoan(memberA, borrowedItem));
+        assertTrue(hasLoan(memberA, borrowedItem), "a loan should be recorded for the borrower");
+        assertEquals(0, LibraryService.getItemById(borrowedItem).getAvailableCopies(),
+                "the single copy should now be checked out");
 
-        // B reserves through the service the same way the GUI does; with 0 copies
-        // free it must be WAITING. (Second GUI login is heavy; the reserve button
-        // path itself is covered by the borrow test's navigation.)
+        // Phase 2 — with 0 copies free, B's reservation queues as WAITING; A then
+        // returns the copy through the GUI, which promotes B's reservation to ready.
         Reservation reservation = ReservationService.reserve(
-                memberB, itemId, SimulationClock.getCurrentDay());
+                memberB, borrowedItem, SimulationClock.getCurrentDay());
         assertEquals(ReservationStatus.WAITING, reservation.getStatus(),
                 "no copies free, so the reservation queues");
 
-        // A returns the copy through the GUI; the return promotes B's reservation.
         clickOn(LOANS_NAV);
         selectFirstLoanRow();
         clickOn("Return selected");
         GuiTestSupport.dismissInfo(this, "Returned");
-
-        waitForServiceState(() -> !hasLoan(memberA, itemId));
-        assertTrue(ReservationService.hasReadyReservation(memberB, itemId),
+        waitForServiceState(() -> !hasLoan(memberA, borrowedItem));
+        assertTrue(ReservationService.hasReadyReservation(memberB, borrowedItem),
                 "returning the copy should activate the queued reservation");
-    }
 
-    @Test
-    public void reserveWhenCopyAvailableIsImmediatelyActive() {
-        GuiTestSupport.signIn(this, STUDENT_A);
-        String memberId = PersonaService.getProfile(STUDENT_A).getMemberId();
-
+        // Phase 3 — a freshly seeded copy is free, so reserving it is ready at once.
+        itemId = seedSingleCopyBook();
+        String freeItem = itemId;
         clickOn(LIBRARY_NAV);
         selectSeededRow();
         clickOn("Reserve selected");
         GuiTestSupport.dismissInfo(this, "Reserved");
-
-        waitForServiceState(() -> !ReservationService.getMemberReservations(memberId).isEmpty());
-        assertTrue(ReservationService.hasReadyReservation(memberId, itemId),
+        waitForServiceState(() -> !ReservationService.getMemberReservations(memberA).isEmpty());
+        assertTrue(ReservationService.hasReadyReservation(memberA, freeItem),
                 "a copy is available, so the reservation is ready immediately");
+
+        GuiTestSupport.signOut(this);
     }
 
     // --- helpers -------------------------------------------------------------
@@ -163,8 +162,14 @@ public class BorrowReserveReturnE2ETest extends ApplicationTest {
                 lookup(".table-view").queryTableView();
         assertNotNull(table, "library table should be present");
         // Results paginate at 10 rows, so filter to the unique seeded title
-        // (which embeds the item id) to bring it onto the first page.
-        clickOn(".field").write(itemId);
+        // (which embeds the item id) to bring it onto the first page. Clear any
+        // text a previous phase left in the field first (we now reuse one login
+        // across several borrow/reserve phases), otherwise the id would append
+        // to the stale filter and match nothing.
+        clickOn(".field");
+        push(javafx.scene.input.KeyCode.CONTROL, javafx.scene.input.KeyCode.A);
+        push(javafx.scene.input.KeyCode.DELETE);
+        write(itemId);
         // The debounced search then runs on a background thread; wait until the
         // seeded item shows up in the (now filtered) table before selecting it.
         waitForServiceState(() -> table.getItems().stream()

@@ -33,9 +33,17 @@ public class ShellNavigationTest extends ApplicationTest {
         Persona.setCurrentUser(null);
     }
 
+    /**
+     * One admin session that walks the whole shell: sign in once, assert the
+     * nav items and identity, swap the sidebar content, then sign out once and
+     * confirm the login screen returns — instead of re-running the full 2FA
+     * sign-in for each of these checks.
+     */
     @Test
-    public void testAdminShellHasAdminNavItems() {
+    public void testAdminShellNavigationEndToEnd() {
         signInWithMasterKey("admin@system.local");
+
+        // Nav items present for an admin.
         verifyThat(".sidebar", NodeMatchers.isVisible());
         verifyThat("Dashboard", NodeMatchers.isVisible());
         verifyThat("Library / Search", NodeMatchers.isVisible());
@@ -44,27 +52,17 @@ public class ShellNavigationTest extends ApplicationTest {
         verifyThat("Fines", NodeMatchers.isVisible());
         verifyThat("Analytics", NodeMatchers.isVisible());
         verifyThat("System Settings", NodeMatchers.isVisible());
-    }
 
-    @Test
-    public void testAdminTopBarShowsIdentity() {
-        signInWithMasterKey("admin@system.local");
+        // Top bar identity.
         verifyThat("admin@system.local  ·  ADMIN", NodeMatchers.isVisible());
-    }
 
-    @Test
-    public void testSidebarContentSwap() {
-        signInWithMasterKey("admin@system.local");
+        // Sidebar content swaps as the user navigates.
         clickOn("Library / Search");
         verifyThat("Library & Search", NodeMatchers.isVisible());
         clickOn("Item Management");
         verifyThat("Item Management", NodeMatchers.isVisible());
-    }
 
-    @Test
-    public void testLogoutReturnsToLogin() {
-        signInWithMasterKey("admin@system.local");
-        verifyThat(".sidebar", NodeMatchers.isVisible());
+        // Sign out once, back to login.
         clickOn("Sign out");
         verifyThat("#emailField", NodeMatchers.isVisible());
         verifyThat("#loginButton", NodeMatchers.isVisible());

@@ -50,34 +50,32 @@ public class WalletPanelTest extends ApplicationTest {
         PersonaRepository.insertPersona(student);
     }
 
+    /**
+     * Single session covering the whole Wallet panel: sign in once, open Wallet,
+     * assert the stat cards, action buttons and (paginated) transaction table are
+     * all present, then sign out once — instead of repeating the full auth flow
+     * for each assertion group.
+     */
     @Test
-    public void testWalletShowsBalanceAndDebt() {
+    public void testWalletPanelEndToEnd() {
         loginAsStudent();
         clickOn("Wallet");
-        
-        // Verify stat cards visible
+
+        // Stat cards.
         verifyThat("Balance", isVisible());
         verifyThat("Outstanding debt", isVisible());
-    }
 
-    @Test
-    public void testWalletHasTopUpAndPayDebtButtons() {
-        loginAsStudent();
-        clickOn("Wallet");
-        
+        // Action buttons.
         verifyThat("Top up", isVisible());
         verifyThat("Pay debt", isVisible());
-    }
 
-    @Test
-    public void testTransactionHistoryTableVisible() {
-        loginAsStudent();
-        clickOn("Wallet");
-        
+        // Transaction history table (columns render through the PagedTable).
         verifyThat("Transaction history", isVisible());
         verifyThat("Date", isVisible());
         verifyThat("Type", isVisible());
         verifyThat("Amount", isVisible());
         verifyThat("Description", isVisible());
+
+        GuiTestSupport.signOut(this);
     }
 }

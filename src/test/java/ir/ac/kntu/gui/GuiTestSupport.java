@@ -75,6 +75,18 @@ final class GuiTestSupport {
     }
 
     /**
+     * Signs the current user out of the {@code AppShell} and waits for the login
+     * screen to return. Pairs with {@link #signIn(FxRobot, String)} so a test can
+     * log in once, exercise everything, and sign out once instead of cycling the
+     * whole auth flow between individual actions.
+     */
+    static void signOut(FxRobot robot) {
+        robot.clickOn("Sign out");
+        waitFor(() -> robot.lookup("#loginButton").tryQuery().isPresent());
+        WaitForAsyncUtils.waitForFxEvents();
+    }
+
+    /**
      * Dismisses a success/info {@link javafx.scene.control.Alert} whose header
      * is {@code header} (e.g. "Borrowed", "Reserved", "Returned"). The alert is
      * raised from a background job's success callback, so this waits for it.

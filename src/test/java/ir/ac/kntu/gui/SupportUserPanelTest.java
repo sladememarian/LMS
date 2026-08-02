@@ -53,26 +53,29 @@ public class SupportUserPanelTest extends ApplicationTest {
         PersonaRepository.insertPersona(student);
     }
 
+    /**
+     * Single student session over the Support panel: sign in once, open Support,
+     * assert both the create-ticket form and the ticket table render, then sign
+     * out once — instead of re-running the full 2FA sign-in for each group.
+     */
     @Test
-    public void testSupportUserCreateTicketFormVisible() {
+    public void testSupportUserPanelEndToEnd() {
         loginAsUser();
         clickOn("Support");
-        
+
+        // Create-ticket form.
         verifyThat("#sectionBox", isVisible());
         verifyThat("#titleField", isVisible());
         verifyThat("#descriptionArea", isVisible());
         verifyThat("Create ticket", isVisible());
-    }
 
-    @Test
-    public void testSupportUserTicketTableVisible() {
-        loginAsUser();
-        clickOn("Support");
-        
+        // Ticket table columns.
         verifyThat("Ticket", isVisible());
         verifyThat("Section", isVisible());
         verifyThat("Title", isVisible());
         verifyThat("Status", isVisible());
         verifyThat("Response", isVisible());
+
+        GuiTestSupport.signOut(this);
     }
 }

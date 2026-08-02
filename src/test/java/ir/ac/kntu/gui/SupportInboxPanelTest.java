@@ -46,27 +46,30 @@ public class SupportInboxPanelTest extends ApplicationTest {
         GuiTestSupport.signIn(this, "callcenter@system.local");
     }
 
+    /**
+     * Single call-center session over the Support Inbox: sign in once, open the
+     * inbox, assert the ticket table columns and the action buttons are all
+     * present, then sign out once — instead of re-running the full 2FA sign-in
+     * for each assertion group.
+     */
     @Test
-    public void testSupportInboxShowsTicketTable() {
+    public void testSupportInboxEndToEnd() {
         loginAsCallCenter();
         clickOn("Support Inbox");
-        
+
+        // Ticket table columns.
         verifyThat("Ticket", isVisible());
         verifyThat("User", isVisible());
         verifyThat("Section", isVisible());
         verifyThat("Title", isVisible());
         verifyThat("Priority", isVisible());
         verifyThat("Status", isVisible());
-    }
 
-    @Test
-    public void testReplyAndCloseButtonsVisible() {
-        loginAsCallCenter();
-        clickOn("Support Inbox");
-        
-        // Verify action buttons visible
+        // Action buttons.
         verifyThat("Reply", isVisible());
         verifyThat("Close ticket", isVisible());
         verifyThat("Refresh", isVisible());
+
+        GuiTestSupport.signOut(this);
     }
 }
