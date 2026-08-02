@@ -3,13 +3,13 @@ package ir.ac.kntu.gui.notification;
 import java.util.ArrayList;
 
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.mail.Inbox;
 import ir.ac.kntu.mail.MailMessage;
 import ir.ac.kntu.mail.MailService;
 import ir.ac.kntu.persona.Persona;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -28,6 +28,7 @@ public class NotificationsPanel extends VBox {
 
     private final Persona persona;
     private final TableView<MailMessage> table = new TableView<>();
+    private final PagedTable<MailMessage> pagedTable = new PagedTable<>(table);
     private final Runnable onRead;
 
     public NotificationsPanel(Persona persona) {
@@ -50,8 +51,8 @@ public class NotificationsPanel extends VBox {
         heading.getStyleClass().add("h1");
 
         buildTable();
-        getChildren().addAll(heading, actions(), table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        getChildren().addAll(heading, actions(), pagedTable);
+        VBox.setVgrow(pagedTable, Priority.ALWAYS);
         refresh();
     }
 
@@ -109,8 +110,7 @@ public class NotificationsPanel extends VBox {
                     Inbox inbox = MailService.getInbox(email);
                     return inbox != null ? inbox.getMessages() : new ArrayList<MailMessage>();
                 },
-                list -> table.setItems(FXCollections.observableArrayList(
-                        list != null ? list : new ArrayList<>())),
+                list -> pagedTable.setItems(list != null ? list : new ArrayList<>()),
                 error -> Dialogs.error("Could not load notifications", error));
     }
 }

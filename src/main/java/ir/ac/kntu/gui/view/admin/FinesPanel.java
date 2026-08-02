@@ -9,10 +9,10 @@ import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
 import ir.ac.kntu.finance.Transaction;
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.util.PersonaRepository;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -34,6 +34,7 @@ public class FinesPanel extends VBox {
     private static final String GHOST_STYLE = "ghost";
 
     private final TableView<DebtorRow> table = new TableView<>();
+    private final PagedTable<DebtorRow> pagedTable = new PagedTable<>(table);
 
     public FinesPanel() {
         super(16);
@@ -44,8 +45,8 @@ public class FinesPanel extends VBox {
         heading.getStyleClass().add("h1");
 
         buildTable();
-        getChildren().addAll(heading, buildActions(), table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        getChildren().addAll(heading, buildActions(), pagedTable);
+        VBox.setVgrow(pagedTable, Priority.ALWAYS);
         refresh();
     }
 
@@ -77,7 +78,11 @@ public class FinesPanel extends VBox {
         taxRevenue.getStyleClass().add(GHOST_STYLE);
         taxRevenue.setOnAction(e -> handleTaxRevenue());
 
-        HBox box = new HBox(10, drillDown, overdue, taxRevenue);
+        Button refresh = new Button("Refresh");
+        refresh.getStyleClass().add(GHOST_STYLE);
+        refresh.setOnAction(e -> refresh());
+
+        HBox box = new HBox(10, drillDown, overdue, taxRevenue, refresh);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -141,8 +146,7 @@ public class FinesPanel extends VBox {
                         .filter(row -> row.getDebt() > 0)
                         .sorted(Comparator.comparingInt(DebtorRow::getDebt).reversed())
                         .collect(Collectors.toList()),
-                rows -> table.setItems(FXCollections.observableArrayList(
-                        rows != null ? rows : new ArrayList<>())),
+                rows -> pagedTable.setItems(rows != null ? rows : new ArrayList<>()),
                 error -> Dialogs.error("Could not load fines", error));
     }
 

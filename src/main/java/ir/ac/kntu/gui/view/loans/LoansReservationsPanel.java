@@ -8,6 +8,7 @@ import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.Loan;
 import ir.ac.kntu.finance.LoanService;
 import ir.ac.kntu.finance.SimulationClock;
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.library.LibraryItem;
@@ -16,7 +17,6 @@ import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import ir.ac.kntu.reservation.Reservation;
 import ir.ac.kntu.reservation.ReservationService;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -42,7 +42,9 @@ public class LoansReservationsPanel extends VBox {
 
     private final Persona persona;
     private final TableView<LoanRow> loanTable = new TableView<>();
+    private final PagedTable<LoanRow> pagedLoans = new PagedTable<>(loanTable);
     private final TableView<Reservation> reservationTable = new TableView<>();
+    private final PagedTable<Reservation> pagedReservations = new PagedTable<>(reservationTable);
 
     public LoansReservationsPanel(Persona persona) {
         super(16);
@@ -57,9 +59,9 @@ public class LoansReservationsPanel extends VBox {
         buildReservationTable();
 
         getChildren().addAll(heading,
-                new Label("Active loans"), loanActions(), loanTable,
-                new Label("My reservations"), reservationActions(), reservationTable);
-        VBox.setVgrow(loanTable, Priority.ALWAYS);
+                new Label("Active loans"), loanActions(), pagedLoans,
+                new Label("My reservations"), reservationActions(), pagedReservations);
+        VBox.setVgrow(pagedLoans, Priority.ALWAYS);
         refresh();
     }
 
@@ -112,7 +114,11 @@ public class LoansReservationsPanel extends VBox {
         extendBtn.getStyleClass().add(GHOST_STYLE);
         extendBtn.setOnAction(event -> handleExtend());
 
-        HBox box = new HBox(10, returnBtn, extendBtn);
+        Button refreshBtn = new Button("Refresh");
+        refreshBtn.getStyleClass().add(GHOST_STYLE);
+        refreshBtn.setOnAction(event -> refresh());
+
+        HBox box = new HBox(10, returnBtn, extendBtn, refreshBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -235,14 +241,12 @@ public class LoansReservationsPanel extends VBox {
                         .filter(loan -> memberId != null && memberId.equals(loan.getMemberId()))
                         .map(loan -> toRow(loan, today))
                         .collect(Collectors.toList()),
-                rows -> loanTable.setItems(FXCollections.observableArrayList(
-                        rows != null ? rows : new ArrayList<>())),
+                rows -> pagedLoans.setItems(rows != null ? rows : new ArrayList<>()),
                 error -> Dialogs.error("Could not load loans", error));
 
         BackgroundJobs.run(
                 () -> ReservationService.getMemberReservations(memberId),
-                list -> reservationTable.setItems(FXCollections.observableArrayList(
-                        list != null ? list : new ArrayList<>())),
+                list -> pagedReservations.setItems(list != null ? list : new ArrayList<>()),
                 error -> Dialogs.error("Could not load reservations", error));
     }
 

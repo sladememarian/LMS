@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import ir.ac.kntu.finance.FinanceService;
 import ir.ac.kntu.finance.Transaction;
+import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.component.StatCard;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.CardValidator;
@@ -14,7 +15,6 @@ import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.persona.Persona;
 import ir.ac.kntu.persona.PersonaService;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -50,6 +50,7 @@ public class WalletPanel extends VBox {
     private final PasswordField cvvField = new PasswordField();
     private final TextField expiryField = new TextField();
     private final TableView<Transaction> table = new TableView<>();
+    private final PagedTable<Transaction> pagedTable = new PagedTable<>(table);
     private final Button topUp = new Button("Top up");
     private final Button payDebt = new Button("Pay debt");
     private final ProgressIndicator actionProgress = new ProgressIndicator();
@@ -65,9 +66,14 @@ public class WalletPanel extends VBox {
 
         buildTable();
         FlowPane cards = new FlowPane(16, 16, balanceCard, debtCard);
+        Button refresh = new Button("Refresh");
+        refresh.getStyleClass().add("ghost");
+        refresh.setOnAction(event -> refresh());
+        HBox historyHeader = new HBox(10, new Label("Transaction history"), refresh);
+        historyHeader.setAlignment(Pos.CENTER_LEFT);
         getChildren().addAll(heading, cards, buildActions(),
-                new Label("Transaction history"), table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+                historyHeader, pagedTable);
+        VBox.setVgrow(pagedTable, Priority.ALWAYS);
         refresh();
     }
 
@@ -198,8 +204,7 @@ public class WalletPanel extends VBox {
 
         BackgroundJobs.run(
                 () -> FinanceService.getTransactionsForMember(memberId),
-                list -> table.setItems(FXCollections.observableArrayList(
-                        list != null ? list : new ArrayList<>())),
+                list -> pagedTable.setItems(list != null ? list : new ArrayList<>()),
                 error -> Dialogs.error("Could not load transactions", error));
     }
 
