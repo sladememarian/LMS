@@ -45,7 +45,18 @@ public class App extends Application {
 
         primaryStage.setOnCloseRequest(event -> BackgroundJobs.shutdown());
         primaryStage.show();
+        bringToFront(primaryStage);
         splash.start();
+    }
+
+    // On Windows a freshly launched stage sometimes appears behind the terminal
+    // that started it. A momentary always-on-top toggle plus toFront() pulls it
+    // forward on launch without pinning it above every other window afterwards.
+    private void bringToFront(Stage stage) {
+        stage.setAlwaysOnTop(true);
+        stage.toFront();
+        stage.requestFocus();
+        stage.setAlwaysOnTop(false);
     }
 
     @Override
