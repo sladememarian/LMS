@@ -99,8 +99,11 @@ public class LoansReservationsPanel extends VBox {
         TableColumn<Reservation, Number> queue = new TableColumn<>("Queue #");
         queue.setCellValueFactory(cell -> {
             Reservation reservation = cell.getValue();
+            // getQueuePosition is already 1-based for WAITING reservations, and
+            // returns -1 for an ACTIVE (ready-for-pickup) one, which we show as
+            // 0. Don't add another 1 or the #1 person would display as #2.
             int pos = ReservationService.getQueuePosition(reservation.getReservationId(), reservation.getItemId());
-            return new javafx.beans.property.SimpleIntegerProperty(pos < 0 ? 0 : pos + 1);
+            return new javafx.beans.property.SimpleIntegerProperty(pos < 0 ? 0 : pos);
         });
         reservationTable.getColumns().addAll(item, reserved, expires, queue, status);
         reservationTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
