@@ -9,6 +9,8 @@ import ir.ac.kntu.gui.component.PagedTable;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.gui.util.Dialogs;
 import ir.ac.kntu.gui.util.LibraryColumns;
+import ir.ac.kntu.finance.SimulationClock;
+import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.library.AudioBook;
 import ir.ac.kntu.library.Book;
 import ir.ac.kntu.library.EBook;
@@ -259,9 +261,19 @@ public class ItemManagementPanel extends VBox {
         }
         Integer value = promptInt("How many additional copies for " + selected.getTitle() + "? (use negative to remove)");
         if (value != null) {
-            runMutation(() ->
-                    LibraryService.updateItemQuantityFromCallCenter(selected.getItemId(), value),
-                    "Quantity updated.");
+            String itemId = selected.getItemId();
+            int delta = value;
+            runMutation(() -> {
+                LibraryService.updateItemQuantityFromCallCenter(itemId, delta);
+                // Adding copies frees stock, so advance the reservation queue
+                // once per new copy — the same trigger the CLI admin console
+                // runs after a restock. Without this, waiting members are
+                // never promoted when an admin/call-center adds copies.
+                if (delta > 0) {
+                    ReservationService.fulfillFromQueue(
+                            itemId, delta, SimulationClock.getCurrentDay());
+                }
+            }, "Quantity updated.");
         }
     }
 
