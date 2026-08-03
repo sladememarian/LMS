@@ -20,9 +20,13 @@ import javafx.util.Duration;
  * on a black background and animates a purple progress bar to <em>simulate</em>
  * loading the data store from PostgreSQL, then hands off to {@link LoginView}.
  *
- * <p>Purely presentational — no backend work happens here; the bar is a timed
- * animation, not a real DB probe. It is wired only from {@code App.start()} so
- * the TestFX suites (which build views directly) are unaffected.</p>
+ * <p>The bar is a timed animation, but the splash also does one real piece of
+ * work: it opens the database connection on a background thread. That first
+ * connect runs the JDBC handshake plus the table/migration setup, which is
+ * otherwise paid on the user's first sign-in and makes it feel slow. Warming
+ * it here hides that cost behind the loading bar. Wired only from
+ * {@code App.start()} so the TestFX suites (which build views directly) are
+ * unaffected.</p>
  */
 public class SplashView implements View {
 
@@ -88,6 +92,15 @@ public class SplashView implements View {
      * takes over. Call after the stage is shown.
      */
     public void start() {
+        // Warm the DB connection off the FX thread while the bar animates. The
+        // first getConnection() opens the socket and runs table setup, so doing
+        // it now keeps the first sign-in from paying that cost. Failures are
+        // ignored here — the login screen surfaces real connection errors.
+        ir.ac.kntu.gui.concurrency.BackgroundJobs.runAction(
+                ir.ac.kntu.util.Database::getConnection,
+                null,
+                error -> { /* login will report a genuine outage */ });
+
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(progress.progressProperty(), 0)),
                 new KeyFrame(LOAD_TIME, new KeyValue(progress.progressProperty(), 1)));
