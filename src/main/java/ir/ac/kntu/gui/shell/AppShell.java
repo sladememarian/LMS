@@ -12,6 +12,7 @@ import ir.ac.kntu.gui.view.library.ItemManagementPanel;
 import ir.ac.kntu.gui.view.loans.LoansReservationsPanel;
 import ir.ac.kntu.gui.view.profile.ProfilePanel;
 import ir.ac.kntu.gui.view.wallet.WalletPanel;
+import ir.ac.kntu.gui.view.wallet.AdminWalletPanel;
 import ir.ac.kntu.gui.view.support.SupportUserPanel;
 import ir.ac.kntu.gui.view.support.SupportInboxPanel;
 import ir.ac.kntu.gui.view.admin.UserManagementPanel;
@@ -214,6 +215,7 @@ public class AppShell implements View {
             items.add(new NavItem("User Management", () -> new UserManagementPanel(persona)));
             items.add(new NavItem("Callcenter", () -> new SupportStaffPanel(persona)));
             items.add(new NavItem("Fines", FinesPanel::new));
+            items.add(new NavItem("Wallet", () -> new AdminWalletPanel(persona)));
             items.add(new NavItem("Analytics", AnalyticsPanel::new));
             items.add(new NavItem("System Settings", () -> new SystemSettingsPanel(persona)));
         } else if (role == UserRole.CALLCENTER) {
