@@ -17,7 +17,6 @@ import ir.ac.kntu.persona.UserProfile;
 import ir.ac.kntu.reservation.ReservationService;
 import ir.ac.kntu.util.SystemSettingsService;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -259,11 +258,17 @@ public class LibrarySearchPanel extends BorderPane {
                     resultCount.setText(currentResults.size() + " item(s) found");
                     int pages = Math.max(1,
                             (int) Math.ceil(currentResults.size() / (double) PAGE_SIZE));
+                    int current = Math.min(Math.max(0, pagination.getCurrentPageIndex()), pages - 1);
                     pagination.setPageCount(pages);
-                    // Force the current page to re-render with new data.
-                    int current = Math.min(pagination.getCurrentPageIndex(), pages - 1);
-                    pagination.setCurrentPageIndex(0);
-                    Platform.runLater(() -> pagination.setCurrentPageIndex(current));
+                    // Setting the index to a value it already holds fires no
+                    // change event, so the page factory wouldn't re-run and the
+                    // table would keep the previous search's rows. Render
+                    // explicitly in that case so every keystroke refreshes.
+                    if (pagination.getCurrentPageIndex() != current) {
+                        pagination.setCurrentPageIndex(current);
+                    } else {
+                        renderPage(current);
+                    }
                 },
                 error -> {
                     spinner.setVisible(false);
