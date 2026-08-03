@@ -32,12 +32,9 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Role-aware dashboard. Every statistic is computed with the Java Streams API,
- * and the whole computation runs on a background {@link javafx.concurrent.Task}
- * (via {@link BackgroundJobs}) so the UI never blocks. A {@link ProgressIndicator}
- * is shown while stats load.
- */
+// Role-aware dashboard. Every statistic is computed with the Streams API, and
+// the whole computation runs on a background Task (via BackgroundJobs) so the UI
+// never blocks; a ProgressIndicator is shown while stats load.
 public class DashboardPanel extends StackPane {
 
     private final Persona persona;
@@ -63,7 +60,7 @@ public class DashboardPanel extends StackPane {
                 });
     }
 
-    /** Runs OFF the FX thread. Only builds lightweight data + nodes here. */
+    // Runs OFF the FX thread. Only builds lightweight data + nodes here.
     private Node computeContent() {
         UserRole role = persona.getRole();
         if (role == UserRole.ADMIN) {
@@ -180,7 +177,7 @@ public class DashboardPanel extends StackPane {
         return requestsBox;
     }
 
-    /** Renders one pending role-request as a label, appending its optional note. */
+    // Renders one pending role-request as a label, appending its optional note.
     private static Label roleRequestLabel(RoleRequest req) {
         String text = req.getRequestId() + " | "
                 + req.getRequesterEmail() + " -> " + req.getRequestedRole();

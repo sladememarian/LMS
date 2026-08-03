@@ -86,7 +86,7 @@ public final class NotificationChecker {
         }
     }
 
-    /** Pure computation (Streams) — safe to run on a background thread. */
+    // Pure computation (Streams) — safe to run on a background thread.
     public static List<String> computeWarnings(Persona persona) {
         List<String> messages = new ArrayList<>();
         String memberId = persona.getMemberId();

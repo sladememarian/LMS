@@ -14,46 +14,34 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Durable producer/consumer queue for sign-up profile envelopes.
- *
- * <p>This is the message-queue at the heart of the async sign-up design. It has
- * two faces:</p>
- * <ul>
- *   <li>an in-memory {@link BlockingQueue} that lets the single {@link
- *       SignupWorker} consumer block in {@link #take()} until work arrives; and</li>
- *   <li>an on-disk <em>spool</em> ({@code signup_queue/pending.jsonl}, one
- *       envelope per line) so queued-but-unprocessed work survives a crash or
- *       restart. On construction the spool is replayed back into the in-memory
- *       queue; once the worker finishes an envelope it calls {@link
- *       #markProcessed(SignupEnvelope)} to drop that line from the spool.</li>
- * </ul>
- *
- * <p><b>Performance:</b> the previous implementation rewrote the <em>entire</em>
- * spool file on every {@link #markProcessed} call, all under {@code diskLock} —
- * which also serialised producers appending in {@link #enqueue}. With a burst of
- * <var>N</var> concurrent sign-ups that is O(N&sup2;) disk work, so opening many
- * sign-up windows at once made the whole flow crawl. It now uses <em>deferred
- * compaction</em>: processed envelopes are buffered in memory and the spool is
- * rewritten only when the buffer crosses a threshold or the queue drains, turning
- * the hot path back into O(1) amortised. Progress is logged to the terminal so the
- * queue/worker state is observable.</p>
- *
- * <p>Everything here lives in the GUI layer and only ever calls existing backend
- * services from the worker — no phase-1/2 code is modified.</p>
- */
+// Durable producer/consumer queue for sign-up profile envelopes - the message
+// queue at the heart of the async sign-up design. It has two faces:
+//   - an in-memory BlockingQueue that lets the single SignupWorker consumer block
+//     in take() until work arrives; and
+//   - an on-disk spool (signup_queue/pending.jsonl, one envelope per line) so
+//     queued-but-unprocessed work survives a crash. On construction the spool is
+//     replayed into the queue; when the worker finishes an envelope it calls
+//     markProcessed(...) to drop that line from the spool.
+// Performance: an earlier version rewrote the whole spool on every markProcessed
+// call under diskLock (which also serialised producers in enqueue) - O(N^2) disk
+// work for a burst of N sign-ups. It now uses deferred compaction: processed
+// envelopes are buffered in memory and the spool is rewritten only when the
+// buffer crosses a threshold or the queue drains, keeping the hot path O(1)
+// amortised. Progress is logged so the queue/worker state is observable.
+// Everything lives in the GUI layer and only calls existing backend services from
+// the worker - no phase-1/2 code is modified.
 public final class SignupQueue {
 
     private static final SignupQueue INSTANCE = new SignupQueue();
 
-    /** Rewrite the spool after this many processed envelopes accumulate. */
+    // Rewrite the spool after this many processed envelopes accumulate.
     private static final int COMPACT_THRESHOLD = 50;
 
     private final BlockingQueue<SignupEnvelope> memory = new LinkedBlockingQueue<>();
     private final Path spoolFile;
     private final Object diskLock = new Object();
 
-    /** Lines already handled by the worker, buffered until the next compaction. */
+    // Lines already handled by the worker, buffered until the next compaction.
     private final Set<String> processedBuffer = new HashSet<>();
 
     // Lifetime counters for observability (logged to the terminal).
@@ -69,11 +57,8 @@ public final class SignupQueue {
         return INSTANCE;
     }
 
-    /**
-     * Producer side. Appends the envelope to the disk spool first (so it is
-     * durable before we acknowledge it), then hands it to the in-memory queue
-     * for the worker to pick up.
-     */
+    // Producer side. Appends the envelope to the disk spool first (durable before
+    // we acknowledge it), then hands it to the in-memory queue for the worker.
     public void enqueue(SignupEnvelope envelope) {
         if (envelope == null) {
             return;
@@ -86,17 +71,15 @@ public final class SignupQueue {
                 + memory.size() + ", totalEnqueued=" + total + ")");
     }
 
-    /** Consumer side. Blocks until an envelope is available. */
+    // Consumer side. Blocks until an envelope is available.
     public SignupEnvelope take() throws InterruptedException {
         return memory.take();
     }
 
-    /**
-     * Marks an envelope as done. Instead of rewriting the whole spool on every
-     * call, the line is buffered and the spool is compacted only when the buffer
-     * crosses {@link #COMPACT_THRESHOLD} or the in-memory queue has drained. This
-     * keeps the worker's hot path O(1) amortised even under a burst of sign-ups.
-     */
+    // Marks an envelope as done. Instead of rewriting the whole spool on every
+    // call, the line is buffered and the spool is compacted only when the buffer
+    // crosses COMPACT_THRESHOLD or the in-memory queue has drained. This keeps the
+    // worker's hot path O(1) amortised even under a burst of sign-ups.
     public void markProcessed(SignupEnvelope envelope) {
         if (envelope == null) {
             return;
@@ -114,12 +97,12 @@ public final class SignupQueue {
                 + ", totalProcessed=" + total + ")");
     }
 
-    /** Number of envelopes still waiting in memory (diagnostics/tests). */
+    // Number of envelopes still waiting in memory (diagnostics/tests).
     public int pendingCount() {
         return memory.size();
     }
 
-    /** Total envelopes handed to the worker so far (diagnostics/tests). */
+    // Total envelopes handed to the worker so far (diagnostics/tests).
     public long processedCount() {
         return processed.get();
     }
@@ -150,7 +133,7 @@ public final class SignupQueue {
         }
     }
 
-    /** Rewrites the spool without any buffered-processed lines. Caller holds diskLock. */
+    // Rewrites the spool without any buffered-processed lines. Caller holds diskLock.
     private void compact() {
         if (processedBuffer.isEmpty()) {
             return;

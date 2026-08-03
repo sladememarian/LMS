@@ -5,52 +5,33 @@ import java.util.function.Consumer;
 import ir.ac.kntu.gui.concurrency.BackgroundJobs;
 import ir.ac.kntu.persona.PersonaService;
 
-/**
- * GUI-side orchestrator for the three-stage asynchronous sign-up.
- *
- * <p>The interactive path is split into three concerns that run on independent
- * threads so the user gets an "account created" window the instant their
- * credentials are accepted, and none of the slower work blocks the UI:</p>
- * <ul>
- *   <li><b>Stage A — create the account</b> (on a {@link BackgroundJobs}
- *       thread): {@code PersonaService.registerPersona(email, password)} writes
- *       the identity row to the store (Postgres in prod, H2 in tests). This is
- *       the only thing the user must wait for before they can sign in.</li>
- *   <li><b>Stage B — GUI trigger</b> (FX thread): as soon as Stage A reports the
- *       credentials are accepted, {@code onAccountReady} fires and the "Account
- *       created" window opens. It does <em>not</em> wait for the profile to be
- *       persisted.</li>
- *   <li><b>Stage C — profile persistence</b> (independent): the remaining
- *       fields (first/last name, phone) are wrapped in a {@link SignupEnvelope}
- *       and handed to the durable {@link SignupQueue}; the {@link SignupWorker}
- *       thread later drains it via {@code PersonaService.updateProfile}.</li>
- * </ul>
- *
- * <p>Stage C is scheduled independently of Stage B, so a queue/disk hiccup can
- * never surface as a "registration failed" error once the account already
- * exists — the failure is logged and the durable spool still carries the
- * envelope. No backend code is modified — only existing services are called.</p>
- */
+// GUI-side orchestrator for the three-stage asynchronous sign-up. The path is
+// split into three concerns on independent threads so the user gets an "account
+// created" window the instant credentials are accepted, and none of the slower
+// work blocks the UI:
+//   Stage A - create the account (on a BackgroundJobs thread): registerPersona
+//     writes the identity row. This is the only thing the user must wait for
+//     before they can sign in.
+//   Stage B - GUI trigger (FX thread): as soon as Stage A accepts, onAccountReady
+//     fires and the "Account created" window opens; it does NOT wait for the
+//     profile to be persisted.
+//   Stage C - profile persistence (independent): the remaining fields are wrapped
+//     in a SignupEnvelope, handed to the durable SignupQueue, and the SignupWorker
+//     later drains it via PersonaService.updateProfile.
+// Stage C is scheduled independently of Stage B, so a queue/disk hiccup can never
+// surface as a "registration failed" error once the account exists. No backend
+// code is modified - only existing services are called.
 public final class SignupService {
 
     private SignupService() {
         // utility class
     }
 
-    /**
-     * Registers the account (Stage A) and, once credentials are accepted, both
-     * fires the GUI trigger (Stage B) and schedules profile persistence
-     * (Stage C) independently.
-     *
-     * @param profile        the collected sign-up fields (email + name + phone).
-     * @param password       the account password (kept off the durable envelope).
-     * @param onAccountReady invoked on the FX thread the moment the account
-     *                       exists and login is possible (Stage B). Fires
-     *                       independently of profile persistence.
-     * @param onError        invoked on the FX thread only if account creation
-     *                       (Stage A) fails; profile-queue failures never reach
-     *                       it.
-     */
+    // Registers the account (Stage A) and, once credentials are accepted, both
+    // fires the GUI trigger (Stage B) and schedules profile persistence (Stage C)
+    // independently. onAccountReady fires on the FX thread the moment login is
+    // possible; onError fires on the FX thread only if account creation fails
+    // (profile-queue failures never reach it).
     public static void submit(SignupEnvelope profile,
                               String password,
                               Runnable onAccountReady,
@@ -88,12 +69,10 @@ public final class SignupService {
                 });
     }
 
-    /**
-     * Stage A body, run on {@code lms-bg-worker}. Narrates the real sub-steps of
-     * {@code PersonaService.registerPersona} (there is no separate IAM call on
-     * the self-signup path; the "iam accepted" line marks the credentials being
-     * accepted, i.e. the duplicate-email guard passing).
-     */
+    // Stage A body, run on lms-bg-worker. Narrates the real sub-steps of
+    // PersonaService.registerPersona (there's no separate IAM call on the
+    // self-signup path; the "iam accepted" line marks credentials being accepted,
+    // i.e. the duplicate-email guard passing).
     private static void createAccount(String email, String password) {
         SignupLog.step(SignupLog.THREAD_A, "validating email/password in iam (" + email + ")");
         PersonaService.registerPersona(email, password);
@@ -101,12 +80,10 @@ public final class SignupService {
         SignupLog.step(SignupLog.THREAD_A, "account saved in db");
     }
 
-    /**
-     * Stage C producer. Enqueues the profile envelope for the worker to persist,
-     * swallowing (and logging) any failure: the account already exists, so a
-     * queue problem must not be reported as a sign-up failure. The broad
-     * {@code RuntimeException} catch is deliberate for exactly that reason.
-     */
+    // Stage C producer. Enqueues the profile envelope for the worker to persist,
+    // swallowing (and logging) any failure: the account already exists, so a
+    // queue problem must not be reported as a sign-up failure. The broad
+    // RuntimeException catch is deliberate for exactly that reason.
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private static void enqueueProfile(SignupEnvelope profile) {
         try {

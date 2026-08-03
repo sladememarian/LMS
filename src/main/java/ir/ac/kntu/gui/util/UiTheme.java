@@ -5,12 +5,9 @@ import java.util.Objects;
 
 import javafx.scene.Scene;
 
-/**
- * Light/Dark theme handling. Stylesheets live under
- * {@code resources/ir/ac/kntu/gui/css/}. The current theme is applied to the
- * active {@link Scene}; persistence per user is wired up in later steps via
- * {@code SsoService.changeTheme}.
- */
+// Light/Dark theme handling. Stylesheets live under
+// resources/ir/ac/kntu/gui/css/. The current theme is applied to the active
+// Scene. Per-user persistence is added later via SsoService.changeTheme.
 public enum UiTheme {
 
     LIGHT("/ir/ac/kntu/gui/css/light.css"),
@@ -22,7 +19,7 @@ public enum UiTheme {
         this.path = path;
     }
 
-    /** Parses a stored theme string ("dark"/"light"); defaults to LIGHT. */
+    // Reads a stored theme string ("dark"/"light"); defaults to LIGHT.
     public static UiTheme from(String value) {
         if (value != null && value.trim().equalsIgnoreCase("dark")) {
             return DARK;
@@ -30,7 +27,7 @@ public enum UiTheme {
         return LIGHT;
     }
 
-    /** Removes any known theme stylesheet and applies this one to the scene. */
+    // Removes any known theme stylesheet, then applies this one to the scene.
     public void applyTo(Scene scene) {
         if (scene == null) {
             return;

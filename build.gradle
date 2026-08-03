@@ -78,6 +78,21 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// Headed test task: runs the two most important GUI tests with a real JavaFX
+// window and the real OS robot. No Monocle/headless properties. Skipped
+// automatically when -PskipGuiTests is set (same as CI behaviour).
+tasks.register('testHeaded', Test) {
+    useJUnitPlatform()
+    environment 'JDBC_URL', 'jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1'
+    environment 'JDBC_USER', 'sa'
+    environment 'JDBC_PASSWORD', ''
+    filter {
+        includeTestsMatching 'ir.ac.kntu.gui.BorrowReserveReturnE2ETest'
+        includeTestsMatching 'ir.ac.kntu.gui.SignupFlowTest'
+    }
+    onlyIf { !project.hasProperty('skipGuiTests') }
+}
+
 test {
     useJUnitPlatform()
     environment 'JDBC_URL', 'jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1'
@@ -96,6 +111,12 @@ test {
     systemProperty 'prism.order', 'sw'
     systemProperty 'prism.text', 't2k'
     systemProperty 'java.awt.headless', 'true'
+
+    // The two headed tests run in the testHeaded task instead (real window).
+    filter {
+        excludeTestsMatching 'ir.ac.kntu.gui.BorrowReserveReturnE2ETest'
+        excludeTestsMatching 'ir.ac.kntu.gui.SignupFlowTest'
+    }
     // CI (university GitLab shell runner) cannot run TestFX GUI tests, so they
     // are skipped there via `-PskipGuiTests`. Locally, `./gradlew clean test`
     // still runs everything including the GUI tests (headed).
@@ -104,4 +125,5 @@ test {
             excludeTestsMatching 'ir.ac.kntu.gui.*'
         }
     }
+    dependsOn testHeaded
 }

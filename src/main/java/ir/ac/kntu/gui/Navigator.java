@@ -6,14 +6,10 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-/**
- * Owns the primary {@link Stage} and performs multi-scene navigation by swapping
- * the root of a single reused {@link Scene}. Keeping one Scene lets the active
- * theme stylesheet persist across screen changes.
- *
- * <p>A single shared instance is created by {@link App} and passed to every
- * view, so any screen can navigate to another via {@code navigator.switchTo(...)}.
- */
+// Owns the primary Stage and navigates by swapping the root of one reused Scene.
+// Keeping a single Scene lets the active theme stylesheet persist across screen
+// changes. App creates one shared instance and passes it to every view, so any
+// screen can navigate via navigator.switchTo(...).
 public final class Navigator {
 
     private final Stage stage;
@@ -30,7 +26,7 @@ public final class Navigator {
         stage.setMinHeight(600);
     }
 
-    /** Replaces the current screen with {@code view}, with a short fade-in. */
+    // Replaces the current screen with view, with a short fade-in.
     public void switchTo(View view) {
         javafx.scene.Parent root = view.getRoot();
         scene.setRoot(root);

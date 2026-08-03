@@ -9,21 +9,14 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Reusable client-side pagination wrapper around a {@link TableView}, showing a
- * fixed number of rows per page with a {@link Pagination} control underneath.
- *
- * <p>This generalises the pattern first written inline in
- * {@code LibrarySearchPanel}: hold the full result list, compute the page count,
- * and re-render the visible slice via a {@link Pagination} page-factory. Every
- * table across the app that lists results uses this so they all paginate the
- * same way (10 rows per page by default), just with different columns/content.</p>
- *
- * @param <T> the row type of the wrapped table.
- */
+// Reusable client-side pagination wrapper around a TableView: it holds the full
+// result list, computes the page count, and re-renders the visible slice via a
+// Pagination page-factory. Every result table in the app uses this so they all
+// paginate the same way (10 rows per page by default), just with different
+// columns/content. T is the row type of the wrapped table.
 public class PagedTable<T> extends VBox {
 
-    /** Default rows shown per page, matching the Library/Search reference. */
+    // Default rows shown per page, matching the Library/Search reference.
     public static final int DEFAULT_PAGE_SIZE = 10;
 
     private final TableView<T> table;
@@ -44,15 +37,13 @@ public class PagedTable<T> extends VBox {
         VBox.setVgrow(pagination, Priority.ALWAYS);
     }
 
-    /** The wrapped table, e.g. for selection-model access. */
+    // The wrapped table, e.g. for selection-model access.
     public TableView<T> getTable() {
         return table;
     }
 
-    /**
-     * Replaces the backing data, recomputes the page count and re-renders the
-     * current page (clamped to the new bounds). Call on the FX thread.
-     */
+    // Replaces the backing data, recomputes the page count and re-renders the
+    // current page (clamped to the new bounds). Call on the FX thread.
     public void setItems(List<T> newItems) {
         this.items = newItems != null ? new ArrayList<>(newItems) : new ArrayList<>();
         int pages = Math.max(1, (int) Math.ceil(items.size() / (double) pageSize));

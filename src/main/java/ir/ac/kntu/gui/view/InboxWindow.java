@@ -17,13 +17,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-/**
- * A separate window that shows a user's simulated email inbox
- * ({@link MailService#getInbox(String)}). It is opened during login so the
- * user can read the delivered 2FA verification code and copy it back into the
- * sign-in dialog. Purely a viewer over existing backend mail data — it adds no
- * backend behaviour.
- */
+// A separate window that shows a user's simulated email inbox (via
+// MailService.getInbox). It is opened during login so the user can read the
+// delivered 2FA verification code and copy it back into the sign-in dialog.
+// Purely a viewer over existing backend mail data — it adds no backend behaviour.
 public class InboxWindow {
 
     private final Stage stage = new Stage();

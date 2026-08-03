@@ -9,29 +9,24 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 
-/**
- * A password entry control with a small eye icon that toggles between masked
- * and plain-text display.
- *
- * <p>Internally it stacks a {@link PasswordField} (masked) and a
- * {@link TextField} (revealed) that share a single text value through a
- * bidirectional binding, so switching visibility never loses what the user
- * typed. Only one is visible at a time; the eye {@link Button} flips between
- * them. The component is a drop-in replacement for a {@code PasswordField} in
- * an auth form: it stretches to fill its parent and forwards prompt text, the
- * text value, and the {@code fx:id} to the underlying masked field.</p>
- */
+// A password field with a small eye icon that toggles between masked and
+// plain-text display. It stacks a PasswordField (masked) and a TextField
+// (revealed) sharing one text value via a bidirectional binding, so switching
+// visibility never loses what the user typed. Only one shows at a time; the eye
+// button flips between them. It's a drop-in replacement for a PasswordField:
+// stretches to fill its parent and forwards prompt text, the text value, and the
+// fx:id to the underlying masked field.
 public class PasswordBox extends StackPane {
 
     private static final String FIELD_STYLE = "field";
 
-    /** Open-eye glyph (password shown). */
+    // Open-eye glyph (password shown).
     private static final String EYE_OPEN =
             "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 "
             + "11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 110-10 5 5 0 010 "
             + "10zm0-8a3 3 0 100 6 3 3 0 000-6z";
 
-    /** Crossed-out eye glyph (password masked). */
+    // Crossed-out eye glyph (password masked).
     private static final String EYE_OFF =
             "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 "
             + "2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 "
@@ -90,13 +85,13 @@ public class PasswordBox extends StackPane {
         active.positionCaret(text == null ? 0 : text.length());
     }
 
-    /** Sets the prompt text on both the masked and revealed fields. */
+    // Sets the prompt text on both the masked and revealed fields.
     public void setPromptText(String prompt) {
         masked.setPromptText(prompt);
         plain.setPromptText(prompt);
     }
 
-    /** Assigns the {@code fx:id} to the underlying masked field (for lookups). */
+    // Assigns the fx:id to the underlying masked field (for lookups).
     public void setFieldId(String id) {
         masked.setId(id);
     }

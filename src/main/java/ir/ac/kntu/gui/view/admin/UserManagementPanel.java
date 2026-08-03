@@ -29,11 +29,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Admin User Management: list/search users and enable/disable, reset password
- * or delete them. All mutations run off the FX thread and use the signed-in
- * admin as the acting persona.
- */
+// Admin User Management: list/search users and enable/disable, reset password
+// or delete them. All mutations run off the FX thread and use the signed-in
+// admin as the acting persona.
 public class UserManagementPanel extends VBox {
 
     private static final String GHOST_STYLE = "ghost";
@@ -338,8 +336,8 @@ public class UserManagementPanel extends VBox {
         return user;
     }
 
-    /** Builds the pending role-request approval section (item: admins can now
-     *  accept/reject role upgrade requests directly from User Management). */
+    // Builds the pending role-request approval section so admins can
+    // accept/reject role upgrade requests directly from User Management.
     private VBox buildRoleRequestSection() {
         Label title = new Label("Pending Role Requests");
         title.getStyleClass().add("h2");

@@ -24,10 +24,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Regular-user support screen: create a ticket and track your own tickets.
- * Creation and loading run off the FX thread.
- */
+// Regular-user support screen: create a ticket and track your own tickets.
+// Creation and loading run off the FX thread.
 public class SupportUserPanel extends VBox {
 
     private final Persona persona;

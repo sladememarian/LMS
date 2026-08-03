@@ -29,11 +29,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Admin Callcenter Management: create Callcenter agents and assign their
- * support responsibility areas ({@link SupportSection}). All work runs off the
- * FX thread.
- */
+// Admin Callcenter Management: create Callcenter agents and assign their
+// support responsibility areas (SupportSection). All work runs off the FX
+// thread.
 public class SupportStaffPanel extends VBox {
 
     private final Persona actor;

@@ -21,10 +21,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Login screen. Credential checking runs on a background thread so the UI stays
- * responsive; on success a session is created and the user is routed onward.
- */
+// Login screen. Credential checking runs on a background thread so the UI stays
+// responsive; on success a session is created and the user is routed onward.
 public class LoginView implements View {
 
     private static final String SIGN_IN_FAILED = "Sign-in failed";
@@ -40,7 +38,7 @@ public class LoginView implements View {
         build();
     }
 
-    /** Injected by {@code App} after construction (breaks the init cycle). */
+    // Injected by App after construction (breaks the init cycle).
     public void attachNavigator(Navigator navigator) {
         this.navigator = navigator;
     }
@@ -129,13 +127,11 @@ public class LoginView implements View {
                 });
     }
 
-    /**
-     * Second login factor: deliver a 2FA code to the user's simulated mailbox,
-     * pop the inbox window so they can read it, then verify the entered code
-     * before a session is created. The master OTP (.env {@code MASTER_OTP=123})
-     * still passes via {@code MailService.verifyCode}, so testers can skip the
-     * inbox. All mail work runs on a background thread.
-     */
+    // Second login factor: deliver a 2FA code to the user's simulated mailbox,
+    // pop the inbox window so they can read it, then verify the entered code
+    // before a session is created. The master OTP (.env MASTER_OTP=123) still
+    // passes via MailService.verifyCode, so testers can skip the inbox. All mail
+    // work runs on a background thread.
     private void startTwoFactor(Persona persona) {
         if (persona == null) {
             Dialogs.error(SIGN_IN_FAILED, "Account could not be loaded.");

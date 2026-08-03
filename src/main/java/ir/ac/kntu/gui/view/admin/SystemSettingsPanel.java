@@ -11,10 +11,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Admin System Settings: edit core parameters (borrow days, fine rate,
- * reservation days, max reservations). Loads and saves off the FX thread.
- */
+// Admin System Settings: edit core parameters (borrow days, fine rate,
+// reservation days, max reservations). Loads and saves off the FX thread.
 public class SystemSettingsPanel extends VBox {
 
     @SuppressWarnings("PMD.UnusedPrivateField")

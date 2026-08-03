@@ -20,10 +20,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Notification inbox: lists all received messages (read and unread) and lets the
- * user mark them read. Loading runs off the FX thread.
- */
+// Notification inbox: lists all received messages (read and unread) and lets the
+// user mark them read. Loading runs off the FX thread.
 public class NotificationsPanel extends VBox {
 
     private final Persona persona;
@@ -35,11 +33,8 @@ public class NotificationsPanel extends VBox {
         this(persona, null);
     }
 
-    /**
-     * @param onRead optional callback fired when the user's latest notifications
-     *               are read (mark-all-read), so the shell can clear its unread
-     *               indicator. May be {@code null}.
-     */
+    // onRead is an optional callback fired when the user's latest notifications
+    // are marked read, so the shell can clear its unread indicator. May be null.
     public NotificationsPanel(Persona persona, Runnable onRead) {
         super(16);
         this.persona = persona;

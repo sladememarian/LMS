@@ -35,13 +35,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-/**
- * Library browser with real-time, background-threaded search and pagination.
- *
- * <p>As the user types, keystrokes are debounced (300 ms) and the actual search
- * runs on a background {@link javafx.concurrent.Task} via {@link BackgroundJobs}
- * so the UI never freezes. Results are paginated client-side, 10 rows per page.
- */
+// Library browser with real-time, background-threaded search and pagination.
+// As the user types, keystrokes are debounced (300 ms) and the search runs on a
+// background Task via BackgroundJobs so the UI never freezes. Results are
+// paginated client-side, 10 rows per page.
 public class LibrarySearchPanel extends BorderPane {
 
     private static final int PAGE_SIZE = 10;
@@ -120,7 +117,7 @@ public class LibrarySearchPanel extends BorderPane {
         table.setPlaceholder(new Label("No items found."));
     }
 
-    /** Borrows the selected item for the signed-in user (background thread). */
+    // Borrows the selected item for the signed-in user (background thread).
     private void handleBorrow() {
         LibraryItem item = table.getSelectionModel().getSelectedItem();
         if (item == null) {
@@ -152,7 +149,7 @@ public class LibrarySearchPanel extends BorderPane {
         doBorrowLoan(user, freshItem, itemId);
     }
 
-    /** Reserves the selected item for the signed-in user (background thread). */
+    // Reserves the selected item for the signed-in user (background thread).
     private void handleReserve() {
         LibraryItem item = table.getSelectionModel().getSelectedItem();
         if (item == null) {
@@ -177,7 +174,7 @@ public class LibrarySearchPanel extends BorderPane {
                 error -> Dialogs.error("Reservation failed", error));
     }
 
-    /** Reports whether the reservation is ready now (ACTIVE) or queued (WAITING). */
+    // Reports whether the reservation is ready now (ACTIVE) or queued (WAITING).
     private void announceReservation(String title, ir.ac.kntu.reservation.Reservation reservation) {
         if (reservation.isActive()) {
             Dialogs.info("Reserved",
@@ -240,7 +237,7 @@ public class LibrarySearchPanel extends BorderPane {
                 error -> Dialogs.error("Borrow failed", error));
     }
 
-    /** Runs the search off the FX thread and refreshes pagination on success. */
+    // Runs the search off the FX thread and refreshes pagination on success.
     private void runSearch(String rawQuery) {
         String query = rawQuery == null ? "" : rawQuery.trim();
         spinner.setVisible(true);
@@ -276,7 +273,7 @@ public class LibrarySearchPanel extends BorderPane {
                 });
     }
 
-    /** Pagination page factory: shows PAGE_SIZE rows for the given page index. */
+    // Pagination page factory: shows PAGE_SIZE rows for the given page index.
     private TableView<LibraryItem> renderPage(int pageIndex) {
         int from = pageIndex * PAGE_SIZE;
         int to = Math.min(from + PAGE_SIZE, currentResults.size());

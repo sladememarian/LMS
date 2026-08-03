@@ -15,22 +15,17 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-/**
- * Boot splash shown before the login screen. It presents the Collaberry brand
- * on a black background and animates a purple progress bar to <em>simulate</em>
- * loading the data store from PostgreSQL, then hands off to {@link LoginView}.
- *
- * <p>The bar is a timed animation, but the splash also does one real piece of
- * work: it opens the database connection on a background thread. That first
- * connect runs the JDBC handshake plus the table/migration setup, which is
- * otherwise paid on the user's first sign-in and makes it feel slow. Warming
- * it here hides that cost behind the loading bar. Wired only from
- * {@code App.start()} so the TestFX suites (which build views directly) are
- * unaffected.</p>
- */
+// Boot splash shown before the login screen. It shows the Collaberry brand on a
+// black background and animates a purple progress bar to simulate loading from
+// PostgreSQL, then hands off to LoginView. The bar is just a timed animation,
+// but the splash also does one real thing: it opens the database connection on a
+// background thread. That first connect runs the JDBC handshake plus table setup
+// that would otherwise be paid on the first sign-in and make it feel slow, so
+// warming it here hides the cost behind the bar. Wired only from App.start(), so
+// the TestFX suites (which build views directly) are unaffected.
 public class SplashView implements View {
 
-    /** How long the simulated "loading from postgres" animation runs. */
+    // How long the simulated "loading from postgres" animation runs.
     private static final Duration LOAD_TIME = Duration.seconds(2.4);
 
     private final VBox root = new VBox(18);
@@ -43,7 +38,7 @@ public class SplashView implements View {
         build();
     }
 
-    /** Injected by {@code App}: where to go once the bar fills. */
+    // Injected by App: where to go once the bar fills.
     public void attachNavigator(Navigator navigator, View next) {
         this.navigator = navigator;
         this.next = next;
@@ -72,10 +67,8 @@ public class SplashView implements View {
         root.getChildren().addAll(progress, loading, brand, author);
     }
 
-    /**
-     * Loads the brand icon from {@code <project>/icon/Collaberry_groups.png}. If
-     * the file is missing we simply omit the image rather than fail the splash.
-     */
+    // Loads the brand icon from <project>/icon/Collaberry_groups.png; if the file
+    // is missing we omit the image rather than fail the splash.
     private ImageView buildLogo() {
         ImageView view = new ImageView();
         Image icon = BrandAssets.loadIcon();
@@ -87,10 +80,8 @@ public class SplashView implements View {
         return view;
     }
 
-    /**
-     * Starts the loading animation; when the bar reaches 100% the login screen
-     * takes over. Call after the stage is shown.
-     */
+    // Starts the loading animation; when the bar reaches 100% the login screen
+    // takes over. Call after the stage is shown.
     public void start() {
         // Warm the DB connection off the FX thread while the bar animates. The
         // first getConnection() opens the socket and runs table setup, so doing

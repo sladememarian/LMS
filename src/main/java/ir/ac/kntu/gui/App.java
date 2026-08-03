@@ -8,13 +8,9 @@ import javafx.application.Application;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
-/**
- * JavaFX application entry point. Builds the {@link Navigator}, shows the login
- * screen, and cleans up the background worker pool on exit.
- *
- * <p>All existing business services (IAM, Library, Finance, Support, ...) are
- * reused unchanged; this class only bootstraps the graphical shell.
- */
+// JavaFX entry point. Builds the Navigator, shows the login screen, and shuts
+// down the background worker pool on exit. All business services (IAM, Library,
+// Finance, Support, ...) are reused unchanged; this only bootstraps the shell.
 @SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.UnnecessaryConstructor"})
 public class App extends Application {
 

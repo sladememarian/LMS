@@ -20,12 +20,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Registration screen. Collects email, first name, last name, phone, password,
- * and confirm. The account is created fast (email + password only) via
- * {@link SignupService}, so the user can sign in immediately; the profile fields
- * are queued and persisted by a background worker thread.
- */
+// Registration screen. Collects email, first name, last name, phone, password
+// and confirm. The account is created fast (email + password only) via
+// SignupService so the user can sign in immediately; the profile fields are
+// queued and persisted by a background worker thread.
 public class RegisterView implements View {
 
     private static final String FIELD_STYLE = "field";
@@ -80,7 +78,7 @@ public class RegisterView implements View {
         StackPane.setAlignment(card, Pos.CENTER);
     }
 
-    /** Prompt text, fx:ids, and style classes for every input field. */
+    // Prompt text, fx:ids, and style classes for every input field.
     private void configureFields() {
         configureText(emailField, "Email", "emailField");
         configureText(firstNameField, "First name", "firstNameField");
@@ -128,7 +126,7 @@ public class RegisterView implements View {
                 });
     }
 
-    /** Validates all registration fields, showing a warning for the first problem. */
+    // Validates all registration fields, showing a warning for the first problem.
     private boolean isValid(SignupEnvelope profile, String password, String confirm) {
         String email = profile.getEmail();
         if (email.isEmpty() || password.isEmpty()) {

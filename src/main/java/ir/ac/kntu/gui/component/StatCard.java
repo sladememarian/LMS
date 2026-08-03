@@ -4,10 +4,8 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
-/**
- * Reusable dashboard info-card: a small caption, a large value and an optional
- * sub-line. Used across the User/Support/Admin dashboards.
- */
+// Reusable dashboard info-card: a small caption, a large value and an optional
+// sub-line. Used across the User/Support/Admin dashboards.
 public class StatCard extends VBox {
 
     private final Label valueLabel;
@@ -32,7 +30,7 @@ public class StatCard extends VBox {
         }
     }
 
-    /** Updates the large value shown on the card. */
+    // Updates the large value shown on the card.
     public void setValue(String value) {
         valueLabel.setText(value);
     }

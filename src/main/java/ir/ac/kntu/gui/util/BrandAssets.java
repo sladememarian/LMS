@@ -6,28 +6,25 @@ import java.nio.file.Paths;
 
 import javafx.scene.image.Image;
 
-/**
- * Central access to the Collaberry brand image so the splash logo and the
- * stage/taskbar icon load from a single source. The file lives at
- * {@code <project>/icon/Collaberry_groups.png}; when it is missing (e.g. tests
- * running from another directory) loaders simply get {@code null}.
- */
+// One place to load the Collaberry brand image, so the splash logo and the
+// stage/taskbar icon come from the same source. The file lives at
+// <project>/icon/Collaberry_groups.png. If it is missing (for example, tests
+// run from another directory), loaders just get null.
 public final class BrandAssets {
 
     private static final String ICON_FILE = "Collaberry_groups.png";
 
     private BrandAssets() {
+        // utility class
     }
 
-    /** Absolute path to the brand icon under the launch directory. */
+    // Absolute path to the brand icon under the launch directory.
     public static Path iconPath() {
         return Paths.get(System.getProperty("user.dir"), "icon", ICON_FILE);
     }
 
-    /**
-     * Loads the brand icon, or returns {@code null} if the file is absent so
-     * callers can fall back to the JavaFX default rather than crash.
-     */
+    // Loads the brand icon, or returns null if the file is missing so callers
+    // can fall back to the JavaFX default instead of crashing.
     public static Image loadIcon() {
         Path path = iconPath();
         if (Files.exists(path)) {

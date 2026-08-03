@@ -28,11 +28,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * CallCenter support inbox: shows tickets in the agent's assigned sections
- * (via {@link SupportService#getTicketsForAgent}), and lets the agent reply to
- * or close a ticket. Actions run off the FX thread.
- */
+// CallCenter support inbox: shows tickets in the agent's assigned sections
+// (via SupportService.getTicketsForAgent) and lets the agent reply to or close
+// a ticket. Actions run off the FX thread.
 public class SupportInboxPanel extends VBox {
 
     private static final String GHOST_STYLE = "ghost";

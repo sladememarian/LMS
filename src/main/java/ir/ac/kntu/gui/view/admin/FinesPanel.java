@@ -22,11 +22,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Fines screen (Admin / CallCenter): a table of indebted users sorted by debt
- * descending. The debtor list is built entirely with the Java Streams API and
- * computed on a background thread.
- */
+// Fines screen (Admin / CallCenter): a table of indebted users sorted by debt
+// descending. The debtor list is built entirely with the Java Streams API and
+// computed on a background thread.
 public class FinesPanel extends VBox {
 
     private static final String GHOST_STYLE = "ghost";
@@ -142,7 +140,7 @@ public class FinesPanel extends VBox {
                 error -> Dialogs.error("Could not load fines", error));
     }
 
-    /** Row view-model for the fines table. */
+    // Row view-model for the fines table.
     public static class DebtorRow {
         private final String email;
         private final String memberId;

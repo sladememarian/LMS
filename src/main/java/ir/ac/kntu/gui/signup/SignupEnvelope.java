@@ -3,15 +3,11 @@ package ir.ac.kntu.gui.signup;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Immutable "envelope" carrying the profile fields collected at sign-up that are
- * <em>not</em> part of the fast account-creation path (email + password). It is
- * the message pushed onto {@link SignupQueue} and later applied to the account
- * by {@link SignupWorker} via {@code PersonaService.updateProfile}.
- *
- * <p>Serialized as a single JSON line so the queue can be spooled to disk (one
- * envelope per line) for durability and crash recovery.</p>
- */
+// Immutable envelope carrying the profile fields collected at sign-up that are
+// NOT part of the fast account-creation path (email + password). It's the
+// message pushed onto SignupQueue and later applied by SignupWorker via
+// PersonaService.updateProfile. Serialized as one JSON line so the queue can be
+// spooled to disk (one envelope per line) for durability and crash recovery.
 public final class SignupEnvelope {
 
     private static final String KEY_EMAIL = "email";
@@ -47,7 +43,7 @@ public final class SignupEnvelope {
         return phoneNumber;
     }
 
-    /** Renders this envelope as one JSON object on a single line. */
+    // Renders this envelope as one JSON object on a single line.
     public String toJsonLine() {
         return "{"
                 + jsonField(KEY_EMAIL, email) + ","
@@ -61,7 +57,7 @@ public final class SignupEnvelope {
         return "\"" + key + "\":\"" + escape(value) + "\"";
     }
 
-    /** Parses a line produced by {@link #toJsonLine()}. Returns null if malformed. */
+    // Parses a line produced by toJsonLine(). Returns null if malformed.
     public static SignupEnvelope fromJsonLine(String line) {
         if (line == null || line.trim().isEmpty()) {
             return null;

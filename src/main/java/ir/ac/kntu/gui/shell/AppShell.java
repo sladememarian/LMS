@@ -50,14 +50,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
-/**
- * The main post-login application shell: a top bar (identity, theme, logout), a
- * left sidebar whose entries depend on the signed-in user's role, and a central
- * content area that is swapped as the user navigates (multi-scene requirement).
- *
- * <p>Menu sets are assembled per role in {@link #buildNavItems()}. Screens are
- * currently placeholders and are filled in by later migration steps.
- */
+// The main post-login shell: a top bar (identity, theme, logout), a left
+// sidebar whose entries depend on the user's role, and a central content area
+// that is swapped as the user navigates (multi-scene requirement). Menu sets
+// are assembled per role in buildNavItems().
 public class AppShell implements View {
 
     private static final String DASHBOARD = "Dashboard";
@@ -70,10 +66,10 @@ public class AppShell implements View {
     private final ScrollPane contentScroll = new ScrollPane();
     private final ToggleGroup navGroup = new ToggleGroup();
 
-    /** A tiny red dot shown beside "Notifications" when unread mail exists. */
+    // A tiny red dot shown beside "Notifications" when unread mail exists.
     private final Circle unreadDot = new Circle(4);
 
-    /** Next-Day control + its busy spinner (admin top bar); locked while running. */
+    // Next-Day control + its busy spinner (admin top bar); locked while running.
     private final Button nextDayButton = new Button("Next Day");
     private final ProgressIndicator nextDaySpinner = new ProgressIndicator();
 
@@ -181,7 +177,7 @@ public class AppShell implements View {
         return sidebar;
     }
 
-    /** Builds the unread-notification dot graphic for the Notifications button. */
+    // Builds the unread-notification dot graphic for the Notifications button.
     private HBox buildUnreadDotGraphic() {
         unreadDot.getStyleClass().add("unread-dot");
         unreadDot.setManaged(false);
@@ -203,7 +199,7 @@ public class AppShell implements View {
         fade.play();
     }
 
-    /** Assembles the sidebar based on the user's role. */
+    // Assembles the sidebar based on the user's role.
     private List<NavItem> buildNavItems() {
         UserRole role = persona.getRole();
         List<NavItem> items = new ArrayList<>();
@@ -239,10 +235,8 @@ public class AppShell implements View {
         return items;
     }
 
-    /**
-     * Recomputes whether the user has any unread mail (off the FX thread) and
-     * shows/hides the little red dot beside the Notifications nav item.
-     */
+    // Recomputes whether the user has any unread mail (off the FX thread) and
+    // shows/hides the little red dot beside the Notifications nav item.
     private void refreshUnreadIndicator() {
         String email = persona.getEmail();
         if (email == null) {
@@ -264,10 +258,10 @@ public class AppShell implements View {
                 error -> { /* non-critical: indicator only */ });
     }
 
-    /** Advances the simulated day, accrues overdue debts, expires reservations,
-     *  then re-checks notifications — all on a background thread. The button is
-     *  locked and a spinner shown while it runs so the slow per-row DB writes
-     *  can't be re-triggered or appear frozen. */
+    // Advances the simulated day, accrues overdue debts, expires reservations,
+    // then re-checks notifications — all on a background thread. The button is
+    // locked and a spinner shown while it runs so the slow per-row DB writes
+    // can't be re-triggered or appear frozen.
     private void handleNextDay() {
         nextDayButton.setDisable(true);
         nextDaySpinner.setVisible(true);

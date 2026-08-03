@@ -16,12 +16,9 @@ import javafx.stage.Popup;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
-/**
- * Small helper for user-facing notifications. Phase-3 requires that errors,
- * successes and warnings are shown via visual {@link Alert} boxes instead of the
- * console. All methods are safe to call from any thread (they hop to the FX
- * thread when needed).
- */
+// Small helper for user-facing notifications. Phase-3 shows errors, successes
+// and warnings in Alert boxes instead of the console. Every method is safe to
+// call from any thread; it switches to the FX thread when needed.
 public final class Dialogs {
 
     private static final Duration FADE = Duration.millis(220);
@@ -35,7 +32,7 @@ public final class Dialogs {
         show(AlertType.ERROR, "Error", header, unwrap(message));
     }
 
-    /** Convenience for exceptions surfaced from background tasks. */
+    // Shortcut for exceptions coming from background tasks.
     public static void error(String header, Throwable throwable) {
         error(header, describe(throwable));
     }
@@ -48,10 +45,8 @@ public final class Dialogs {
         show(AlertType.WARNING, "Warning", header, message);
     }
 
-    /**
-     * Shows a non-modal toast that fades in, holds, then fades out — used for
-     * ambient notifications that must not interrupt the user with a dialog.
-     */
+    // Shows a non-modal toast that fades in, waits, then fades out. Used for
+    // quiet notifications that should not interrupt the user with a dialog.
     public static void toast(String title, String message) {
         BackgroundJobs.onFxThread(() -> showToast(title, message));
     }
@@ -103,7 +98,7 @@ public final class Dialogs {
                         .orElse(null));
     }
 
-    /** Yes/No confirmation. Returns true if the user confirmed. */
+    // Yes/No confirmation. Returns true if the user confirmed.
     public static boolean confirm(String header, String message) {
         Alert alert = new Alert(AlertType.CONFIRMATION, message,
                 ButtonType.YES, ButtonType.NO);

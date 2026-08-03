@@ -34,11 +34,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Item management for Admin / CallCenter: add, edit price, adjust quantity and
- * delete library items. Every mutation runs on a background thread and refreshes
- * the table; validation problems surface as {@link Dialogs} alerts.
- */
+// Item management for Admin / CallCenter: add, edit price, adjust quantity and
+// delete library items. Every mutation runs on a background thread and refreshes
+// the table; validation problems surface as Dialogs alerts.
 public class ItemManagementPanel extends VBox {
 
     private final TableView<LibraryItem> table = new TableView<>();
@@ -62,12 +60,10 @@ public class ItemManagementPanel extends VBox {
     private static final String STR_EBOOK = "EBOOK";
     private static final String STR_AUDIOBOOK = "AUDIOBOOK";
 
-    /**
-     * GUI-local, relaxed item-id rule: a plain {@code ITEM-<number>} (e.g.
-     * {@code ITEM-12}). The stricter backend {@code Validator.isValidItemId}
-     * (typed prefix + 8 digits) is left untouched — it is shared with the CLI
-     * and its own tests — so this only loosens what the add-item form accepts.
-     */
+    // GUI-local, relaxed item-id rule: a plain ITEM-<number> (e.g. ITEM-12). The
+    // stricter backend Validator.isValidItemId (typed prefix + 8 digits) is left
+    // untouched — it is shared with the CLI and its own tests — so this only
+    // loosens what the add-item form accepts.
     private static final Pattern GUI_ITEM_ID = Pattern.compile("^ITEM-\\d+$");
 
     public ItemManagementPanel() {

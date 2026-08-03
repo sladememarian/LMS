@@ -3,21 +3,14 @@ package ir.ac.kntu.gui.signup;
 import ir.ac.kntu.exception.BaseException;
 import ir.ac.kntu.persona.PersonaService;
 
-/**
- * The consumer thread for {@link SignupQueue}.
- *
- * <p>A single daemon thread loops forever: it blocks on {@link SignupQueue#take()}
- * until an envelope arrives, then persists the profile fields by calling the
- * existing {@code PersonaService.updateProfile}. Because the fast path (create
- * account with email + password) and this slow path (attach the rest of the
- * profile) run on <em>different</em> threads, the account row may not be visible
- * the instant the worker wakes up; the worker therefore retries a bounded number
- * of times before giving up on a single envelope, and never lets one bad
- * envelope kill the loop.</p>
- *
- * <p>Started once via {@link #start()} (idempotent). Lives entirely in the GUI
- * layer; the only backend call is the pre-existing {@code updateProfile}.</p>
- */
+// The consumer thread for SignupQueue. A single daemon thread loops forever:
+// it blocks on SignupQueue.take() until an envelope arrives, then persists the
+// profile fields via the existing PersonaService.updateProfile. Because the fast
+// path (create account) and this slow path (attach the profile) run on different
+// threads, the account row may not be visible the instant the worker wakes up, so
+// the worker retries a bounded number of times per envelope and never lets one
+// bad envelope kill the loop. Started once via start() (idempotent). Lives in the
+// GUI layer; the only backend call is the pre-existing updateProfile.
 public final class SignupWorker {
 
     private static final int MAX_ATTEMPTS = 20;
@@ -34,7 +27,7 @@ public final class SignupWorker {
         this.queue = queue;
     }
 
-    /** Starts the singleton worker thread once; further calls are no-ops. */
+    // Starts the singleton worker thread once; further calls are no-ops.
     public static synchronized void start() {
         if (started) {
             return;

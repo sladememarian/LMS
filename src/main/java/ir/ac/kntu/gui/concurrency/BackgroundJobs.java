@@ -9,15 +9,11 @@ import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
-/**
- * Central place for running work OFF the JavaFX Application Thread.
- *
- * <p>Phase-3 rule: no long-running / DB / heavy-Stream operation may run on the
- * FX thread, or the UI freezes. Every such operation is wrapped in a JavaFX
- * {@link Task} submitted to a shared daemon {@link ExecutorService}. The success
- * and failure callbacks provided here are always delivered on the FX thread, so
- * callers can safely touch the scene graph inside them.
- */
+// Central place for running work OFF the JavaFX Application Thread. No slow /
+// DB / heavy-Stream operation may run on the FX thread or the UI freezes, so
+// each one is wrapped in a JavaFX Task on a shared daemon ExecutorService. The
+// success and failure callbacks are always delivered back on the FX thread, so
+// callers can safely touch the scene graph inside them.
 public final class BackgroundJobs {
 
     private static final ThreadFactory DAEMON_FACTORY = runnable -> {
@@ -33,13 +29,9 @@ public final class BackgroundJobs {
         // utility class
     }
 
-    /**
-     * Runs {@code work} in the background. When it finishes, {@code onSuccess}
-     * is invoked on the FX thread with the result. If it throws, {@code onError}
-     * is invoked on the FX thread with the exception.
-     *
-     * @return the running {@link Task} (useful for binding a ProgressIndicator).
-     */
+    // Runs work in the background. On success onSuccess runs on the FX thread
+    // with the result; if it throws, onError runs on the FX thread with the
+    // exception. Returns the running Task (handy for binding a ProgressIndicator).
     public static <T> Task<T> run(Supplier<T> work,
                                   Consumer<T> onSuccess,
                                   Consumer<Throwable> onError) {
@@ -63,7 +55,7 @@ public final class BackgroundJobs {
         return task;
     }
 
-    /** Convenience overload for work that returns nothing. */
+    // Convenience overload for work that returns nothing.
     public static Task<Void> runAction(Runnable work,
                                        Runnable onSuccess,
                                        Consumer<Throwable> onError) {
@@ -80,7 +72,7 @@ public final class BackgroundJobs {
                 onError);
     }
 
-    /** Marshals a snippet onto the FX thread (thin wrapper over Platform.runLater). */
+    // Marshals a snippet onto the FX thread (thin wrapper over Platform.runLater).
     public static void onFxThread(Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
             runnable.run();
@@ -89,7 +81,7 @@ public final class BackgroundJobs {
         }
     }
 
-    /** Call once on application shutdown to stop the worker pool cleanly. */
+    // Call once on application shutdown to stop the worker pool cleanly.
     public static void shutdown() {
         EXECUTOR.shutdownNow();
     }

@@ -28,14 +28,9 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Admin analytics screen. Two Streams-derived charts:
- * <ul>
- *   <li>Top-10 most-borrowed items ({@link BarChart}), from loan history.</li>
- *   <li>Monthly fine revenue ({@link LineChart}), from TAX transactions.</li>
- * </ul>
- * Both datasets are computed on a background thread.
- */
+// Admin analytics screen. Two Streams-derived charts: top-10 most-borrowed items
+// (BarChart) from loan history, and monthly fine revenue (LineChart) from TAX
+// transactions. Both datasets are computed on a background thread.
 public class AnalyticsPanel extends StackPane {
 
     public AnalyticsPanel() {
@@ -64,7 +59,7 @@ public class AnalyticsPanel extends StackPane {
         return new VBox(16, heading, buildReportBar(), topBorrowedChart(), monthlyRevenueChart());
     }
 
-    /** Bonus: generate an HTML financial report on a background thread with progress. */
+    // Generates an HTML financial report on a background thread with progress.
     private Node buildReportBar() {
         javafx.scene.control.Button generate = new javafx.scene.control.Button("Generate HTML report");
         generate.getStyleClass().add("primary");

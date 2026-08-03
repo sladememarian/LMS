@@ -1,14 +1,9 @@
 package ir.ac.kntu.gui;
 
-/**
- * Plain launcher class.
- *
- * <p>When an application that extends {@link javafx.application.Application} is
- * started from a non-modular classpath, the JVM can complain that the JavaFX
- * runtime components are missing. Launching through a separate class that does
- * <em>not</em> extend {@code Application} is the standard workaround: this
- * {@code main} simply delegates to {@link App#main(String[])}.
- */
+// Plain launcher. Starting an Application subclass from a non-modular classpath
+// can make the JVM complain that JavaFX is missing; launching from a class that
+// does NOT extend Application is the standard workaround. This just calls
+// App.main(...).
 public final class GuiLauncher {
 
     private GuiLauncher() {

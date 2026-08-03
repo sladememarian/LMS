@@ -28,11 +28,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Regular-user Loans &amp; Reservations screen: active loans (with due day and
- * overdue status computed via the simulation clock) plus the user's reservations.
- * Return and extend actions reuse the existing services and run off the FX thread.
- */
+// Regular-user Loans & Reservations screen: active loans (with due day and
+// overdue status computed via the simulation clock) plus the user's reservations.
+// Return and extend actions reuse the existing services and run off the FX thread.
 public class LoansReservationsPanel extends VBox {
 
     private static final int EXTENSION_FEE = 25_000;
@@ -270,7 +268,7 @@ public class LoansReservationsPanel extends VBox {
         return new LoanRow(loan.getItemId(), title, loan.getBorrowDay(), loan.getDueDay(), status);
     }
 
-    /** Row view-model for the loan table (public getters for PropertyValueFactory). */
+    // Row view-model for the loan table (public getters for PropertyValueFactory).
     public static class LoanRow {
         private final String itemId;
         private final String itemTitle;

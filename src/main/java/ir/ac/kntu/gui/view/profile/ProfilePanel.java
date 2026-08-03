@@ -17,17 +17,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-/**
- * Profile screen: lets the signed-in user review their identity, edit the
- * name/phone fields, change their password and switch the visual theme. Every
- * mutation is delegated to the existing {@link SsoService} backend (no new
- * business logic here) and runs off the FX thread.
- *
- * <p>Editing the e-mail address and uploading a profile photo are intentionally
- * out of scope: the CLI backend keys accounts by e-mail and stores no avatar, so
- * exposing either from the GUI would require changing phase-1/2 code. Both are
- * documented as skipped in {@code docs/gui.md}.</p>
- */
+// Profile screen: lets the signed-in user review their identity, edit the
+// name/phone fields, change their password and switch the visual theme. Every
+// mutation is delegated to the existing SsoService backend (no new business
+// logic here) and runs off the FX thread. Editing the e-mail and uploading a
+// photo are intentionally out of scope: the CLI backend keys accounts by e-mail
+// and stores no avatar, so exposing either would require changing phase-1/2 code.
 public class ProfilePanel extends VBox {
 
     private static final String FIELD_STYLE = "field";

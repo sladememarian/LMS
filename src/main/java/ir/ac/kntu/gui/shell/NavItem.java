@@ -4,11 +4,8 @@ import java.util.function.Supplier;
 
 import javafx.scene.Node;
 
-/**
- * One entry in the application sidebar: a label plus a lazy factory that builds
- * the content node when the item is selected. Content is built on demand so
- * screens are only constructed when actually visited.
- */
+// One sidebar entry: a label plus a lazy factory that builds the screen only
+// when the item is selected, so screens aren't constructed until visited.
 public final class NavItem {
 
     private final String label;

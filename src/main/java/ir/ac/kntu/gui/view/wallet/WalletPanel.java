@@ -30,11 +30,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Wallet &amp; Transactions screen: shows balance and outstanding debt, allows
- * top-ups and debt payment, and lists the user's transaction history. All
- * finance calls run off the FX thread.
- */
+// Wallet & Transactions screen: shows balance and outstanding debt, allows
+// top-ups and debt payment, and lists the user's transaction history. All
+// finance calls run off the FX thread.
 public class WalletPanel extends VBox {
 
     private static final DateTimeFormatter TS_FORMAT =
@@ -124,7 +122,7 @@ public class WalletPanel extends VBox {
         return new VBox(8, row1, row2);
     }
 
-    /** Toggles the small inline spinner and disables the action buttons. */
+    // Toggles the small inline spinner and disables the action buttons.
     private void setActionBusy(boolean busy) {
         actionProgress.setVisible(busy);
         topUp.setDisable(busy);
